@@ -3,27 +3,29 @@
 
 mod database;
 
-use database::{get_all_films, initialize_database, Film};
-
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use database::Film;
 
 #[tauri::command]
-fn get_films() -> Option<Vec<Film>> {
-    match get_all_films() {
+fn get_all_films() -> Option<Vec<Film>> {
+    match database::get_all_films() {
         Ok(films) => Some(films),
         Err(_) => None,
     }
 }
 
+#[tauri::command]
+fn add_directory(path: &str) -> bool {
+    match database::add_directory(path) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, get_films])
+        .invoke_handler(tauri::generate_handler![get_all_films, add_directory])
         .setup(|_app| {
-            match initialize_database() {
+            match database::initialize_database() {
                 Ok(_) => {}
                 Err(err) => {
                     eprintln!("{:?}", err);

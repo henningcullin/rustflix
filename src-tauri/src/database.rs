@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use dirs::data_local_dir;
-use rusqlite::Connection;
+use rusqlite::{params, Connection};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -31,13 +31,23 @@ fn create_connection() -> Result<Connection, rusqlite::Error> {
 pub fn initialize_database() -> Result<(), rusqlite::Error> {
     let conn = create_connection()?;
 
+    // create films table
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS film (
+        "CREATE TABLE IF NOT EXISTS films (
             id    INTEGER PRIMARY KEY,
             title TEXT,
             file  TEXT NOT NULL,
             link  TEXT
             )",
+        [],
+    )?;
+
+    // create directories table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS directories (
+        id   INTEGER PRIMARY KEY,
+        path TEXT NOT NULL
+        )",
         [],
     )?;
 
@@ -47,20 +57,25 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
 pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     let conn = create_connection()?;
 
-    let mut stmt = conn.prepare("SELECT id, title, file, link FROM film")?;
-    let film_iter = stmt.query_map([], |row| {
-        Ok(Film {
-            id: row.get(0)?,
-            title: row.get(1)?,
-            file: row.get(2)?,
-            link: row.get(3)?,
-        })
-    })?;
-
-    let mut films = Vec::new();
-    for film in film_iter {
-        films.push(film?);
-    }
+    let mut stmt = conn.prepare("SELECT id, title, file, link FROM films")?;
+    let films: Vec<Film> = stmt
+        .query_map([], |row| {
+            Ok(Film {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                file: row.get(2)?,
+                link: row.get(3)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
 
     Ok(films)
+}
+
+pub fn add_directory(path: &str) -> Result<(), rusqlite::Error> {
+    let conn = create_connection()?;
+
+    conn.execute("INSERT INTO directories (path) VALUES (?1)", params![path])?;
+
+    Ok(())
 }
