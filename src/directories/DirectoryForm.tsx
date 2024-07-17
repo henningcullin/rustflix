@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useState } from "react";
+
+import { Label } from "@/components/ui/label";
 
 export function DirectoryForm() {
   const [directory, setDirectory] = useState<string>("");
@@ -16,8 +19,13 @@ export function DirectoryForm() {
 
   return (
     <>
-      <Button onClick={selectDirectory}>Select Directory</Button>
-      <p>{directory}</p>
+      <div style={{ width: "450px" }}>
+        <Label>Directory</Label>
+        <div style={{ display: "flex", gap: "5px" }}>
+          <Input value={directory} readOnly disabled />
+          <Button onClick={selectDirectory}>Select Directory</Button>
+        </div>
+      </div>
     </>
   );
 }
