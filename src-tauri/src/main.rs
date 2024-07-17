@@ -5,23 +5,8 @@ mod database;
 mod directories;
 mod films;
 
-use films::Film;
-
-#[tauri::command]
-fn get_all_films() -> Option<Vec<Film>> {
-    match films::get_all_films() {
-        Ok(films) => Some(films),
-        Err(_) => None,
-    }
-}
-
-#[tauri::command]
-fn add_directory(path: &str) -> bool {
-    match directories::add_directory(path) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
-}
+use directories::add_directory;
+use films::get_all_films;
 
 fn main() {
     tauri::Builder::default()
