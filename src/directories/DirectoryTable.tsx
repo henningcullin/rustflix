@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,9 +8,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { invoke } from "@tauri-apps/api/tauri";
+
+interface Directory {
+  id: number;
+  path: string;
+}
 
 export function DirectoryTable() {
-  const [directories, setDirectories] = useState<string[]>([]);
+  const [directories, setDirectories] = useState<Directory[]>([]);
+
+  async function getDirectories() {
+    try {
+      const data: Directory[] | null = await invoke("get_all_directories");
+      if (data) setDirectories(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    getDirectories();
+  }, []);
 
   return (
     <Table>
@@ -24,8 +43,8 @@ export function DirectoryTable() {
       <TableBody>
         {directories.map((directory) => (
           <TableRow>
-            <TableCell></TableCell>
-            <TableCell></TableCell>
+            <TableCell>{directory.id}</TableCell>
+            <TableCell>{directory.path}</TableCell>
           </TableRow>
         ))}
       </TableBody>
