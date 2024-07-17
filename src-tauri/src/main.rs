@@ -2,12 +2,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod database;
+mod directories;
+mod films;
 
-use database::Film;
+use films::Film;
 
 #[tauri::command]
 fn get_all_films() -> Option<Vec<Film>> {
-    match database::get_all_films() {
+    match films::get_all_films() {
         Ok(films) => Some(films),
         Err(_) => None,
     }
@@ -15,7 +17,7 @@ fn get_all_films() -> Option<Vec<Film>> {
 
 #[tauri::command]
 fn add_directory(path: &str) -> bool {
-    match database::add_directory(path) {
+    match directories::add_directory(path) {
         Ok(_) => true,
         Err(_) => false,
     }
@@ -30,6 +32,10 @@ fn main() {
                 Err(err) => {
                     eprintln!("{:?}", err);
                 }
+            };
+            match database::check_for_new_films() {
+                Ok(_) => {}
+                Err(_) => {}
             };
             Ok(())
         })
