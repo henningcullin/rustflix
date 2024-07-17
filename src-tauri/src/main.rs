@@ -5,15 +5,18 @@ mod database;
 mod directories;
 mod films;
 
-use directories::{add_directory, select_directory};
+use directories::{add_directory, get_all_directories, select_directory};
 use films::get_all_films;
 
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            // DIRECTORIES
             add_directory,
             select_directory,
-            get_all_films
+            get_all_directories,
+            // FILMS
+            get_all_films,
         ])
         .setup(|_app| {
             match database::initialize_database() {
@@ -22,7 +25,7 @@ fn main() {
                     eprintln!("{:?}", err);
                 }
             };
-            match database::check_for_new_films() {
+            match films::actions::check_for_new_films() {
                 Ok(_) => {}
                 Err(_) => {}
             };
