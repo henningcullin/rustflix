@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Film {
   id: number;
@@ -21,17 +21,24 @@ export function Films() {
     }
   }
 
+  useEffect(() => {
+    getFilms();
+  }, []);
+
   return (
     <>
-      <button onClick={getFilms}>Refresh films</button>
       <div>
-        {films.map((film) => (
-          <div key={film.id}>
-            <h2>{film.title}</h2>
-            <p>File: {film.file}</p>
-            <p>Link: {film.link}</p>
-          </div>
-        ))}
+        {films?.length ? (
+          films.map((film) => (
+            <div key={film.id}>
+              <h2>{film.title}</h2>
+              <p>File: {film.file}</p>
+              <p>Link: {film.link}</p>
+            </div>
+          ))
+        ) : (
+          <b>No films found</b>
+        )}
       </div>
     </>
   );
