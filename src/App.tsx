@@ -1,16 +1,14 @@
-import "./App.css";
 import "../app/globals.css";
-import { Films } from "./films/Films";
-import { DirectoryTable } from "./directories/DirectoryTable";
+
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ModeToggle } from "./components/ModeToggle";
+import { RouterProvider } from "react-router-dom";
+import router from "./Router";
 
 function App() {
   return (
     <ThemeProvider>
-      <ModeToggle />
-      <DirectoryTable></DirectoryTable>
-      <Films></Films>
+      <RouterProvider router={router} />
     </ThemeProvider>
   );
 }
