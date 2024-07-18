@@ -7,12 +7,24 @@ use crate::database::create_connection;
 
 use super::Directory;
 
-pub fn add_directory(path: &str) -> Result<(), rusqlite::Error> {
+pub fn add_directory(path: &str) -> Result<Directory, rusqlite::Error> {
     let conn = create_connection()?;
 
     conn.execute("INSERT INTO directories (path) VALUES (?1)", params![path])?;
 
-    Ok(())
+    // Retrieve the last inserted row ID
+    let id = conn.last_insert_rowid() as i32;
+
+    // Fetch the newly created directory
+    let mut stmt = conn.prepare("SELECT id, path FROM directories WHERE id = ?1")?;
+    let directory = stmt.query_row(params![id], |row| {
+        Ok(Directory {
+            id: row.get(0)?,
+            path: row.get(1)?,
+        })
+    })?;
+
+    Ok(directory)
 }
 
 pub fn get_all_directories() -> Result<Vec<Directory>, rusqlite::Error> {

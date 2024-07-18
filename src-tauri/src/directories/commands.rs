@@ -3,10 +3,10 @@ use tauri::command;
 use super::Directory;
 
 #[command]
-pub fn add_directory(path: &str) -> bool {
+pub fn add_directory(path: &str) -> Option<Directory> {
     match super::actions::add_directory(path) {
-        Ok(_) => true,
-        Err(_) => false,
+        Ok(directory) => Some(directory),
+        Err(_) => None,
     }
 }
 
