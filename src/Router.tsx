@@ -1,8 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import { Films } from "./films/Films";
-import { DirectoryTable } from "./directories/DirectoryTable";
+
 import Layout from "./Layout";
+import Directories from "./directories/Directories";
 
 const router = createBrowserRouter([
   {
@@ -15,7 +16,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/directories",
-        element: <DirectoryTable />,
+        element: <Directories />,
       },
     ],
   },

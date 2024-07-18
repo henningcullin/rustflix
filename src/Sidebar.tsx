@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/sheet";
 import { ModeToggle } from "./components/ModeToggle";
 import { Button } from "./components/ui/button";
+import { Link } from "react-router-dom";
 
 function Sidebar() {
   return (
     <Sheet>
       <SheetTrigger>
-        <Button>
+        <Button className="relative top-0 right-0">
           <HamburgerMenuIcon />
         </Button>
       </SheetTrigger>
@@ -22,8 +23,8 @@ function Sidebar() {
         <SheetHeader>
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
-
         <ModeToggle />
+        <Link to="/directories">Directories</Link>
       </SheetContent>
     </Sheet>
   );
