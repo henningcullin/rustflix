@@ -1,14 +1,17 @@
 import "./App.css";
 import "../app/globals.css";
 import { Films } from "./films/Films";
-import { DirectoryForm } from "./directories/DirectoryForm";
+import { DirectoryTable } from "./directories/DirectoryTable";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { ModeToggle } from "./components/ModeToggle";
 
 function App() {
   return (
-    <div>
-      <DirectoryForm></DirectoryForm>
+    <ThemeProvider>
+      <ModeToggle />
+      <DirectoryTable></DirectoryTable>
       <Films></Films>
-    </div>
+    </ThemeProvider>
   );
 }
 
