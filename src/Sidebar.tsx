@@ -24,7 +24,9 @@ function Sidebar() {
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
         <ModeToggle />
+        <Link to="/"></Link>
         <Link to="/directories">Directories</Link>
+        <Link to="/films">Films</Link>
       </SheetContent>
     </Sheet>
   );
