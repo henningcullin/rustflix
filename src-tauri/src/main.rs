@@ -5,7 +5,7 @@ mod database;
 mod directories;
 mod films;
 
-use directories::{add_directory, get_all_directories, select_directory};
+use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::get_all_films;
 
 fn main() {
@@ -13,6 +13,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             // DIRECTORIES
             add_directory,
+            delete_directory,
             select_directory,
             get_all_directories,
             // FILMS

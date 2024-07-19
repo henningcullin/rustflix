@@ -11,6 +11,14 @@ pub fn add_directory(path: &str) -> Option<Directory> {
 }
 
 #[command]
+pub fn delete_directory(id: u32) -> bool {
+    match super::actions::delete_directory(id) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
+}
+
+#[command]
 pub async fn select_directory() -> Option<String> {
     match super::actions::select_directory().await {
         Some(path) => Some(path.display().to_string()),
