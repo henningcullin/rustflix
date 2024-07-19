@@ -1,8 +1,11 @@
 export interface Film {
   id: number;
-  title: string | null;
   file: string;
-  link: string | null;
+  link?: string;
+  title?: string;
+  release_year?: number;
+  duration?: number;
+  cover_image?: string;
 }
 
 function Films() {

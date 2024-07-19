@@ -7,16 +7,10 @@ use super::Film;
 pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     let conn = create_connection()?;
 
-    let mut stmt = conn.prepare("SELECT id, title, file, link FROM films")?;
+    let mut stmt = conn
+        .prepare("SELECT id, file, link, title, release_year, duration, cover_image FROM films")?;
     let films: Vec<Film> = stmt
-        .query_map([], |row| {
-            Ok(Film {
-                id: row.get(0)?,
-                title: row.get(1)?,
-                file: row.get(2)?,
-                link: row.get(3)?,
-            })
-        })?
+        .query_map([], |row| Film::from_row(row))?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(films)
@@ -34,10 +28,9 @@ pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
         .collect::<Result<Vec<_>, _>>()?;
 
     // Vector to store all video files found
-    let mut all_videos: Vec<String> = Vec::new();
+    let mut all_video_files: Vec<String> = Vec::new();
 
     for dir in directories {
-        println!("{dir:?}");
         if let Ok(entries) = fs::read_dir(&dir) {
             for entry in entries {
                 if let Ok(entry) = entry {
@@ -47,7 +40,7 @@ pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
                             if let Some(ext) = extension.to_str() {
                                 if video_extensions.contains(&ext) {
                                     if let Some(path_str) = path.to_str() {
-                                        all_videos.push(path_str.to_string());
+                                        all_video_files.push(path_str.to_string());
                                     }
                                 }
                             }
@@ -60,9 +53,19 @@ pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
         }
     }
 
+    println!("Video files");
+
     // Print all found video files
-    for video in all_videos {
+    for video in all_video_files {
         println!("{}", video);
+    }
+
+    let old_videos = get_all_films()?;
+
+    println!("Saved Videos");
+
+    for video in old_videos {
+        println!("{video:?}");
     }
 
     Ok(())

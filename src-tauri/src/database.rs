@@ -26,9 +26,12 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS films (
             id    INTEGER PRIMARY KEY,
-            title TEXT,
             file  TEXT NOT NULL,
-            link  TEXT
+            link  TEXT,
+            title TEXT,
+            release_year INTEGER,
+            duration INTEGER,
+            cover_image TEXT
             )",
         [],
     )?;
