@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/command";
 
 import { ModeToggle } from "./components/ModeToggle";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 function Sidebar() {
@@ -30,6 +30,12 @@ function Sidebar() {
     setOpen(false);
     navigate(url);
   }
+
+  const views = [
+    { destination: "/", label: "Home" },
+    { destination: "/directories", label: "Directories" },
+    { destination: "/films", label: "Films" },
+  ];
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -47,11 +53,11 @@ function Sidebar() {
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup heading="Views">
-              <CommandItem onSelect={() => travel("/")}>Home</CommandItem>
-              <CommandItem onSelect={() => travel("/directories")}>
-                Directories
-              </CommandItem>
-              <CommandItem onSelect={() => travel("/films")}>Films</CommandItem>
+              {views.map((view) => (
+                <CommandItem onSelect={() => travel(view.destination)}>
+                  {view.label}
+                </CommandItem>
+              ))}
             </CommandGroup>
             <CommandSeparator />
             <CommandGroup heading="Settings">
