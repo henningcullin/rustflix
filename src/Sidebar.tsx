@@ -19,11 +19,20 @@ import {
 } from "@/components/ui/command";
 
 import { ModeToggle } from "./components/ModeToggle";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 function Sidebar() {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  function travel(url: string) {
+    setOpen(false);
+    navigate(url);
+  }
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger>
         <Button className="relative top-0 right-0">
           <HamburgerMenuIcon />
@@ -38,15 +47,11 @@ function Sidebar() {
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup heading="Views">
-              <CommandItem>
-                <Link to="/">Home</Link>
+              <CommandItem onSelect={() => travel("/")}>Home</CommandItem>
+              <CommandItem onSelect={() => travel("/directories")}>
+                Directories
               </CommandItem>
-              <CommandItem>
-                <Link to="/directories">Directories</Link>
-              </CommandItem>
-              <CommandItem>
-                <Link to="/films">Films</Link>
-              </CommandItem>
+              <CommandItem onSelect={() => travel("/films")}>Films</CommandItem>
             </CommandGroup>
             <CommandSeparator />
             <CommandGroup heading="Settings">
