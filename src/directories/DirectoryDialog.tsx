@@ -2,7 +2,7 @@ import { directoryAtom } from "@/lib/atoms";
 
 import { invoke } from "@tauri-apps/api/tauri";
 import { ReactElement, useState } from "react";
-import { Outlet } from "react-router-dom";
+
 import { useAtom } from "jotai";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Directory } from "./Directories";
