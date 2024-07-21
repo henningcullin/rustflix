@@ -1,13 +1,12 @@
 use std::{collections::HashMap, fs};
 
-use serde::Serialize;
-
 use crate::{
     database::create_connection,
     directories::{actions::get_all_directories, Directory},
+    error::Error,
 };
 
-use super::Film;
+use super::{models::VideoFiles, Film};
 
 pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     let conn = create_connection()?;
@@ -21,12 +20,7 @@ pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     Ok(films)
 }
 
-#[derive(Serialize)]
-struct VideoFiles {
-    files_by_directory: HashMap<u32, Vec<String>>,
-}
-
-pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
+pub fn check_for_new_films() -> Result<VideoFiles, Error> {
     // Video file extensions to look for
     let video_extensions = vec!["mp4", "mkv", "avi", "mov"];
 
@@ -66,12 +60,5 @@ pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
         files_by_directory: video_files_by_directory,
     };
 
-    let json = serde_json::to_string(&video_files).map_err(|e| e.to_string());
-
-    match json {
-        Ok(msg) => println!("{msg}"),
-        Err(msg) => println!("{msg}"),
-    }
-
-    Ok(())
+    Ok(video_files)
 }

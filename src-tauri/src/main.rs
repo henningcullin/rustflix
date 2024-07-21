@@ -3,6 +3,7 @@
 
 mod database;
 mod directories;
+mod error;
 mod films;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
