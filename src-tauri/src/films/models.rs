@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rusqlite::Row;
 use serde::Serialize;
 
@@ -26,9 +24,4 @@ impl Film {
             cover_image: row.get(6)?,
         })
     }
-}
-
-#[derive(Serialize)]
-pub struct VideoFiles {
-    pub files_by_directory: HashMap<u32, Vec<String>>,
 }

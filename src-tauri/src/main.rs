@@ -7,7 +7,7 @@ mod error;
 mod films;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
-use films::get_all_films;
+use films::{get_all_files, get_all_films};
 
 fn main() {
     tauri::Builder::default()
@@ -19,6 +19,7 @@ fn main() {
             get_all_directories,
             // FILMS
             get_all_films,
+            get_all_files,
         ])
         .setup(|_app| {
             match database::initialize_database() {
@@ -26,10 +27,6 @@ fn main() {
                 Err(err) => {
                     eprintln!("{:?}", err);
                 }
-            };
-            match films::actions::check_for_new_films() {
-                Ok(_) => {}
-                Err(_) => {}
             };
             Ok(())
         })

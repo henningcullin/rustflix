@@ -6,7 +6,7 @@ use crate::{
     error::Error,
 };
 
-use super::{models::VideoFiles, Film};
+use super::Film;
 
 pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     let conn = create_connection()?;
@@ -20,7 +20,7 @@ pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     Ok(films)
 }
 
-pub fn check_for_new_films() -> Result<VideoFiles, Error> {
+pub fn get_all_files() -> Result<HashMap<u32, Vec<String>>, Error> {
     // Video file extensions to look for
     let video_extensions = vec!["mp4", "mkv", "avi", "mov"];
 
@@ -55,10 +55,5 @@ pub fn check_for_new_films() -> Result<VideoFiles, Error> {
         }
     }
 
-    // Serialize the HashMap to JSON
-    let video_files = VideoFiles {
-        files_by_directory: video_files_by_directory,
-    };
-
-    Ok(video_files)
+    Ok(video_files_by_directory)
 }
