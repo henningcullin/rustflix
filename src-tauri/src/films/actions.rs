@@ -1,6 +1,11 @@
-use std::fs;
+use std::{collections::HashMap, fs};
 
-use crate::database::create_connection;
+use serde::Serialize;
+
+use crate::{
+    database::create_connection,
+    directories::{actions::get_all_directories, Directory},
+};
 
 use super::Film;
 
@@ -16,22 +21,23 @@ pub fn get_all_films() -> Result<Vec<Film>, rusqlite::Error> {
     Ok(films)
 }
 
-pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
-    let conn = create_connection()?;
+#[derive(Serialize)]
+struct VideoFiles {
+    files_by_directory: HashMap<u32, Vec<String>>,
+}
 
+pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
     // Video file extensions to look for
     let video_extensions = vec!["mp4", "mkv", "avi", "mov"];
 
-    let mut stmt = conn.prepare("SELECT path FROM directories")?;
-    let directories: Vec<String> = stmt
-        .query_map([], |row| row.get(0))?
-        .collect::<Result<Vec<_>, _>>()?;
+    let directories: Vec<Directory> = get_all_directories()?;
 
-    // Vector to store all video files found
-    let mut all_video_files: Vec<String> = Vec::new();
+    let mut video_files_by_directory: HashMap<u32, Vec<String>> = HashMap::new();
 
     for dir in directories {
-        if let Ok(entries) = fs::read_dir(&dir) {
+        if let Ok(entries) = fs::read_dir(&dir.path) {
+            let mut video_files: Vec<String> = Vec::new();
+
             for entry in entries {
                 if let Ok(entry) = entry {
                     let path = entry.path();
@@ -40,7 +46,7 @@ pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
                             if let Some(ext) = extension.to_str() {
                                 if video_extensions.contains(&ext) {
                                     if let Some(path_str) = path.to_str() {
-                                        all_video_files.push(path_str.to_string());
+                                        video_files.push(path_str.to_string());
                                     }
                                 }
                             }
@@ -48,24 +54,23 @@ pub fn check_for_new_films() -> Result<(), rusqlite::Error> {
                     }
                 }
             }
+
+            video_files_by_directory.insert(dir.id.clone(), video_files);
         } else {
-            println!("Could not read directory: {dir:?}");
+            println!("Could not read directory: {:?}", dir);
         }
     }
 
-    println!("Video files");
+    // Serialize the HashMap to JSON
+    let video_files = VideoFiles {
+        files_by_directory: video_files_by_directory,
+    };
 
-    // Print all found video files
-    for video in all_video_files {
-        println!("{}", video);
-    }
+    let json = serde_json::to_string(&video_files).map_err(|e| e.to_string());
 
-    let old_videos = get_all_films()?;
-
-    println!("Saved Videos");
-
-    for video in old_videos {
-        println!("{video:?}");
+    match json {
+        Ok(msg) => println!("{msg}"),
+        Err(msg) => println!("{msg}"),
     }
 
     Ok(())
