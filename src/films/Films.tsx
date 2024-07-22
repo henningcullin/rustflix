@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
+import { Button } from '@/components/ui/button';
 interface Entry {
   directory: string;
   path: string;
@@ -77,18 +78,24 @@ function Films() {
           <TableHead>Directory</TableHead>
           <TableHead>Path</TableHead>
           <TableHead>Is Registered</TableHead>
+          <TableHead>Register</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {entries.map((entry) => (
-          <TableRow>
-            <TableCell>{entry.directory}</TableCell>
-            <TableCell>{entry.path}</TableCell>
-            <TableCell>
-              <CheckBox state={entry?.film?.id} />
-            </TableCell>
-          </TableRow>
-        ))}
+        {entries
+          .sort((a, b) => (a.film == null ? -1 : b.film == null ? 1 : 0))
+          .map((entry) => (
+            <TableRow>
+              <TableCell>{entry.directory}</TableCell>
+              <TableCell>{entry.path}</TableCell>
+              <TableCell>
+                <CheckBox state={entry?.film?.id} />
+              </TableCell>
+              <TableCell>
+                <Button>Register</Button>
+              </TableCell>
+            </TableRow>
+          ))}
       </TableBody>
     </Table>
   );
@@ -98,9 +105,9 @@ function CheckBox({ state }: { state: number | undefined | null }) {
   return (
     <>
       {state !== null && state !== undefined ? (
-        <CheckIcon className='text-green-700 ' />
+        <CheckIcon className='text-green-700 w-6 h-6' />
       ) : (
-        <Cross2Icon className='text-red-700 ' />
+        <Cross2Icon className='text-red-700 w-6 h-6' />
       )}
     </>
   );

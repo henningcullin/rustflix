@@ -1,19 +1,19 @@
-import { Film } from "@/films/Films";
-import { filmAtom } from "@/lib/atoms";
-import { invoke } from "@tauri-apps/api/tauri";
-import { useAtom } from "jotai";
-import { useEffect } from "react";
+import { Film } from '@/films/Films';
+import { filmAtom } from '@/lib/atoms';
+import { invoke } from '@tauri-apps/api/tauri';
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
 
 function Home() {
   const [films, setFilms] = useAtom(filmAtom);
 
   async function getFilms() {
     try {
-      const data: Film[] | null = await invoke("get_all_films");
+      const data: Film[] | null = await invoke('get_all_films');
       if (data) setFilms(data);
       console.log(films);
     } catch (error) {
-      console.error("Failed to fetch films:", error);
+      console.error('Failed to fetch films:', error);
     }
   }
 

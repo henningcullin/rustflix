@@ -1,26 +1,26 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from 'react-router-dom';
 
-import Films from "./films/Films";
+import Films from './films/Films';
 
-import Layout from "./Layout";
-import Directories from "./directories/Directories";
-import Home from "./home/Home";
+import Layout from './Layout';
+import Directories from './directories/Directories';
+import Home from './home/Home';
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <Layout />,
     children: [
       {
-        path: "/",
+        path: '/',
         element: <Home />,
       },
       {
-        path: "/films",
+        path: '/films',
         element: <Films />,
       },
       {
-        path: "/directories",
+        path: '/directories',
         element: <Directories />,
       },
     ],
