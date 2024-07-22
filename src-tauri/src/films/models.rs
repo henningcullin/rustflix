@@ -5,11 +5,14 @@ use serde::Serialize;
 pub struct Film {
     pub id: u32,
     pub file: String,
+    pub directory: u32,
     pub link: Option<String>,
     pub title: Option<String>,
+    pub synopsis: Option<String>,
     pub release_year: Option<u32>,
     pub duration: Option<u32>,
     pub cover_image: Option<String>,
+    pub registered: bool,
 }
 
 impl Film {
@@ -17,11 +20,14 @@ impl Film {
         Ok(Film {
             id: row.get(0)?,
             file: row.get(1)?,
-            link: row.get(2)?,
-            title: row.get(3)?,
-            release_year: row.get(4)?,
-            duration: row.get(5)?,
-            cover_image: row.get(6)?,
+            directory: row.get(2)?,
+            link: row.get(3)?,
+            title: row.get(4)?,
+            synopsis: row.get(5)?,
+            release_year: row.get(6)?,
+            duration: row.get(7)?,
+            cover_image: row.get(8)?,
+            registered: row.get(9)?,
         })
     }
 }
