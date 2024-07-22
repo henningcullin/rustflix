@@ -1,10 +1,6 @@
 use std::{collections::HashMap, fs};
 
-use crate::{
-    database::create_connection,
-    directories::{actions::get_all_directories, Directory},
-    error::Error,
-};
+use crate::{database::create_connection, directories::actions::get_all_directories, error::Error};
 
 use super::Film;
 
@@ -24,7 +20,7 @@ pub fn get_all_files() -> Result<HashMap<u32, Vec<String>>, Error> {
     // Video file extensions to look for
     let video_extensions = vec!["mp4", "mkv", "avi", "mov"];
 
-    let directories: Vec<Directory> = get_all_directories()?;
+    let directories = get_all_directories()?;
 
     let mut video_files_by_directory: HashMap<u32, Vec<String>> = HashMap::new();
 
@@ -50,8 +46,6 @@ pub fn get_all_files() -> Result<HashMap<u32, Vec<String>>, Error> {
             }
 
             video_files_by_directory.insert(dir.id.clone(), video_files);
-        } else {
-            println!("Could not read directory: {:?}", dir);
         }
     }
 
