@@ -22,25 +22,32 @@ pub fn create_connection() -> Result<Connection, rusqlite::Error> {
 pub fn initialize_database() -> Result<(), rusqlite::Error> {
     let conn = create_connection()?;
 
-    // create films table
+    // Enable foreign key support
+    conn.execute("PRAGMA foreign_keys = ON", [])?;
+
+    // Create directories table
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS films (
-            id    INTEGER PRIMARY KEY,
-            file  TEXT NOT NULL,
-            link  TEXT,
-            title TEXT,
-            release_year INTEGER,
-            duration INTEGER,
-            cover_image TEXT
-            )",
+        "CREATE TABLE IF NOT EXISTS directories (
+            id   INTEGER PRIMARY KEY,
+            path TEXT NOT NULL
+        )",
         [],
     )?;
 
-    // create directories table
+    // Create films table with a foreign key to directories table
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS directories (
-        id   INTEGER PRIMARY KEY,
-        path TEXT NOT NULL
+        "CREATE TABLE IF NOT EXISTS films (
+            id          INTEGER PRIMARY KEY,
+            file        TEXT NOT NULL,
+            directory   INTEGER NOT NULL,
+            link        TEXT,
+            title       TEXT,
+            synopsis    TEXT,
+            release_year INTEGER,
+            duration    INTEGER,
+            cover_image TEXT,
+            registered  INTEGER DEFAULT 0,
+            FOREIGN KEY (directory) REFERENCES directories(id) ON DELETE CASCADE
         )",
         [],
     )?;
