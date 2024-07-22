@@ -74,7 +74,6 @@ pub fn sync_films_with_files() -> Result<(), Error> {
         let files = get_files(&directory)?;
 
         for file in files {
-            println!("{file}");
             let mut stmt = conn.prepare("SELECT id FROM films WHERE file = ?1")?;
 
             // Check if the file exists
@@ -83,7 +82,6 @@ pub fn sync_films_with_files() -> Result<(), Error> {
                 .optional()?;
 
             if film_exists.is_none() {
-                eprintln!("File did not exist!");
                 // If the film does not exist, insert a new row
                 conn.execute(
                     "INSERT INTO films (file, directory, link, title, release_year, duration, cover_image, synopsis, registered) VALUES (?1, ?2, NULL, NULL, NULL, NULL, NULL, NULL, 0)",
