@@ -46,7 +46,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             release_year INTEGER,
             duration    INTEGER,
             cover_image TEXT,
-            registered  INTEGER DEFAULT 0,
+            registered  INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (directory) REFERENCES directories(id) ON DELETE CASCADE
         )",
         [],
