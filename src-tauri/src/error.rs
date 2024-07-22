@@ -1,6 +1,7 @@
 use rusqlite::Error as rusqliteError;
 use serde_json::Error as serdeError;
 
+#[derive(Debug)]
 pub enum Error {
     DatabaseError(rusqliteError),
     JsonError(serdeError),
