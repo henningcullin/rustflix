@@ -24,17 +24,15 @@ function Home() {
   return (
     <>
       <div>
-        {films?.length ? (
-          films.map((film) => (
+        {films
+          .filter((film) => film.registered)
+          .map((film) => (
             <div key={film.id}>
               <h2>{film.title}</h2>
               <p>File: {film.file}</p>
               <p>Link: {film.link}</p>
             </div>
-          ))
-        ) : (
-          <b>No films found</b>
-        )}
+          ))}
       </div>
     </>
   );
