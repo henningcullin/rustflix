@@ -14,7 +14,7 @@ pub fn get_all_films() -> Result<Vec<Film>, Error> {
     let conn = create_connection()?;
 
     let mut stmt = conn
-        .prepare("SELECT id, file, link, title, release_year, duration, cover_image FROM films")?;
+        .prepare("SELECT id, file, directory, link, title, release_year, duration, cover_image, synopsis, registered FROM films")?;
     let films: Vec<Film> = stmt
         .query_map([], |row| Film::from_row(row))?
         .collect::<Result<Vec<_>, _>>()?;
@@ -25,13 +25,13 @@ pub fn get_all_films() -> Result<Vec<Film>, Error> {
 pub fn get_film(id: u32) -> Result<Film, Error> {
     let conn = create_connection()?;
 
-    let mut stmt = conn.prepare("SELECT id, file, link, title, release_year, duration, cover_image, synopsis, registered FROM films WHERE id = ?1")?;
+    let mut stmt = conn.prepare("SELECT id, file, directory, link, title, release_year, duration, cover_image, synopsis, registered FROM films WHERE id = ?1")?;
     let film = stmt.query_row([id], |row| Ok(Film::from_row(row)?))?;
 
     Ok(film)
 }
 
-pub fn get_files(directory: Directory) -> Result<Vec<String>, Error> {
+pub fn get_files(directory: &Directory) -> Result<Vec<String>, Error> {
     // Video file extensions to look for
     let video_extensions = vec!["mp4", "mkv", "avi", "mov"];
 
@@ -71,9 +71,10 @@ pub fn sync_films_with_files() -> Result<(), Error> {
     let directories = get_all_directories()?;
 
     for directory in directories {
-        let files = get_files(directory)?;
+        let files = get_files(&directory)?;
 
         for file in files {
+            println!("{file}");
             let mut stmt = conn.prepare("SELECT id FROM films WHERE file = ?1")?;
 
             // Check if the file exists
@@ -82,10 +83,11 @@ pub fn sync_films_with_files() -> Result<(), Error> {
                 .optional()?;
 
             if film_exists.is_none() {
+                eprintln!("File did not exist!");
                 // If the film does not exist, insert a new row
                 conn.execute(
-                    "INSERT INTO films (file, link, title, release_year, duration, cover_image, synopsis, registered) VALUES (?1, NULL, NULL, NULL, NULL, NULL, NULL, 0)",
-                    params![file],
+                    "INSERT INTO films (file, directory, link, title, release_year, duration, cover_image, synopsis, registered) VALUES (?1, ?2, NULL, NULL, NULL, NULL, NULL, NULL, 0)",
+                    params![file, &directory.id],
                 )?;
             }
         }

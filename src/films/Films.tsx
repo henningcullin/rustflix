@@ -31,6 +31,7 @@ function Films() {
   async function getFilms() {
     try {
       const data: Film[] | null = await invoke('get_all_films');
+      console.log(data);
       if (data) setFilms(data);
     } catch (error) {
       console.error('Failed to fetch films:', error);
