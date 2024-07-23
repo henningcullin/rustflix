@@ -12,6 +12,7 @@ import { CheckIcon, Cross2Icon, Pencil2Icon } from '@radix-ui/react-icons';
 
 import { useAtom } from 'jotai';
 import { filmAtom } from '@/lib/atoms';
+import { Link } from 'react-router-dom';
 export interface Film {
   id: number;
   file: string;
@@ -19,7 +20,7 @@ export interface Film {
   link?: string;
   title?: string;
   synopsis?: string;
-  release_year?: number;
+  release_date?: Date;
   duration?: number;
   cover_image?: string;
   registered: boolean;
@@ -60,8 +61,10 @@ function Films() {
             <TableCell>
               <CheckBox state={film.registered} />
             </TableCell>
-            <TableCell onClick={() => {}}>
-              <Pencil2Icon /> Edit
+            <TableCell>
+              <Link to={`/film/edit/${film.id}`}>
+                <Pencil2Icon /> Edit
+              </Link>
             </TableCell>
           </TableRow>
         ))}

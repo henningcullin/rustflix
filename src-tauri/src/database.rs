@@ -43,7 +43,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             link        TEXT,
             title       TEXT,
             synopsis    TEXT,
-            release_year INTEGER,
+            release_date TEXT,
             duration    INTEGER,
             cover_image TEXT,
             registered  INTEGER NOT NULL DEFAULT 0,

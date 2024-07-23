@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use rusqlite::Row;
 use serde::Serialize;
 
@@ -9,7 +10,7 @@ pub struct Film {
     pub link: Option<String>,
     pub title: Option<String>,
     pub synopsis: Option<String>,
-    pub release_year: Option<u32>,
+    pub release_date: Option<NaiveDate>,
     pub duration: Option<u32>,
     pub cover_image: Option<String>,
     pub registered: bool,
@@ -24,7 +25,7 @@ impl Film {
             link: row.get(3)?,
             title: row.get(4)?,
             synopsis: row.get(5)?,
-            release_year: row.get(6)?,
+            release_date: row.get(6)?,
             duration: row.get(7)?,
             cover_image: row.get(8)?,
             registered: row.get(9)?,
