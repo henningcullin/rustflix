@@ -9,3 +9,11 @@ pub fn get_all_films() -> Option<Vec<Film>> {
         Err(_) => None,
     }
 }
+
+#[command]
+pub fn get_film(id: u32) -> Option<Film> {
+    match super::actions::get_film(id) {
+        Ok(film) => Some(film),
+        Err(_) => None,
+    }
+}
