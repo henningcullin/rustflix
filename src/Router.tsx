@@ -24,7 +24,7 @@ const router = createMemoryRouter([
         path: '/film',
         children: [
           {
-            path: '/edit/:filmId',
+            path: 'edit/:filmId',
             element: <EditFilm />,
           },
         ],
