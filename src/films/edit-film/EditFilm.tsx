@@ -3,6 +3,7 @@ import { Film } from '../Films';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useParams } from 'react-router-dom';
 
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -14,17 +15,25 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { CalendarIcon, OpenInNewWindowIcon } from '@radix-ui/react-icons';
+import { Calendar } from '@/components/ui/calendar';
 
 const formSchema = z.object({
   link: z.string(),
   title: z.string(),
   synopsis: z.string(),
-  release_year: z.number(),
+  release_date: z.date(),
   duration: z.number(),
   cover_image: z.string(),
 });
@@ -72,6 +81,23 @@ function EditFilm() {
         >
           <FormField
             control={form.control}
+            name='link'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Link</FormLabel>
+                <FormControl>
+                  <Input placeholder='Enter the link' {...field} />
+                  <Button>
+                    <OpenInNewWindowIcon />
+                  </Button>
+                </FormControl>
+                <FormDescription>Link to imdb source</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          ></FormField>
+          <FormField
+            control={form.control}
             name='title'
             render={({ field }) => (
               <FormItem>
@@ -102,15 +128,44 @@ function EditFilm() {
           />
           <FormField
             control={form.control}
-            name='release_year'
+            name='release_date'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Release Date</FormLabel>
-                <FormControl>
-                  <Textarea placeholder='Enter the synopsis' {...field} />
-                </FormControl>
+                <br />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'w-[240px] pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className='w-auto p-0' align='start'>
+                    <Calendar
+                      mode='single'
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date: Date) =>
+                        date > new Date() || date < new Date('1900-01-01')
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 <FormDescription>
-                  Synopsis of the motion picture
+                  Release date of the motion picture
                 </FormDescription>
                 <FormMessage />
               </FormItem>
