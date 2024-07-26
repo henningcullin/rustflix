@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   Dialog,
@@ -10,10 +10,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Link1Icon, OpenInNewWindowIcon } from '@radix-ui/react-icons';
+import { Link1Icon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Input } from '@/components/ui/input';
-import { FormSubmitHandler } from 'react-hook-form';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 interface Arguments {
   onSelect: (url: string | undefined) => void;
@@ -63,19 +64,32 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
   const [open, setOpen] = useState<boolean>(false);
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
-  const filmName = getFilmName(filePath);
+  const initialSearchTerm = getFilmName(filePath);
 
-  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    search(initialSearchTerm);
+  }, [initialSearchTerm]);
+
+  async function handleSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const searchValue = formData.get('searchValue');
     if (typeof searchValue !== 'string') return;
+    search(searchValue);
+  }
+
+  async function search(searchValue: string) {
+    if (!searchValue?.length) return;
     const items = await searchFilms(searchValue);
+
     if (typeof items === 'boolean') return;
     setSearchItems(items);
-  };
+  }
 
-  const handleSelect = () => {};
+  function handleSelect(id: string) {
+    onSelect(id);
+    setOpen(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -89,11 +103,18 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
         <DialogHeader>
           <DialogTitle>Select film</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSearch}>
-          <Input name='searchValue' defaultValue={filmName} />
-          <Button>Search</Button>
+        <form onSubmit={handleSearch} className='flex'>
+          <Input
+            name='searchValue'
+            placeholder='Enter a film title'
+            defaultValue={initialSearchTerm}
+          />
+          <Button variant='secondary'>
+            Search
+            <MagnifyingGlassIcon />
+          </Button>
         </form>
-        <FilmList films={searchItems}></FilmList>
+        <FilmList films={searchItems} handleSelect={handleSelect}></FilmList>
         <DialogFooter>
           <DialogClose asChild>
             <Button type='button' variant='secondary'>
@@ -106,13 +127,45 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
   );
 }
 
-function FilmList({ films }: { films: SearchItem[] }) {
+function FilmList({
+  films,
+  handleSelect,
+}: {
+  films: SearchItem[];
+  handleSelect: (id: string) => void;
+}) {
   return (
-    <ul>
-      {films.map((film) => (
-        <li>{film.id}</li>
-      ))}
-    </ul>
+    <ScrollArea className='max-h-96'>
+      <ul>
+        {films.map((film) => (
+          <>
+            <li className='flex  min-h-76'>
+              <div className='flex-1'>
+                {film?.i?.imageUrl ? (
+                  <img src={film.i.imageUrl} className='w-48' />
+                ) : (
+                  <div className='w-48 h-28'></div>
+                )}
+              </div>
+
+              <div className='flex-1 h-full items-center '>
+                <h4>
+                  {film?.l} ({film?.y})
+                </h4>
+                <br />
+                <Button
+                  className='bg-green-600'
+                  onClick={() => handleSelect(film.id)}
+                >
+                  Select
+                </Button>
+              </div>
+            </li>
+            <Separator className='mt-4 mb-4' />
+          </>
+        ))}
+      </ul>
+    </ScrollArea>
   );
 }
 
