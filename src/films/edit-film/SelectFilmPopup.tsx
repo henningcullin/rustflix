@@ -20,16 +20,32 @@ interface Arguments {
   filePath: string | undefined;
 }
 
-async function searchFilms(searchValue: string): Promise<string> {
+interface SearchItem {
+  i: { height: number; imageUrl: string; width: number };
+  id: string;
+  l: string;
+  q: string;
+  qid: string;
+  rank: number;
+  s: string;
+  y: number;
+}
+
+async function searchFilms(
+  searchValue: string
+): Promise<SearchItem[] | boolean> {
   try {
     const url = `https://v3.sg.media-imdb.com/suggestion/x/${searchValue}.json?includeVideos=0`;
     const response: string = await invoke('fetch_data', { url });
-    const parsed = JSON.parse(response);
-    console.log(parsed);
-    return '';
+    const parsed: {
+      d: SearchItem[];
+    } = JSON.parse(response);
+    const items = parsed.d;
+    const filmItems = items.filter((item) => item.id.includes('tt'));
+    return filmItems;
   } catch (error) {
     console.error('Error searching for films', error);
-    return '';
+    return false;
   }
 }
 
@@ -45,15 +61,18 @@ function getFilmName(filePath: string | undefined): string {
 
 function SelectFilmPopup({ onSelect, filePath }: Arguments) {
   const [open, setOpen] = useState<boolean>(false);
-  const [searchItems, setSearchItems] = useState([]);
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
   const filmName = getFilmName(filePath);
 
-  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const searchValue = formData.get('searchValue');
-    if (typeof searchValue === 'string') searchFilms(searchValue);
+    if (typeof searchValue !== 'string') return;
+    const items = await searchFilms(searchValue);
+    if (typeof items === 'boolean') return;
+    setSearchItems(items);
   };
 
   const handleSelect = () => {};
@@ -74,6 +93,7 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
           <Input name='searchValue' defaultValue={filmName} />
           <Button>Search</Button>
         </form>
+        <FilmList films={searchItems}></FilmList>
         <DialogFooter>
           <DialogClose asChild>
             <Button type='button' variant='secondary'>
@@ -86,11 +106,11 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
   );
 }
 
-function FilmList(films: string[]) {
+function FilmList({ films }: { films: SearchItem[] }) {
   return (
     <ul>
       {films.map((film) => (
-        <li>{film}</li>
+        <li>{film.id}</li>
       ))}
     </ul>
   );
