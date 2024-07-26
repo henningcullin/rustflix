@@ -9,6 +9,18 @@ mod films;
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film};
 
+#[tauri::command]
+async fn fetch_data(url: String) -> Result<String, String> {
+    let response = reqwest::get(url).await;
+    match response {
+        Ok(res) => {
+            let body = res.text().await.unwrap_or_default();
+            Ok(body)
+        }
+        Err(err) => Err(err.to_string()),
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -20,6 +32,8 @@ fn main() {
             // FILMS
             get_all_films,
             get_film,
+            // MISC
+            fetch_data
         ])
         .setup(|_app| {
             match database::initialize_database() {
