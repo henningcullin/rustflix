@@ -28,6 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, OpenInNewWindowIcon } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
+import SelectFilmPopup from './SelectFilmPopup';
 
 const formSchema = z.object({
   link: z.string(),
@@ -39,15 +40,6 @@ const formSchema = z.object({
 });
 
 type FormSchema = z.infer<typeof formSchema>;
-
-async function getFilm(id: number) {
-  try {
-    const data = await invoke('get_film', { id });
-    console.log(data);
-  } catch (error) {
-    console.error('Could not get film', error);
-  }
-}
 
 function EditFilm() {
   const [film, setFilm] = useState<Film>();
@@ -65,6 +57,15 @@ function EditFilm() {
     console.log(values);
   }
 
+  async function getFilm(id: number) {
+    try {
+      const data: Film | undefined = await invoke('get_film', { id });
+      if (data) setFilm(data);
+    } catch (error) {
+      console.error('Could not get film', error);
+    }
+  }
+
   useEffect(() => {
     if (typeof filmId !== 'string') return;
     const id = parseInt(filmId);
@@ -74,6 +75,10 @@ function EditFilm() {
 
   return (
     <div>
+      <SelectFilmPopup
+        onSelect={(value) => console.log(value)}
+        filePath={film?.file}
+      />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -87,9 +92,6 @@ function EditFilm() {
                 <FormLabel>Link</FormLabel>
                 <FormControl>
                   <Input placeholder='Enter the link' {...field} />
-                  <Button>
-                    <OpenInNewWindowIcon />
-                  </Button>
                 </FormControl>
                 <FormDescription>Link to imdb source</FormDescription>
                 <FormMessage />

@@ -71,7 +71,7 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
           <DialogTitle>Select film</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSearch}>
-          <Input name='searchValue' value={filmName} />
+          <Input name='searchValue' defaultValue={filmName} />
           <Button>Search</Button>
         </form>
         <DialogFooter>
