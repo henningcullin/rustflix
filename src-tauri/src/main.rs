@@ -5,6 +5,7 @@ mod database;
 mod directories;
 mod error;
 mod films;
+mod scrapers;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film};
