@@ -67,7 +67,7 @@ async fn scrape_movie(id: &str) -> Result<Film, Box<dyn std::error::Error>> {
     Ok(info)
 }
 
-async fn get_page(url: &str) -> Result<String, Error> {
+async fn get_page(url: &str) -> Result<String, Box<dyn std::error::Error>> {
     let response = reqwest::get(url).await?;
     let html = response.text().await?;
     Ok(html)
@@ -144,15 +144,7 @@ fn stars(parsed_html: &Html) -> Vec<Star> {
             let character = element
                 .select(&character_selector)
                 .next()
-                .map(|e| {
-                    unescape(
-                        e.first_child()
-                            .unwrap()
-                            .value()
-                            .as_text()
-                            .unwrap_or_default(),
-                    )
-                })
+                .map(|e| unescape(e.first_child().unwrap().value().as_text().unwrap()))
                 .unwrap_or_default();
 
             let actor_element = element.select(&actor_selector).next().unwrap();
