@@ -29,7 +29,7 @@ struct Star {
     avatar: Option<String>,
 }
 
-async fn scrape_movie(id: &str) -> Result<Film, Box<dyn std::error::Error>> {
+pub async fn scrape_movie(id: &str) -> Result<Film, Box<dyn std::error::Error>> {
     let url = format!("https://www.imdb.com/title/{}/", id);
     let raw_html = get_page(&url).await?;
     let parsed_html = Html::parse_document(&raw_html);
@@ -43,22 +43,16 @@ async fn scrape_movie(id: &str) -> Result<Film, Box<dyn std::error::Error>> {
             .iter()
             .map(|g| unescape(g.as_str().unwrap_or_default()))
             .collect(),
-        release_date: data_object["datePublished"]
-            .as_str()
-            .unwrap_or_default()
-            .to_string(),
+        release_date: data_object["datePublished"].to_string(),
         plot: unescape(data_object["description"].as_str().unwrap_or_default()),
         run_time: data_object["duration"]
             .as_str()
             .unwrap_or_default()
             .to_string(),
-        color: color(&parsed_html),
+        color: color(&parsed_html).unwrap_or_default(),
         directors: directors(&data_object),
         stars: stars(&parsed_html),
-        cover: data_object["image"]
-            .as_str()
-            .unwrap_or_default()
-            .to_string(),
+        cover: data_object["image"].to_string(),
         rating: data_object["aggregateRating"]["ratingValue"]
             .as_f64()
             .unwrap_or_default(),
@@ -88,18 +82,18 @@ fn unescape(string: &str) -> String {
     html_escape::decode_html_entities(string).to_string()
 }
 
-fn color(parsed_html: &Html) -> String {
-    let selector = Selector::parse(r#"[data-testid="title-techspec_color"]"#).unwrap();
+fn color(parsed_html: &Html) -> Result<String, Box<dyn std::error::Error>> {
+    let selector = Selector::parse(r#"[data-testid="title-techspec_color"]"#)?;
     let color_element = parsed_html.select(&selector).next();
     match color_element {
         Some(element) => element
             .last_child()
-            .unwrap()
+            .unwrap(),
             .value()
             .as_text()
             .unwrap()
             .to_string(),
-        None => String::new(),
+        None => Err("No text"),
     }
 }
 
