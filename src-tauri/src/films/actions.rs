@@ -5,12 +5,12 @@ use rusqlite::{params, Connection, OptionalExtension};
 use crate::{
     database::create_connection,
     directories::{actions::get_all_directories, Directory},
-    error::Error,
+    error::AppError,
 };
 
 use super::Film;
 
-pub fn get_all_films() -> Result<Vec<Film>, Error> {
+pub fn get_all_films() -> Result<Vec<Film>, AppError> {
     let conn = create_connection()?;
 
     let mut stmt = conn
@@ -22,7 +22,7 @@ pub fn get_all_films() -> Result<Vec<Film>, Error> {
     Ok(films)
 }
 
-pub fn get_film(id: u32) -> Result<Film, Error> {
+pub fn get_film(id: u32) -> Result<Film, AppError> {
     let conn = create_connection()?;
 
     let mut stmt = conn.prepare("SELECT id, file, directory, link, title, release_year, duration, cover_image, synopsis, registered FROM films WHERE id = ?1")?;
@@ -31,7 +31,7 @@ pub fn get_film(id: u32) -> Result<Film, Error> {
     Ok(film)
 }
 
-pub fn get_files(directory: &Directory) -> Result<Vec<String>, Error> {
+pub fn get_files(directory: &Directory) -> Result<Vec<String>, AppError> {
     // Video file extensions to look for
     let video_extensions = vec!["mp4", "mkv", "avi", "mov"];
 
@@ -59,13 +59,13 @@ pub fn get_files(directory: &Directory) -> Result<Vec<String>, Error> {
     Ok(video_files)
 }
 
-fn add_film(conn: &Connection, file: &String) -> Result<(), Error> {
+fn add_film(conn: &Connection, file: &String) -> Result<(), AppError> {
     conn.execute("INSERT INTO films (file) VALUES (?1)", params![file])?;
 
     Ok(())
 }
 
-pub fn sync_films_with_files() -> Result<(), Error> {
+pub fn sync_films_with_files() -> Result<(), AppError> {
     let conn = create_connection()?;
 
     let directories = get_all_directories()?;
