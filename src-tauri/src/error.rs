@@ -10,7 +10,7 @@ use std::fmt;
 pub enum AppError {
     DatabaseError(rusqlite::Error),
     JsonError(serdeError),
-    SelectorError(SelectorError),
+    SelectorError(SelectorError<'static>),
     ReqwestError(reqwestError),
     ScrapeError(String),
 }
@@ -27,8 +27,8 @@ impl From<serdeError> for AppError {
     }
 }
 
-impl From<SelectorError> for AppError {
-    fn from(value: SelectorError) -> Self {
+impl From<SelectorError<'static>> for AppError {
+    fn from(value: SelectorError<'static>) -> Self {
         Self::SelectorError(value)
     }
 }
@@ -42,10 +42,11 @@ impl From<reqwestError> for AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            AppError::DatabaseError(ref err) => write!(f, "Database error: {}", err),
-            AppError::JsonError(ref err) => write!(f, "JSON error: {}", err),
-            AppError::SelectorError(ref err) => write!(f, "Selector error: {}", err),
-            AppError::ScrapeError(ref err) => write!(f, "Scrape error: {}", err),
+            Self::DatabaseError(ref err) => write!(f, "Database error: {}", err),
+            Self::JsonError(ref err) => write!(f, "JSON error: {}", err),
+            Self::SelectorError(ref err) => write!(f, "Selector error: {}", err),
+            Self::ScrapeError(ref err) => write!(f, "Scrape error: {}", err),
+            Self::ReqwestError(ref err) => write!(f, "Reqwest error: {}", err),
         }
     }
 }
@@ -53,10 +54,11 @@ impl fmt::Display for AppError {
 impl std::error::Error for AppError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match *self {
-            AppError::DatabaseError(ref err) => Some(err),
-            AppError::JsonError(ref err) => Some(err),
-            AppError::SelectorError(ref err) => Some(err),
-            AppError::ScrapeError(_) => None,
+            Self::DatabaseError(ref err) => Some(err),
+            Self::JsonError(ref err) => Some(err),
+            Self::SelectorError(ref err) => Some(err),
+            Self::ScrapeError(_) => None,
+            Self::ReqwestError(ref err) => Some(err),
         }
     }
 }
