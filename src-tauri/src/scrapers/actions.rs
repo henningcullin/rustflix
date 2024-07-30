@@ -5,13 +5,13 @@ use crate::error::AppError;
 #[derive(Debug, Deserialize)]
 struct Film {
     title: Option<String>,
-    genres: Vec<String>,
+    genres: Option<Vec<String>>,
     release_date: Option<String>,
     plot: Option<String>,
     run_time: Option<String>,
     color: Option<String>,
-    directors: Vec<Director>,
-    stars: Vec<Star>,
+    directors: Option<Vec<Director>>,
+    stars: Option<Vec<Star>>,
     cover: Option<String>,
     rating: Option<f64>,
 }
@@ -56,8 +56,8 @@ pub async fn scrape_movie(id: &str) -> Result<Film, AppError> {
                 .to_string(),
         ),
         color: color(&parsed_html).ok(),
-        directors: directors(&data_object),
-        stars: stars(&parsed_html),
+        directors: directors(&data_object).ok(),
+        stars: stars(&parsed_html).ok(),
         cover: Some(data_object["image"].to_string()),
         rating: data_object["aggregateRating"]["ratingValue"]
             .as_f64()
@@ -90,8 +90,7 @@ fn unescape(string: &str) -> String {
 }
 
 fn color(parsed_html: &Html) -> Result<String, AppError> {
-    let selector = Selector::parse(r#"[data-testid="title-techspec_color"]"#)
-        .map_err(|e| AppError::ScrapeError(e.to_string()))?;
+    let selector = Selector::parse(r#"[data-testid="title-techspec_color"]"#)?;
     let color_element = parsed_html.select(&selector).next();
 
     match color_element {
@@ -109,37 +108,45 @@ fn color(parsed_html: &Html) -> Result<String, AppError> {
     }
 }
 
-fn directors(data_object: &serde_json::Value) -> Vec<Director> {
-    data_object["director"]
-        .as_array()
-        .unwrap_or(&vec![])
-        .iter()
-        .map(|d| Director {
-            imdb_id: d["url"]
-                .as_str()
-                .unwrap_or_default()
-                .split("/")
-                .nth(4)
-                .unwrap_or_default()
-                .to_string(),
-            real_name: unescape(d["name"].as_str().unwrap_or_default()),
-        })
-        .collect()
+fn directors(data_object: &serde_json::Value) -> Result<Vec<Director>, AppError> {
+    match data_object["director"].as_array() {
+        Some(array) => array
+            .iter()
+            .map(|d| {
+                let imdb_id = match d["url"].as_str().unwrap_or_default().split("/").nth(4) {
+                    Some(id) => id.to_string(),
+                    None => return Err(AppError::ScrapeError("No Imdb-id found".to_string())),
+                };
+                let real_name = match d["name"].as_str() {
+                    Some(name) => unescape(name),
+                    None => return Err(AppError::ScrapeError("Real name not found".to_string())),
+                };
+                Ok(Director { imdb_id, real_name })
+            })
+            .collect(),
+        None => Err(AppError::ScrapeError("No director array found".to_string())),
+    }
 }
 
-fn stars(parsed_html: &Html) -> Vec<Star> {
-    let selector = Selector::parse(r#"[data-testid="title-cast-item"]"#).unwrap();
+fn stars(parsed_html: &Html) -> Result<Vec<Star>, AppError> {
+    // Attempt to parse the main selector
+    let selector =
+        Selector::parse(r#"[data-testid="title-cast-item"]"#).map_err(AppError::SelectorError)?;
+
+    // Select the star elements from the parsed HTML
     let star_elements = parsed_html.select(&selector);
 
-    star_elements
+    // Try to process each element and collect results
+    let stars = star_elements
         .map(|element| {
+            // Attempt to parse each nested selector
             let avatar_selector =
-                Selector::parse(r#"[data-testid="title-cast-item__avatar"] img"#).unwrap();
+                Selector::parse(r#"[data-testid="title-cast-item__avatar"] img"#)?;
             let character_selector =
-                Selector::parse(r#"[data-testid="cast-item-characters-link"]"#).unwrap();
-            let actor_selector =
-                Selector::parse(r#"[data-testid="title-cast-item__actor"]"#).unwrap();
+                Selector::parse(r#"[data-testid="cast-item-characters-link"]"#)?;
+            let actor_selector = Selector::parse(r#"[data-testid="title-cast-item__actor"]"#)?;
 
+            // Process avatar, character, and actor details
             let avatar = element.select(&avatar_selector).next().and_then(|e| {
                 e.value()
                     .attr("srcset")
@@ -154,23 +161,28 @@ fn stars(parsed_html: &Html) -> Vec<Star> {
                 .map(|item| unescape(item))
                 .unwrap_or_default();
 
-            let actor_element = element.select(&actor_selector).next().unwrap();
-            let real_name = unescape(actor_element.inner_html().as_str());
+            let actor_element = element
+                .select(&actor_selector)
+                .next()
+                .ok_or(AppError::ScrapeError("Failed to find actor element".into()))?;
+            let real_name = unescape(&actor_element.inner_html());
             let imdb_id = actor_element
                 .value()
                 .attr("href")
-                .unwrap_or_default()
+                .ok_or(AppError::ScrapeError("Missing href attribute".into()))?
                 .split("/")
                 .nth(4)
                 .unwrap_or_default()
                 .to_string();
 
-            Star {
+            Ok(Star {
                 imdb_id,
                 real_name,
                 character,
                 avatar,
-            }
+            })
         })
-        .collect()
+        .collect::<Result<Vec<Star>, AppError>>()?;
+
+    Ok(stars)
 }
