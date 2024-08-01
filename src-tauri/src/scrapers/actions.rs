@@ -1,34 +1,8 @@
 use scraper::{Html, Selector};
-use serde::Deserialize;
 
 use crate::error::AppError;
-#[derive(Debug, Deserialize)]
-struct ScrapedFilm {
-    title: Option<String>,
-    genres: Vec<String>,
-    release_date: Option<String>,
-    plot: Option<String>,
-    run_time: Option<String>,
-    color: Option<String>,
-    directors: Vec<ScrapedDirector>,
-    stars: Vec<ScrapedStar>,
-    cover: Option<String>,
-    rating: Option<f64>,
-}
 
-#[derive(Debug, Deserialize)]
-struct ScrapedDirector {
-    imdb_id: String,
-    real_name: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct ScrapedStar {
-    imdb_id: String,
-    real_name: String,
-    character: String,
-    avatar: Option<String>,
-}
+use super::{ScrapedDirector, ScrapedFilm, ScrapedStar};
 
 pub async fn scrape_movie(id: &str) -> Result<ScrapedFilm, AppError> {
     let url = format!("https://www.imdb.com/title/{}/", id);
