@@ -1,6 +1,4 @@
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct ScrapedFilm {
     pub title: Option<String>,
     pub genres: Vec<String>,
@@ -14,13 +12,13 @@ pub struct ScrapedFilm {
     pub rating: Option<f64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct ScrapedDirector {
     pub imdb_id: String,
     pub real_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct ScrapedStar {
     pub imdb_id: String,
     pub real_name: String,
