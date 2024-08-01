@@ -54,16 +54,18 @@ fn get_data_object(parsed_html: &Html) -> Result<serde_json::Value, AppError> {
     let script_element = parsed_html
         .select(&selector)
         .next()
-        .ok_or(AppError::ScrapeError("No script element found".to_string()))?;
+        .ok_or_else(|| AppError::new())?;
     let script_text = script_element.inner_html();
     let data_object: serde_json::Value = serde_json::from_str(&script_text)?;
     Ok(data_object)
 }
 
 fn unescape_str(value: Option<&str>) -> Option<String> {
-    match value {
-        Some(string) => Some(html_escape::decode_html_entities(string).to_string()),
-        None => None,
+    let string = value?;
+
+    match string.len() {
+        0 => None,
+        _ => Some(html_escape::decode_html_entities(string).to_string()),
     }
 }
 
@@ -85,28 +87,25 @@ fn color(parsed_html: &Html) -> Result<String, AppError> {
                     return Ok(text.to_string());
                 }
             }
-            Err(AppError::ScrapeError("Color text not found".to_string()))
+            Err(AppError::new())
         }
-        None => Err(AppError::ScrapeError(
-            "Color information not found".to_string(),
-        )),
+        None => Err(AppError::new()),
     }
 }
 
 fn directors(data_object: &serde_json::Value) -> Result<Vec<ScrapedDirector>, AppError> {
     data_object["director"]
         .as_array()
-        .ok_or_else(|| AppError::ScrapeError("No director array found".to_string()))?
+        .ok_or_else(|| AppError::new())?
         .iter()
         .map(|d| {
             let imdb_id = d["url"]
                 .as_str()
                 .and_then(|url| url.split('/').nth(4))
                 .map(|id| id.to_string())
-                .ok_or_else(|| AppError::ScrapeError("No IMDb ID found".to_string()))?;
+                .ok_or_else(|| AppError::new())?;
 
-            let real_name = unescape_str(d["name"].as_str())
-                .ok_or_else(|| AppError::ScrapeError("No name found".to_string()))?;
+            let real_name = unescape_str(d["name"].as_str()).ok_or_else(|| AppError::new())?;
 
             Ok(ScrapedDirector { imdb_id, real_name })
         })
@@ -137,28 +136,27 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
                 element
                     .select(&character_selector)
                     .next()
-                    .ok_or_else(|| AppError::ScrapeError("Character element not found".into()))?
-                    .first_child()
+                    .and_then(|el| el.first_child())
                     .and_then(|n| n.value().as_text())
                     .map(|text| text.to_string())
-                    .ok_or_else(|| AppError::ScrapeError("No inner text".into()))?,
+                    .ok_or_else(|| AppError::new())?,
             )
-            .ok_or_else(|| AppError::ScrapeError("Empty string escaped".into()))?;
+            .ok_or_else(|| AppError::new())?;
 
             let actor_element = element
                 .select(&actor_selector)
                 .next()
-                .ok_or_else(|| AppError::ScrapeError("Failed to find actor element".into()))?;
+                .ok_or_else(|| AppError::new())?;
 
-            let real_name = unescape_string(actor_element.inner_html())
-                .ok_or_else(|| AppError::ScrapeError("Real name not found".into()))?;
+            let real_name =
+                unescape_string(actor_element.inner_html()).ok_or_else(|| AppError::new())?;
 
             let imdb_id = actor_element
                 .value()
                 .attr("href")
                 .and_then(|href| href.split('/').nth(4))
                 .map(|id| id.to_string())
-                .ok_or_else(|| AppError::ScrapeError("Missing IMDb ID".into()))?;
+                .ok_or_else(|| AppError::new())?;
 
             Ok(ScrapedStar {
                 imdb_id,
