@@ -4,7 +4,7 @@ use crate::error::AppError;
 
 use super::{ScrapedDirector, ScrapedFilm, ScrapedStar};
 
-pub async fn scrape_movie(id: &str) -> Result<ScrapedFilm, AppError> {
+pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
     let url = format!("https://www.imdb.com/title/{}/", id);
     let raw_html = get_page(&url).await?;
     let parsed_html = Html::parse_document(&raw_html);

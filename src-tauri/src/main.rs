@@ -9,6 +9,7 @@ mod scrapers;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film};
+use scrapers::scrape_film;
 
 #[tauri::command]
 async fn fetch_data(url: String) -> Result<String, String> {
@@ -34,7 +35,9 @@ fn main() {
             get_all_films,
             get_film,
             // MISC
-            fetch_data
+            fetch_data,
+            // SCRAPER
+            scrape_film
         ])
         .setup(|_app| {
             match database::initialize_database() {
