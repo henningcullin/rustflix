@@ -15,6 +15,12 @@ pub enum AppError {
     ScrapeError(String),
 }
 
+impl AppError {
+    pub fn new() -> Self {
+        Self::ScrapeError("Option was none".into())
+    }
+}
+
 impl From<rusqliteError> for AppError {
     fn from(value: rusqliteError) -> Self {
         Self::DatabaseError(value)
