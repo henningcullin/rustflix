@@ -12,17 +12,12 @@ pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
     let data_object = get_data_object(&parsed_html)?;
 
     let title = unescape_str(data_object["name"].as_str());
-    let genres = data_object["genre"].as_array().map_or(vec![], |array| {
-        array
-            .iter()
-            .filter_map(|g| unescape_str(g.as_str()))
-            .collect()
-    });
+    let genres = genre(data_object["genres"].as_array());
     let release_date = unescape_str(data_object["datePublished"].as_str());
     let plot = unescape_str(data_object["description"].as_str());
     let run_time = unescape_str(data_object["duration"].as_str());
     let color = color(&parsed_html).ok();
-    let directors = directors(&data_object)?;
+    let directors = directors(&data_object);
     let stars = stars(&parsed_html)?;
     let cover = unescape_str(data_object["image"].as_str());
     let rating = data_object["aggregateRating"]["ratingValue"].as_f64();
@@ -54,7 +49,7 @@ fn get_data_object(parsed_html: &Html) -> Result<serde_json::Value, AppError> {
     let script_element = parsed_html
         .select(&selector)
         .next()
-        .ok_or_else(|| AppError::new())?;
+        .ok_or_else(|| AppError::new("No script element"))?;
     let script_text = script_element.inner_html();
     let data_object: serde_json::Value = serde_json::from_str(&script_text)?;
     Ok(data_object)
@@ -76,6 +71,15 @@ fn unescape_string(value: String) -> Option<String> {
     }
 }
 
+fn genre(genre_field: Option<&Vec<serde_json::Value>>) -> Vec<String> {
+    genre_field.map_or(vec![], |array| {
+        array
+            .iter()
+            .filter_map(|g| unescape_str(g.as_str()))
+            .collect()
+    })
+}
+
 fn color(parsed_html: &Html) -> Result<String, AppError> {
     let selector = Selector::parse(r#"[data-testid="title-techspec_color"]"#)?;
     let color_element = parsed_html.select(&selector).next();
@@ -87,27 +91,46 @@ fn color(parsed_html: &Html) -> Result<String, AppError> {
                     return Ok(text.to_string());
                 }
             }
-            Err(AppError::new())
+            Err(AppError::new("No color element child"))
         }
-        None => Err(AppError::new()),
+        None => Err(AppError::new("No color element")),
     }
 }
 
-fn directors(data_object: &serde_json::Value) -> Result<Vec<ScrapedDirector>, AppError> {
-    data_object["director"]
-        .as_array()
-        .ok_or_else(|| AppError::new())?
+fn directors(data_object: &serde_json::Value) -> Vec<ScrapedDirector> {
+    // Attempt to get the array of directors
+    let director_array = match data_object["director"].as_array() {
+        Some(array) => array,
+        None => {
+            eprintln!("No director array found");
+            return vec![];
+        }
+    };
+
+    // Process the array elements if it exists
+    director_array
         .iter()
-        .map(|d| {
+        .filter_map(|d| {
             let imdb_id = d["url"]
                 .as_str()
                 .and_then(|url| url.split('/').nth(4))
-                .map(|id| id.to_string())
-                .ok_or_else(|| AppError::new())?;
+                .map(|id| id.to_string());
 
-            let real_name = unescape_str(d["name"].as_str()).ok_or_else(|| AppError::new())?;
+            let real_name = unescape_str(d["name"].as_str());
 
-            Ok(ScrapedDirector { imdb_id, real_name })
+            if imdb_id.is_none() {
+                eprintln!("Director missing imdb_id for element: {:?}", d);
+            }
+
+            if real_name.is_none() {
+                eprintln!("Director missing real_name for element: {:?}", d);
+            }
+
+            if let (Some(imdb_id), Some(real_name)) = (imdb_id, real_name) {
+                Some(ScrapedDirector { imdb_id, real_name })
+            } else {
+                None
+            }
         })
         .collect()
 }
@@ -117,13 +140,16 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
     let star_elements = parsed_html.select(&selector);
 
     let stars = star_elements
-        .map(|element| {
+        .filter_map(|element| {
+            // Parse selectors, skip element if parsing fails
             let avatar_selector =
-                Selector::parse(r#"[data-testid="title-cast-item__avatar"] img"#)?;
+                Selector::parse(r#"[data-testid="title-cast-item__avatar"] img"#).ok()?;
             let character_selector =
-                Selector::parse(r#"[data-testid="cast-item-characters-link"]"#)?;
-            let actor_selector = Selector::parse(r#"[data-testid="title-cast-item__actor"]"#)?;
+                Selector::parse(r#"[data-testid="cast-item-characters-link"] span"#).ok()?;
+            let actor_selector =
+                Selector::parse(r#"[data-testid="title-cast-item__actor"]"#).ok()?;
 
+            // Attempt to find avatar, can be None
             let avatar = element.select(&avatar_selector).next().and_then(|e| {
                 e.value()
                     .attr("srcset")
@@ -132,40 +158,34 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
                     .map(|avatar_source| avatar_source.to_string())
             });
 
-            let character = unescape_string(
-                element
-                    .select(&character_selector)
-                    .next()
-                    .and_then(|el| el.first_child())
-                    .and_then(|n| n.value().as_text())
-                    .map(|text| text.to_string())
-                    .ok_or_else(|| AppError::new())?,
-            )
-            .ok_or_else(|| AppError::new())?;
+            // Extract actor element, skip if missing
+            let actor_element = element.select(&actor_selector).next()?;
 
-            let actor_element = element
-                .select(&actor_selector)
+            // Extract real name, skip if unable to unescape
+            let real_name = unescape_string(actor_element.inner_html())?;
+
+            // Extract character, skip if missing or unescaping fails
+            let character = element
+                .select(&character_selector)
                 .next()
-                .ok_or_else(|| AppError::new())?;
+                .and_then(|el| unescape_string(el.inner_html()))?;
 
-            let real_name =
-                unescape_string(actor_element.inner_html()).ok_or_else(|| AppError::new())?;
-
+            // Extract IMDb ID, skip if not found
             let imdb_id = actor_element
                 .value()
                 .attr("href")
                 .and_then(|href| href.split('/').nth(4))
-                .map(|id| id.to_string())
-                .ok_or_else(|| AppError::new())?;
+                .map(|id| id.to_string())?;
 
-            Ok(ScrapedStar {
+            // Construct ScrapedStar object if all data is valid
+            Some(ScrapedStar {
                 imdb_id,
                 real_name,
                 character,
                 avatar,
             })
         })
-        .collect::<Result<Vec<ScrapedStar>, AppError>>()?;
+        .collect::<Vec<ScrapedStar>>();
 
     Ok(stars)
 }
