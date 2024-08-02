@@ -16,8 +16,8 @@ pub enum AppError {
 }
 
 impl AppError {
-    pub fn new() -> Self {
-        Self::ScrapeError("Option was none".into())
+    pub fn new(msg: &str) -> Self {
+        Self::ScrapeError(msg.into())
     }
 }
 
