@@ -22,6 +22,7 @@ pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
     let cover = unescape_str(data_object["image"].as_str());
     let rating = data_object["aggregateRating"]["ratingValue"].as_f64();
     let languages = languages(&parsed_html);
+    let keywords = keywords(data_object["keywords"].as_str());
 
     let info = ScrapedFilm {
         title,
@@ -35,6 +36,7 @@ pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
         cover,
         rating,
         languages,
+        keywords,
     };
 
     Ok(info)
@@ -115,6 +117,12 @@ fn languages(parsed_html: &Html) -> Vec<String> {
         .collect()
 }
 
+fn keywords(keyword_string: Option<&str>) -> Vec<String> {
+    match keyword_string {
+        Some(string) => string.split(", ").map(|str| str.to_string()).collect(),
+        None => return Vec::new(),
+    }
+}
 fn directors(data_object: &serde_json::Value) -> Vec<ScrapedDirector> {
     // Attempt to get the array of directors
     let director_array = match data_object["director"].as_array() {
