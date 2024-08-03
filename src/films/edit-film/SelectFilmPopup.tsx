@@ -10,11 +10,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Link1Icon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
+import {
+  Link1Icon,
+  MagnifyingGlassIcon,
+  OpenInNewWindowIcon,
+} from '@radix-ui/react-icons';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { shell } from '@tauri-apps/api';
 
 interface Arguments {
   onSelect: (url: string | undefined) => void;
@@ -107,6 +112,7 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
           <Input
             name='searchValue'
             placeholder='Enter a film title'
+            type={'search'}
             defaultValue={initialSearchTerm}
           />
           <Button variant='secondary'>
@@ -125,6 +131,12 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
       </DialogContent>
     </Dialog>
   );
+}
+
+function handleLink(id: string) {
+  shell
+    .open(`https://www.imdb.com/title/${id}/`)
+    .catch((error) => console.error('Failed to open url', error));
 }
 
 function FilmList({
@@ -148,16 +160,24 @@ function FilmList({
                 )}
               </div>
 
-              <div className='flex-1 h-full items-center '>
+              <div className='flex-1 grid h-full items-center '>
                 <h4>
-                  {film?.l} ({film?.y})
+                  {film?.l} {film?.y ? `(${film.y})` : ''}
                 </h4>
                 <br />
                 <Button
-                  className='bg-green-600'
+                  className='bg-green-600 hover:bg-green-700'
                   onClick={() => handleSelect(film.id)}
                 >
                   Select
+                </Button>
+                <br />
+                <Button
+                  className='bg-sky-600 hover:bg-sky-700'
+                  onClick={() => handleLink(film.id)}
+                >
+                  Open IMDB Page
+                  <OpenInNewWindowIcon />
                 </Button>
               </div>
             </li>
