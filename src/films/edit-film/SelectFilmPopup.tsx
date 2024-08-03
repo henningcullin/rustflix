@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
+  Cross2Icon,
   Link1Icon,
   MagnifyingGlassIcon,
   OpenInNewWindowIcon,
@@ -101,7 +102,7 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
       <DialogTrigger asChild>
         <Button>
           Select Film
-          <Link1Icon />
+          <Link1Icon className='ml-1' />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -115,9 +116,9 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
             type={'search'}
             defaultValue={initialSearchTerm}
           />
-          <Button variant='secondary'>
+          <Button variant='secondary' className='ml-1'>
             Search
-            <MagnifyingGlassIcon />
+            <MagnifyingGlassIcon className='ml-1' />
           </Button>
         </form>
         <FilmList films={searchItems} handleSelect={handleSelect}></FilmList>
@@ -125,6 +126,7 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
           <DialogClose asChild>
             <Button type='button' variant='secondary'>
               Close
+              <Cross2Icon className='ml-1' />
             </Button>
           </DialogClose>
         </DialogFooter>
@@ -147,7 +149,7 @@ function FilmList({
   handleSelect: (id: string) => void;
 }) {
   return (
-    <ScrollArea className='max-h-96'>
+    <ScrollArea className='max-h-[65dvh]'>
       <ul>
         {films.map((film) => (
           <>
@@ -177,7 +179,7 @@ function FilmList({
                   onClick={() => handleLink(film.id)}
                 >
                   Open IMDB Page
-                  <OpenInNewWindowIcon />
+                  <OpenInNewWindowIcon className='ml-1' />
                 </Button>
               </div>
             </li>
