@@ -10,6 +10,7 @@ pub struct ScrapedFilm {
     pub stars: Vec<ScrapedStar>,
     pub cover: Option<String>,
     pub rating: Option<f64>,
+    pub languages: Vec<String>,
 }
 
 #[derive(Debug)]

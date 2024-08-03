@@ -21,6 +21,7 @@ pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
     let stars = stars(&parsed_html)?;
     let cover = unescape_str(data_object["image"].as_str());
     let rating = data_object["aggregateRating"]["ratingValue"].as_f64();
+    let languages = languages(&parsed_html);
 
     let info = ScrapedFilm {
         title,
@@ -33,6 +34,7 @@ pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
         stars,
         cover,
         rating,
+        languages,
     };
 
     Ok(info)
@@ -94,6 +96,23 @@ fn color(parsed_html: &Html) -> Result<String, AppError> {
         }
         None => Err(AppError::new("No color element")),
     }
+}
+
+fn languages(parsed_html: &Html) -> Vec<String> {
+    let selector = match Selector::parse(
+        r#"[data-testid="title-details-languages"] a[href*="/search/title?title_type=feature&primary_language="]"#,
+    ) {
+        Ok(sel) => sel,
+        Err(error) => {
+            eprintln!("language selector error {error:?}");
+            return Vec::new();
+        }
+    };
+
+    parsed_html
+        .select(&selector)
+        .filter_map(|link_element| unescape_string(link_element.inner_html()))
+        .collect()
 }
 
 fn directors(data_object: &serde_json::Value) -> Vec<ScrapedDirector> {
@@ -159,7 +178,7 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
             let actor_element = match element.select(&actor_selector).next() {
                 Some(actor) => actor,
                 None => {
-                    println!("Missing actor element in:\n{}", element_html);
+                    eprintln!("Missing actor element in:\n{}", element_html);
                     return None;
                 }
             };
@@ -168,7 +187,7 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
             let real_name = match unescape_string(actor_element.inner_html()) {
                 Some(name) => name,
                 None => {
-                    println!("Failed to unescape real name in:\n{}", actor_element.html());
+                    eprintln!("Failed to unescape real name in:\n{}", actor_element.html());
                     return None;
                 }
             };
@@ -181,7 +200,7 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
             {
                 Some(char_name) => char_name,
                 None => {
-                    println!(
+                    eprintln!(
                         "Missing or failed to unescape character in:\n{}",
                         element_html
                     );
@@ -198,7 +217,7 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
             {
                 Some(id) => id,
                 None => {
-                    println!("Missing IMDb ID in:\n{}", actor_element.html());
+                    eprintln!("Missing IMDb ID in:\n{}", actor_element.html());
                     return None;
                 }
             };
