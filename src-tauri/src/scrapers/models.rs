@@ -11,6 +11,7 @@ pub struct ScrapedFilm {
     pub cover: Option<String>,
     pub rating: Option<f64>,
     pub languages: Vec<String>,
+    pub keywords: Vec<String>,
 }
 
 #[derive(Debug)]
