@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   Dialog,
@@ -92,10 +92,21 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
     setSearchItems(items);
   }
 
-  function handleSelect(id: string) {
-    onSelect(id);
-    setOpen(false);
-  }
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSelect(id);
+      setOpen(false);
+    },
+    [onSelect]
+  );
+
+  const handleLink = useCallback(
+    (id: string) =>
+      shell
+        .open(`https://www.imdb.com/title/${id}/`)
+        .catch((error) => console.error('Failed to open url', error)),
+    []
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -121,7 +132,11 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
             <MagnifyingGlassIcon className='ml-1' />
           </Button>
         </form>
-        <FilmList films={searchItems} handleSelect={handleSelect}></FilmList>
+        <FilmList
+          films={searchItems}
+          handleSelect={handleSelect}
+          handleLink={handleLink}
+        ></FilmList>
         <DialogFooter>
           <DialogClose asChild>
             <Button type='button' variant='secondary'>
@@ -135,18 +150,14 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
   );
 }
 
-function handleLink(id: string) {
-  shell
-    .open(`https://www.imdb.com/title/${id}/`)
-    .catch((error) => console.error('Failed to open url', error));
-}
-
 function FilmList({
   films,
   handleSelect,
+  handleLink,
 }: {
   films: SearchItem[];
   handleSelect: (id: string) => void;
+  handleLink: (id: string) => void;
 }) {
   return (
     <ScrollArea className='max-h-[65dvh]'>
