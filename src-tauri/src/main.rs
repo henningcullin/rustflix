@@ -1,10 +1,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod characters;
 mod database;
 mod directories;
 mod error;
 mod films;
+mod persons;
 mod scrapers;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
