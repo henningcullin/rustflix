@@ -1,18 +1,28 @@
-use chrono::NaiveDate;
+use chrono::{Duration, NaiveDate};
 use rusqlite::Row;
 use serde::Serialize;
+use src_macro::Fields;
 
-#[derive(Debug, Serialize)]
+use crate::{characters::Character, persons::Person};
+
+#[derive(Debug, Serialize, Fields)]
 pub struct Film {
     pub id: u32,
     pub file: String,
     pub directory: u32,
-    pub link: Option<String>,
+    pub imdb_id: Option<String>,
     pub title: Option<String>,
-    pub synopsis: Option<String>,
+    pub genres: Vec<String>,
     pub release_date: Option<NaiveDate>,
-    pub duration: Option<u32>,
+    pub plot: Option<String>,
+    pub run_time: Option<u32>, // seconds
+    pub color: Option<String>,
+    pub rating: Option<f64>,
+    pub languages: Vec<String>,
+    pub keywords: Vec<String>,
     pub cover_image: Option<String>,
+    pub directors: Vec<Person>,
+    pub stars: Vec<Character>,
     pub registered: bool,
 }
 
