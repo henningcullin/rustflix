@@ -1,9 +1,11 @@
-enum Gender {
+use src_macro::Fields;
+
+pub enum Gender {
     Male,
     Female,
 }
 
-enum Country {
+pub enum Country {
     Sweden,
     UnitedKingdom,
     Norway,
@@ -18,11 +20,12 @@ enum Country {
     Portugal,
 }
 
-struct Person {
-    id: u32,
-    imdb_id: String,
-    avatar: Option<String>,
-    age: Option<u32>,
-    gender: Option<Gender>,
-    birthplace: Option<Country>,
+#[derive(Fields)]
+pub struct Person {
+    pub id: u32,
+    pub imdb_id: String,
+    pub avatar: Option<String>,
+    pub age: Option<u32>,
+    pub gender: Option<Gender>,
+    pub birthplace: Option<Country>,
 }
