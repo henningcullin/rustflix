@@ -1,9 +1,10 @@
-use src_macro::Select;
+use src_macro::Fields;
 
-#[derive(Select)]
-struct Character {
-    id: u32,
-    person_id: u32,
-    film_id: u32,
-    description: String,
+use crate::persons::Person;
+
+#[derive(Fields)]
+pub struct Character {
+    pub id: u32,
+    pub actor: Person,
+    pub description: String,
 }
