@@ -1,13 +1,13 @@
 use serde::Serialize;
 use src_macro::Fields;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub enum Gender {
     Male,
     Female,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub enum Country {
     Sweden,
     UnitedKingdom,
@@ -23,7 +23,7 @@ pub enum Country {
     Portugal,
 }
 
-#[derive(Serialize, Fields)]
+#[derive(Debug, Serialize, Fields)]
 pub struct Person {
     pub id: u32,
     pub imdb_id: String,
