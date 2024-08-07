@@ -23,6 +23,8 @@ pub struct Film {
     pub cover_image: Option<String>,
     pub directors: Vec<Person>,
     pub stars: Vec<Character>,
+    pub has_watched: bool,
+    pub left_off_point: Option<u32>,
     pub registered: bool,
 }
 
@@ -32,13 +34,22 @@ impl Film {
             id: row.get(0)?,
             file: row.get(1)?,
             directory: row.get(2)?,
-            link: row.get(3)?,
+            imdb_id: row.get(3)?,
             title: row.get(4)?,
-            synopsis: row.get(5)?,
+            genres: row.get(5)?,
             release_date: row.get(6)?,
-            duration: row.get(7)?,
-            cover_image: row.get(8)?,
-            registered: row.get(9)?,
+            plot: row.get(7)?,
+            run_time: row.get(8)?,
+            color: row.get(9)?,
+            rating: row.get(10)?,
+            languages: row.get(11)?,
+            keywords: row.get(12)?,
+            cover_image: row.get(13)?,
+            directors: row.get(14)?,
+            stars: row.get(15)?,
+            has_watched: row.get(16)?,
+            left_off_point: row.get(17)?,
+            registered: row.get(18),
         })
     }
 }
