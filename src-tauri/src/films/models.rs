@@ -3,7 +3,9 @@ use rusqlite::Row;
 use serde::Serialize;
 use src_macro::Fields;
 
-use crate::{characters::Character, persons::Person};
+use crate::{
+    characters::Character, genres::models::GenreList, languages::Language, persons::Person,
+};
 
 #[derive(Debug, Serialize, Fields)]
 pub struct Film {
@@ -12,13 +14,13 @@ pub struct Film {
     pub directory: u32,
     pub imdb_id: Option<String>,
     pub title: Option<String>,
-    pub genres: Vec<String>,
+    pub genres: GenreList,
     pub release_date: Option<NaiveDate>,
     pub plot: Option<String>,
     pub run_time: Option<u32>, // seconds
     pub color: Option<bool>,
     pub rating: Option<f64>,
-    pub languages: Vec<String>,
+    pub languages: Vec<Language>,
     pub keywords: Vec<String>,
     pub cover_image: Option<String>,
     pub directors: Vec<Person>,

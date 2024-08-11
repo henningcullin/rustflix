@@ -34,6 +34,44 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS genres (
+            id  INTEGER PRIMARY KEY,
+            path TEXT NOT NULL
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS languages (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS persons (
+            id INTEGER PRIMARY KEY,
+            imdb_id: TEXT,
+            avatar: TEXT,
+            age: INTEGER,
+            gender: INTEGER,
+            birthplace: INTEGER
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS characters (
+            id INTEGER PRIMARY KEY,
+            actor INTEGER NOT NULL,
+            description TEXT NOT NULL,
+            FOREIGN KEY (actor) REFERENCES persons(id) ON DELETE 
+        )",
+        [],
+    )?;
+
     // Create films table with a foreign key to directories table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS films (
