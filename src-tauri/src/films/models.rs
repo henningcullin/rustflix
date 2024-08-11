@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate};
+use chrono::NaiveDate;
 use rusqlite::Row;
 use serde::Serialize;
 use src_macro::Fields;
@@ -16,7 +16,7 @@ pub struct Film {
     pub release_date: Option<NaiveDate>,
     pub plot: Option<String>,
     pub run_time: Option<u32>, // seconds
-    pub color: Option<String>,
+    pub color: Option<bool>,
     pub rating: Option<f64>,
     pub languages: Vec<String>,
     pub keywords: Vec<String>,
