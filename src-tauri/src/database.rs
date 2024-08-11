@@ -75,15 +75,19 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
     // Create films table with a foreign key to directories table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS films (
-            id          INTEGER PRIMARY KEY,
-            file        TEXT NOT NULL,
-            directory   INTEGER NOT NULL,
-            link        TEXT,
-            title       TEXT,
-            synopsis    TEXT,
-            release_date TEXT,
-            duration    INTEGER,
-            cover_image TEXT,
+            id              INTEGER PRIMARY KEY,
+            file            TEXT NOT NULL,
+            directory       INTEGER NOT NULL,
+            imdb_id         TEXT,
+            title           TEXT,
+            release_date    TEXT,
+            plot            TEXT,
+            run_time        INTEGER,
+            color           INTEGER,
+            rating          INTEGER,
+            cover_image     TEXT,
+            has_watched     INTEGER,
+            left_off_point  INTEGER,
             registered  INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (directory) REFERENCES directories(id) ON DELETE CASCADE
         )",
