@@ -26,7 +26,7 @@ pub enum Country {
 #[derive(Debug, Serialize, Fields)]
 pub struct Person {
     pub id: u32,
-    pub imdb_id: String,
+    pub imdb_id: Option<String>,
     pub avatar: Option<String>,
     pub age: Option<u32>,
     pub gender: Option<Gender>,
