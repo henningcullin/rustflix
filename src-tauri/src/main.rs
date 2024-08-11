@@ -7,6 +7,7 @@ mod directories;
 mod error;
 mod films;
 mod genres;
+mod languages;
 mod persons;
 mod scrapers;
 
