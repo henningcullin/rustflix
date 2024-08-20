@@ -22,59 +22,42 @@ pub fn create_connection() -> Result<Connection, rusqlite::Error> {
 pub fn initialize_database() -> Result<(), rusqlite::Error> {
     let conn = create_connection()?;
 
-    // Enable foreign key support
-    conn.execute("PRAGMA foreign_keys = ON", [])?;
+    conn.execute_batch(
+        r#"--sql
+        PRAGMA foreign_keys = ON
 
-    // Create directories table
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS directories (
+        CREATE TABLE IF NOT EXISTS directories (
             id   INTEGER PRIMARY KEY,
             path TEXT NOT NULL
-        )",
-        [],
-    )?;
+        )
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS genres (
+        CREATE TABLE IF NOT EXISTS genres (
             id  INTEGER PRIMARY KEY,
             path TEXT NOT NULL
-        )",
-        [],
-    )?;
+        )
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS languages (
+        CREATE TABLE IF NOT EXISTS languages (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL
-        )",
-        [],
-    )?;
+        )
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS persons (
+        CREATE TABLE IF NOT EXISTS persons (
             id INTEGER PRIMARY KEY,
             imdb_id: TEXT,
             avatar: TEXT,
             age: INTEGER,
             gender: INTEGER,
             birthplace: INTEGER
-        )",
-        [],
-    )?;
+        )
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS characters (
+        CREATE TABLE IF NOT EXISTS characters (
             id INTEGER PRIMARY KEY,
             actor INTEGER NOT NULL,
             description TEXT NOT NULL,
             FOREIGN KEY (actor) REFERENCES persons(id) ON DELETE 
-        )",
-        [],
-    )?;
+        )
 
-    // Create films table with a foreign key to directories table
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS films (
+        CREATE TABLE IF NOT EXISTS films (
             id              INTEGER PRIMARY KEY,
             file            TEXT NOT NULL,
             directory       INTEGER NOT NULL,
@@ -90,9 +73,48 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             left_off_point  INTEGER,
             registered  INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (directory) REFERENCES directories(id) ON DELETE CASCADE
-        )",
-        [],
-    )?;
+        )
+        
+        CREATE TABLE IF NOT EXISTS film_genres (
+            film_id INTEGER NOT NULL,
+            genre_id INTEGER NOT NULL,
+            FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+            FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE,
+            PRIMARY KEY (film_id, genre_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS film_languages (
+            film_id INTEGER NOT NULL,
+            language_id INTEGER NOT NULL,
+            FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+            FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE CASCADE,
+            PRIMARY KEY (film_id, language_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS film_keywords (
+            film_id INTEGER NOT NULL,
+            keyword TEXT NOT NULL,
+            FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+            PRIMARY KEY (film_id, keyword)
+        );
+
+        CREATE TABLE IF NOT EXISTS film_directors (
+            film_id INTEGER NOT NULL,
+            person_id INTEGER NOT NULL,
+            FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+            FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+            PRIMARY KEY (film_id, person_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS film_characters (
+            film_id INTEGER NOT NULL,
+            character_id INTEGER NOT NULL,
+            FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+            FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+            PRIMARY KEY (film_id, character_id)
+        );
+        "#,
+    );
 
     Ok(())
 }
