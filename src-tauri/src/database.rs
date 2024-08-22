@@ -114,7 +114,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             PRIMARY KEY (film_id, character_id)
         );
         "#,
-    );
+    )?;
 
     Ok(())
 }
