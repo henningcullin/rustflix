@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use rusqlite::Row;
 use serde::Serialize;
 use src_macro::Fields;
 
@@ -110,7 +109,7 @@ impl Film {
             imdb_id,
             title,
             genres,
-            release_date: release_date.map(|d| NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap()),
+            release_date: release_date.and_then(|d| NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok()),
             plot,
             run_time,
             color,
