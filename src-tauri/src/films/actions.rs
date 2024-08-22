@@ -106,7 +106,7 @@ pub fn sync_films_with_files() -> Result<(), AppError> {
             if film_exists.is_none() {
                 // If the film does not exist, insert a new row
                 conn.execute(
-                    "INSERT INTO films (file, directory, link, title, release_year, duration, cover_image, synopsis, registered) VALUES (?1, ?2, NULL, NULL, NULL, NULL, NULL, NULL, 0)",
+                    "INSERT INTO films (file, directory) VALUES (?1, ?2)",
                     params![file, &directory.id],
                 )?;
             }
