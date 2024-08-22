@@ -6,7 +6,10 @@ use tauri::command;
 pub fn get_all_films() -> Option<Vec<Film>> {
     match super::actions::get_all_films() {
         Ok(films) => Some(films),
-        Err(_) => None,
+        Err(error) => {
+            eprintln!("{}", error);
+            None
+        }
     }
 }
 
@@ -14,6 +17,9 @@ pub fn get_all_films() -> Option<Vec<Film>> {
 pub fn get_film(id: u32) -> Option<Film> {
     match super::actions::get_film(id) {
         Ok(film) => Some(film),
-        Err(_) => None,
+        Err(error) => {
+            eprintln!("{}", error);
+            None
+        }
     }
 }
