@@ -43,11 +43,11 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
 
         CREATE TABLE IF NOT EXISTS persons (
             id INTEGER PRIMARY KEY,
-            imdb_id: TEXT,
-            avatar: TEXT,
-            age: INTEGER,
-            gender: INTEGER,
-            birthplace: INTEGER
+            imdb_id TEXT,
+            avatar TEXT,
+            age INTEGER,
+            gender INTEGER,
+            birthplace INTEGER
         )
 
         CREATE TABLE IF NOT EXISTS characters (
