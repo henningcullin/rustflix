@@ -13,9 +13,31 @@ use super::Film;
 pub fn get_all_films() -> Result<Vec<Film>, AppError> {
     let conn = create_connection()?;
 
-    let mut stmt = conn
-        .prepare("SELECT id, file, directory, link, title, release_year, duration, cover_image, synopsis, registered FROM films")?;
-    let films: Vec<Film> = stmt
+    let mut stmt = conn.prepare(r#"--sql
+        SELECT 
+            f.id as film_id, f.file, f.directory, f.imdb_id, f.title, 
+            f.release_date, f.plot, f.run_time, f.color, f.rating, 
+            f.cover_image, f.has_watched, f.left_off_point, f.registered,
+            GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,
+            GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
+            GROUP_CONCAT(DISTINCT k.keyword) as keywords,
+            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.avatar || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
+            GROUP_CONCAT(DISTINCT c.id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.avatar || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
+        FROM films f
+        LEFT JOIN film_genres fg ON f.id = fg.film_id
+        LEFT JOIN genres g ON fg.genre_id = g.id
+        LEFT JOIN film_languages fl ON f.id = fl.film_id
+        LEFT JOIN languages l ON fl.language_id = l.id
+        LEFT JOIN film_keywords k ON f.id = k.film_id
+        LEFT JOIN film_directors fd ON f.id = fd.film_id
+        LEFT JOIN persons p ON fd.person_id = p.id
+        LEFT JOIN film_characters fc ON f.id = fc.film_id
+        LEFT JOIN characters c ON fc.character_id = c.id
+        LEFT JOIN persons ap ON c.actor = ap.id
+        GROUP BY f.id
+    "#)?;
+
+    let films = stmt
         .query_map([], |row| Film::from_row(row))?
         .collect::<Result<Vec<_>, _>>()?;
 
