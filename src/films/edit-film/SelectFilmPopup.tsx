@@ -14,12 +14,9 @@ import {
   Cross2Icon,
   Link1Icon,
   MagnifyingGlassIcon,
-  OpenInNewWindowIcon,
 } from '@radix-ui/react-icons';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { shell } from '@tauri-apps/api';
 import { useQuery } from '@tanstack/react-query';
 import FilmList from './FilmList';

@@ -26,7 +26,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, OpenInNewWindowIcon } from '@radix-ui/react-icons';
+import { CalendarIcon } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
 
@@ -53,8 +53,12 @@ function EditFilm() {
     },
   });
 
-  function onSubmit(values: FormSchema) {
+  function onSuccess(values: FormSchema) {
     console.log(values);
+  }
+
+  function onError() {
+    console.log('error');
   }
 
   async function getFilm(id: number) {
@@ -76,12 +80,15 @@ function EditFilm() {
   return (
     <div>
       <SelectFilmPopup
-        onSelect={(value) => console.log(value)}
+        onSelect={async (id) => {
+          const result = await invoke('scrape_film', { id });
+          console.log(result);
+        }}
         filePath={film?.file}
       />
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSuccess, onError)}
           className='max-w-96 space-y-6 p-5'
         >
           <FormField
