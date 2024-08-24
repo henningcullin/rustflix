@@ -3,13 +3,17 @@ use std::{fs, path::PathBuf};
 use dirs::data_local_dir;
 use rusqlite::Connection;
 
-fn get_database_path() -> PathBuf {
+fn get_local_path() -> PathBuf {
     let mut path = data_local_dir().unwrap_or_else(|| PathBuf::from("."));
     path.push("Rustflix");
     if !path.exists() {
         fs::create_dir_all(&path).expect("Failed to create appdata directory");
     }
+    path
+}
 
+fn get_database_path() -> PathBuf {
+    let mut path = get_local_path();
     path.push("database.sqlite");
     path
 }
