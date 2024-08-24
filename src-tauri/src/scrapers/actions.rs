@@ -119,7 +119,7 @@ fn languages(parsed_html: &Html) -> Vec<String> {
 
 fn keywords(keyword_string: Option<&str>) -> Vec<String> {
     match keyword_string {
-        Some(string) => string.split(", ").map(|str| str.to_string()).collect(),
+        Some(string) => string.split(",").map(|str| str.to_string()).collect(),
         None => return Vec::new(),
     }
 }
