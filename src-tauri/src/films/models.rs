@@ -34,7 +34,7 @@ impl Film {
         let directory: u32 = row.get("directory")?;
         let imdb_id: Option<String> = row.get("imdb_id")?;
         let title: Option<String> = row.get("title")?;
-        let release_date: Option<String> = row.get("release_date")?;
+
         let plot: Option<String> = row.get("plot")?;
         let run_time: Option<u32> = row.get("run_time")?;
         let color: Option<bool> = row.get("color")?;
@@ -43,6 +43,10 @@ impl Film {
         let has_watched: bool = row.get("has_watched")?;
         let left_off_point: Option<u32> = row.get("left_off_point")?;
         let registered: bool = row.get("registered")?;
+
+        let release_date: Option<NaiveDate> = row
+            .get::<_, Option<String>>("release_date")?
+            .and_then(|d| NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok());
 
         // Parse genres
         let genres: Vec<Genre> = row
@@ -109,7 +113,7 @@ impl Film {
             imdb_id,
             title,
             genres,
-            release_date: release_date.and_then(|d| NaiveDate::parse_from_str(&d, "%Y-%m-%d").ok()),
+            release_date,
             plot,
             run_time,
             color,
