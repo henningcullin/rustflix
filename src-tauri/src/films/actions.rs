@@ -108,7 +108,7 @@ fn add_film(conn: &Connection, file: &String) -> Result<(), AppError> {
     Ok(())
 }
 
-pub fn sync_films_with_files() -> Result<(), AppError> {
+pub fn sync_new_films() -> Result<(), AppError> {
     let conn = create_connection()?;
 
     let directories = get_all_directories()?;

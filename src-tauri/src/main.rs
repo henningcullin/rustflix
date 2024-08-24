@@ -12,7 +12,7 @@ mod persons;
 mod scrapers;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
-use films::{get_all_films, get_film};
+use films::{get_all_films, get_film, sync_new_films};
 use scrapers::scrape_film;
 
 #[tauri::command]
@@ -38,6 +38,7 @@ fn main() {
             // FILMS
             get_all_films,
             get_film,
+            sync_new_films,
             // MISC
             fetch_data,
             // SCRAPER
@@ -50,12 +51,6 @@ fn main() {
                     eprintln!("{err:?}");
                 }
             };
-            match films::sync_films_with_files() {
-                Ok(_) => {}
-                Err(err) => {
-                    eprintln!("{err:?}");
-                }
-            }
             Ok(())
         })
         .run(tauri::generate_context!())
