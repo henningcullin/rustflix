@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 
 interface Arguments {
-  onSelect: (url: string | undefined) => void;
+  onSelect: (imdb_id: string | undefined) => void;
   filePath: string | undefined;
 }
 

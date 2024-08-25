@@ -80,12 +80,14 @@ function EditFilm() {
   return (
     <div>
       <SelectFilmPopup
-        onSelect={async (imdb_id) => {
-          const result = await invoke('scrape_film', {
-            imdb_id,
-            databse_id: filmId,
+        onSelect={async (imdbId) => {
+          if (typeof filmId !== 'string' || typeof imdbId !== 'string') return;
+          const databaseId = parseInt(filmId);
+          if (!Number.isInteger(databaseId)) return;
+          invoke('scrape_film', {
+            imdbId,
+            databaseId,
           });
-          console.log(result);
         }}
         filePath={film?.file}
       />
