@@ -16,7 +16,7 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
     let mut stmt = conn.prepare(r#"--sql
         SELECT 
             f.id as film_id, f.file, f.imdb_id, f.title, 
-            f.release_date, f.plot, f.run_time, f.color, f.rating, 
+            f.release_date, f.plot, f.run_time, f.has_color, f.rating, 
             f.has_watched, f.left_off_point, f.registered,
             (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,
@@ -52,7 +52,7 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
     let mut stmt = conn.prepare("--sql
         SELECT 
             f.id as film_id, f.file, f.imdb_id, f.title, 
-            f.release_date, f.plot, f.run_time, f.color, f.rating, 
+            f.release_date, f.plot, f.run_time, f.has_color, f.rating, 
             f.has_watched, f.left_off_point, f.registered,
             (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,

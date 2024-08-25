@@ -18,7 +18,7 @@ pub struct Film {
     pub release_date: Option<NaiveDate>,
     pub plot: Option<String>,
     pub run_time: Option<u32>, // seconds
-    pub color: Option<bool>,
+    pub has_color: Option<bool>,
     pub rating: Option<f64>,
     pub languages: Vec<Language>,
     pub keywords: Vec<String>,
@@ -52,7 +52,7 @@ impl Film {
         let title: Option<String> = row.get("title")?;
         let plot: Option<String> = row.get("plot")?;
         let run_time: Option<u32> = row.get("run_time")?;
-        let color: Option<bool> = row.get("color")?;
+        let has_color: Option<bool> = row.get("has_color")?;
         let rating: Option<f64> = row.get("rating")?;
         let has_watched: bool = row.get("has_watched")?;
         let left_off_point: Option<u32> = row.get("left_off_point")?;
@@ -130,7 +130,7 @@ impl Film {
             release_date,
             plot,
             run_time,
-            color,
+            has_color,
             rating,
             languages,
             keywords,

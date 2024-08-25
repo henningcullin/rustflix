@@ -122,10 +122,10 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             release_date    TEXT,
             plot            TEXT,
             run_time        INTEGER,
-            color           INTEGER,
-            rating          INTEGER,
+            has_color           INTEGER,
+            rating          REAL,
             has_watched     INTEGER NOT NULL DEFAULT 0,
-            left_off_point  INTEGER,
+            left_off_point  INTEGER NOT NULL DEFAULT 0,
             registered      INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (directory) REFERENCES directories(id) ON DELETE CASCADE
         )"#,

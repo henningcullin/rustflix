@@ -1,7 +1,14 @@
 use html_escape::decode_html_entities;
+use humantime::Duration as HumanDuration;
+use rusqlite::params;
 use scraper::{Html, Selector};
+use std::time::Duration as StdDuration;
 
-use crate::error::AppError;
+use crate::{
+    database::{create_connection, get_cover_path},
+    error::AppError,
+    images::store_image,
+};
 
 use super::{ScrapedDirector, ScrapedFilm, ScrapedStar};
 
@@ -248,4 +255,64 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
         .collect::<Vec<ScrapedStar>>();
 
     Ok(stars)
+}
+
+pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
+    let conn = create_connection()?;
+
+    let run_time: Option<i64> = film
+        .run_time
+        .as_ref() // Convert Option<String> to Option<&String>
+        .and_then(|string| {
+            // Parse the duration string
+            let parse_result: Result<StdDuration, _> =
+                string.parse::<HumanDuration>().map(|d| d.into());
+
+            match parse_result {
+                Ok(duration) => Some(duration.as_secs() as i64),
+                Err(_) => None,
+            }
+        });
+
+    let has_color = film.color.map(|string| {
+        if string == "Color" {
+            return true;
+        } else {
+            return false;
+        };
+    });
+
+    conn.execute(
+        r#"--sql
+        UPDATE 
+            films
+        SET
+            imdb_id = $1,
+            title = $2,
+            release_date = $3,
+            plot = $4,
+            run_time = $5,
+            color = $6,
+            rating = $7,
+            registered = 1
+        WHERE
+            id = $8
+    "#,
+        params![
+            film.imdb_id,
+            film.title,
+            film.release_date,
+            film.plot,
+            run_time,
+            has_color,
+            film.rating,
+            film.id
+        ],
+    )?;
+
+    if let Some(cover_image) = &film.cover_image {
+        store_image(cover_image, &film.id.to_string(), get_cover_path()).await?;
+    }
+
+    Ok(())
 }

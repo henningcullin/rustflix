@@ -1,6 +1,6 @@
 use tauri::command;
 
-use crate::{database::get_cover_path, images::store_image};
+use crate::scrapers::actions::insert_scraped_film;
 
 #[command]
 pub async fn scrape_film(imdb_id: String, database_id: u32) -> bool {
@@ -12,13 +12,15 @@ pub async fn scrape_film(imdb_id: String, database_id: u32) -> bool {
         }
     };
 
-    if let Some(cover_image) = &scraped_film.cover_image {
-        let _ = store_image(cover_image, &scraped_film.id.to_string(), get_cover_path());
-    }
-
     let scraped_json = serde_json::to_string(&scraped_film).unwrap();
 
     println!("{scraped_json}");
 
-    true
+    match insert_scraped_film(scraped_film).await {
+        Ok(()) => true,
+        Err(error) => {
+            eprintln!("{error}");
+            false
+        }
+    }
 }
