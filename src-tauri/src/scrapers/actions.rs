@@ -4,8 +4,8 @@ use crate::error::AppError;
 
 use super::{ScrapedDirector, ScrapedFilm, ScrapedStar};
 
-pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
-    let url = format!("https://www.imdb.com/title/{}/", id);
+pub async fn scrape_film(imdb_id: String, database_id: u32) -> Result<ScrapedFilm, AppError> {
+    let url = format!("https://www.imdb.com/title/{}/", imdb_id);
     let raw_html = get_page(&url).await?;
     let parsed_html = Html::parse_document(&raw_html);
 
@@ -19,21 +19,23 @@ pub async fn scrape_film(id: String) -> Result<ScrapedFilm, AppError> {
     let color = color(&parsed_html).ok();
     let directors = directors(&data_object);
     let stars = stars(&parsed_html)?;
-    let cover = unescape_str(data_object["image"].as_str());
+    let cover_image = unescape_str(data_object["image"].as_str());
     let rating = data_object["aggregateRating"]["ratingValue"].as_f64();
     let languages = languages(&parsed_html);
     let keywords = keywords(data_object["keywords"].as_str());
 
     let info = ScrapedFilm {
+        id: database_id,
         title,
         genres,
+        imdb_id,
         release_date,
         plot,
         run_time,
         color,
         directors,
         stars,
-        cover,
+        cover_image,
         rating,
         languages,
         keywords,
