@@ -1,3 +1,4 @@
+use html_escape::decode_html_entities;
 use scraper::{Html, Selector};
 
 use crate::error::AppError;
@@ -66,14 +67,18 @@ fn unescape_str(value: Option<&str>) -> Option<String> {
 
     match string.len() {
         0 => None,
-        _ => Some(html_escape::decode_html_entities(string).to_string()),
+        _ => Some(
+            decode_html_entities(decode_html_entities(string).to_string().as_str()).to_string(),
+        ),
     }
 }
 
 fn unescape_string(value: String) -> Option<String> {
     match value.len() {
         0 => None,
-        _ => Some(html_escape::decode_html_entities(&value).to_string()),
+        _ => Some(
+            decode_html_entities(decode_html_entities(&value).to_string().as_str()).to_string(),
+        ),
     }
 }
 
