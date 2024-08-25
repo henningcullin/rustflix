@@ -20,6 +20,8 @@ import { Input } from '@/components/ui/input';
 import { shell } from '@tauri-apps/api';
 import { useQuery } from '@tanstack/react-query';
 import FilmList from './FilmList';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 interface Arguments {
   onSelect: (url: string | undefined) => void;
@@ -129,9 +131,19 @@ function SelectFilmPopup({ onSelect, filePath }: Arguments) {
           </Button>
         </form>
         {isLoading ? (
-          <b>Loading...</b>
+          <>
+            <div className='flex items-start space-x-4'>
+              <Skeleton className='h-64 w-48' />
+              <div className='space-y-4'>
+                <Skeleton className='h-4 w-[200px]' />
+                <Skeleton className='h-10 w-[220px]' />
+                <Skeleton className='h-10 w-[220px]' />
+              </div>
+            </div>
+            <Separator className='mt-4 mb-4' />
+          </>
         ) : isError ? (
-          <b>{error?.message}</b>
+          <b>{error?.message ?? error}</b>
         ) : searchItems?.length ? (
           <FilmList
             films={searchItems}
