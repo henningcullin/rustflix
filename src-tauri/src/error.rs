@@ -1,7 +1,9 @@
+use image::ImageError;
 use reqwest::Error as reqwestError;
 use rusqlite::Error as rusqliteError;
 use scraper::error::SelectorErrorKind as SelectorError;
 use serde_json::Error as serdeError;
+use std::io::Error as IoError;
 
 use std::error::Error;
 use std::fmt;
@@ -13,6 +15,8 @@ pub enum AppError {
     SelectorError(SelectorError<'static>),
     ReqwestError(reqwestError),
     ScrapeError(String),
+    ImageError(ImageError),
+    IoError(IoError),
 }
 
 impl AppError {
@@ -45,6 +49,18 @@ impl From<reqwestError> for AppError {
     }
 }
 
+impl From<ImageError> for AppError {
+    fn from(value: ImageError) -> Self {
+        Self::ImageError(value)
+    }
+}
+
+impl From<IoError> for AppError {
+    fn from(value: IoError) -> Self {
+        Self::IoError(value)
+    }
+}
+
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -53,6 +69,8 @@ impl fmt::Display for AppError {
             Self::SelectorError(ref err) => write!(f, "Selector error: {}", err),
             Self::ScrapeError(ref err) => write!(f, "Scrape error: {}", err),
             Self::ReqwestError(ref err) => write!(f, "Reqwest error: {}", err),
+            Self::ImageError(ref err) => write!(f, "Image error: {}", err),
+            Self::IoError(ref err) => write!(f, "IO error: {}", err),
         }
     }
 }
@@ -65,6 +83,8 @@ impl std::error::Error for AppError {
             Self::SelectorError(ref err) => Some(err),
             Self::ScrapeError(_) => None,
             Self::ReqwestError(ref err) => Some(err),
+            Self::ImageError(ref err) => Some(err),
+            Self::IoError(ref err) => Some(err),
         }
     }
 }
