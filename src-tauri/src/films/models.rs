@@ -22,7 +22,6 @@ pub struct Film {
     pub rating: Option<f64>,
     pub languages: Vec<Language>,
     pub keywords: Vec<String>,
-    pub cover_image: Option<String>,
     pub directors: Vec<Person>,
     pub stars: Vec<Character>,
     pub has_watched: bool,
@@ -55,7 +54,6 @@ impl Film {
         let run_time: Option<u32> = row.get("run_time")?;
         let color: Option<bool> = row.get("color")?;
         let rating: Option<f64> = row.get("rating")?;
-        let cover_image: Option<String> = row.get("cover_image")?;
         let has_watched: bool = row.get("has_watched")?;
         let left_off_point: Option<u32> = row.get("left_off_point")?;
         let registered: bool = row.get("registered")?;
@@ -136,7 +134,6 @@ impl Film {
             rating,
             languages,
             keywords,
-            cover_image,
             directors,
             stars,
             has_watched,

@@ -12,6 +12,20 @@ fn get_local_path() -> PathBuf {
     path
 }
 
+pub fn get_cover_path() -> PathBuf {
+    let mut path = get_local_path();
+    path.push("images");
+    path.push("covers");
+    path
+}
+
+pub fn get_avatar_path() -> PathBuf {
+    let mut path = get_local_path();
+    path.push("images");
+    path.push("avatars");
+    path
+}
+
 fn get_database_path() -> PathBuf {
     let mut path = get_local_path();
     path.push("database.sqlite");
@@ -97,7 +111,6 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             run_time        INTEGER,
             color           INTEGER,
             rating          INTEGER,
-            cover_image     TEXT,
             has_watched     INTEGER NOT NULL DEFAULT 0,
             left_off_point  INTEGER,
             registered      INTEGER NOT NULL DEFAULT 0,

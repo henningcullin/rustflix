@@ -17,7 +17,7 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
         SELECT 
             f.id as film_id, f.file, f.imdb_id, f.title, 
             f.release_date, f.plot, f.run_time, f.color, f.rating, 
-            f.cover_image, f.has_watched, f.left_off_point, f.registered,
+            f.has_watched, f.left_off_point, f.registered,
             (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
@@ -53,7 +53,7 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
         SELECT 
             f.id as film_id, f.file, f.imdb_id, f.title, 
             f.release_date, f.plot, f.run_time, f.color, f.rating, 
-            f.cover_image, f.has_watched, f.left_off_point, f.registered,
+            f.has_watched, f.left_off_point, f.registered,
             (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
