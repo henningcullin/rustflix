@@ -7,22 +7,35 @@ fn get_local_path() -> PathBuf {
     let mut path = data_local_dir().unwrap_or_else(|| PathBuf::from("."));
     path.push("Rustflix");
     if !path.exists() {
-        fs::create_dir_all(&path).expect("Failed to create appdata directory");
+        fs::create_dir_all(&path).expect("Failed to create data directory");
+    }
+    path
+}
+
+fn get_images_path() -> PathBuf {
+    let mut path = get_local_path();
+    path.push("images");
+    if !path.exists() {
+        fs::create_dir_all(&path).expect("Failed to create images directory");
     }
     path
 }
 
 pub fn get_cover_path() -> PathBuf {
-    let mut path = get_local_path();
-    path.push("images");
+    let mut path = get_images_path();
     path.push("covers");
+    if !path.exists() {
+        fs::create_dir_all(&path).expect("Failed to create covers directory");
+    }
     path
 }
 
 pub fn get_avatar_path() -> PathBuf {
-    let mut path = get_local_path();
-    path.push("images");
+    let mut path = get_images_path();
     path.push("avatars");
+    if !path.exists() {
+        fs::create_dir_all(&path).expect("Failed to create avatars directory");
+    }
     path
 }
 

@@ -1,16 +1,14 @@
-use image::jpeg::JpegEncoder;
-use image::ImageFormat;
-use reqwest::Error;
+use image::codecs::jpeg::JpegEncoder;
 use std::fs::File;
 use std::io::BufWriter;
-use std::path::Path;
+use std::path::PathBuf;
 
 use crate::error::AppError;
 
-pub async fn download_and_convert_image(
-    image_url: &str,
-    file_name: &str,
-    target_path: &str,
+pub async fn store_image(
+    image_url: &String,
+    file_name: &String,
+    target_path: PathBuf,
 ) -> Result<(), AppError> {
     // Send a GET request to download the image
     let response = reqwest::get(image_url).await?;
@@ -20,7 +18,7 @@ pub async fn download_and_convert_image(
     let img = image::load_from_memory(&bytes)?;
 
     // Create the full path where the file will be saved
-    let file_path = Path::new(target_path).join(file_name);
+    let file_path = target_path.join(format!("{}.jpg", file_name));
 
     // Create the file and a buffered writer
     let file = File::create(file_path)?;
