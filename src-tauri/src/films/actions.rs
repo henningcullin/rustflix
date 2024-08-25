@@ -1,6 +1,6 @@
 use std::fs;
 
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, OptionalExtension};
 
 use crate::{
     database::create_connection,
@@ -104,12 +104,6 @@ pub fn get_files(directory: &Directory) -> Result<Vec<String>, AppError> {
     }
 
     Ok(video_files)
-}
-
-fn add_film(conn: &Connection, file: &String) -> Result<(), AppError> {
-    conn.execute("INSERT INTO films (file) VALUES (?1)", params![file])?;
-
-    Ok(())
 }
 
 pub fn sync_new_films() -> Result<(), AppError> {
