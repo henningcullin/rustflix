@@ -2,13 +2,16 @@ use chrono::NaiveDate;
 use serde::Serialize;
 use src_macro::Fields;
 
-use crate::{characters::Character, genres::Genre, languages::Language, persons::Person};
+use crate::{
+    characters::Character, directories::Directory, genres::Genre, languages::Language,
+    persons::Person,
+};
 
 #[derive(Debug, Serialize, Fields)]
 pub struct Film {
     pub id: u32,
     pub file: String,
-    pub directory: u32,
+    pub directory: Directory,
     pub imdb_id: Option<String>,
     pub title: Option<String>,
     pub genres: Vec<Genre>,
@@ -31,10 +34,23 @@ impl Film {
     pub fn from_row(row: &rusqlite::Row) -> rusqlite::Result<Film> {
         let id: u32 = row.get("film_id")?;
         let file: String = row.get("file")?;
-        let directory: u32 = row.get("directory")?;
+
+        let directory: Directory = row
+            .get::<_, String>("directory")?
+            .split_once(':')
+            .ok_or_else(|| rusqlite::Error::InvalidQuery) // Error if split fails
+            .and_then(|(id_str, path)| {
+                id_str
+                    .parse::<u32>() // Parse the id
+                    .map(|id| Directory {
+                        id,
+                        path: path.to_string(),
+                    })
+                    .map_err(|_| rusqlite::Error::InvalidQuery) // Error if parsing id fails
+            })?;
+
         let imdb_id: Option<String> = row.get("imdb_id")?;
         let title: Option<String> = row.get("title")?;
-
         let plot: Option<String> = row.get("plot")?;
         let run_time: Option<u32> = row.get("run_time")?;
         let color: Option<bool> = row.get("color")?;
