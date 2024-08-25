@@ -19,11 +19,11 @@ use scrapers::scrape_film;
 async fn fetch_data(url: String) -> Result<String, String> {
     let response = reqwest::get(url).await;
     match response {
-        Ok(res) => {
-            let body = res.text().await.unwrap_or_default();
-            Ok(body)
-        }
-        Err(err) => Err(err.to_string()),
+        Ok(res) => match res.text().await {
+            Ok(body) => Ok(body),
+            Err(error) => Err(error.to_string()),
+        },
+        Err(error) => Err(error.to_string()),
     }
 }
 
