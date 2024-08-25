@@ -20,6 +20,7 @@ dirs = "5.0.1"
 chrono = { version = "0.4.38", features = ["serde"] }
 reqwest = { version = "0.12.5", features = ["json"] }
 scraper = "0.19.1"
+image = { version = "0.24" }
 html-escape = "0.2.13"
 src-macro = { path = "../src-macro" }
 iso8601 = "0.6.1"
