@@ -64,7 +64,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         r#"--sql
         CREATE TABLE IF NOT EXISTS directories (
             id   INTEGER PRIMARY KEY,
-            path TEXT NOT NULL
+            path TEXT NOT NULL UNIQUE
         )"#,
         [],
     )?;
@@ -73,7 +73,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         r#"--sql
         CREATE TABLE IF NOT EXISTS genres (
             id  INTEGER PRIMARY KEY,
-            path TEXT NOT NULL
+            name TEXT NOT NULL UNIQUE
         )"#,
         [],
     )?;
@@ -82,7 +82,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         r#"--sql
         CREATE TABLE IF NOT EXISTS languages (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL
+            name TEXT NOT NULL UNIQUE
         )"#,
         [],
     )?;
@@ -91,7 +91,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         r#"--sql
         CREATE TABLE IF NOT EXISTS persons (
             id INTEGER PRIMARY KEY,
-            imdb_id TEXT,
+            imdb_id TEXT UNIQUE,
             avatar TEXT,
             age INTEGER,
             gender INTEGER,
