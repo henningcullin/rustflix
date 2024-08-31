@@ -1,9 +1,8 @@
 use serde::Serialize;
-use src_macro::Fields;
 
 use crate::persons::Person;
 
-#[derive(Debug, Serialize, Fields)]
+#[derive(Debug, Serialize)]
 pub struct Character {
     pub id: u32,
     pub actor: Person,

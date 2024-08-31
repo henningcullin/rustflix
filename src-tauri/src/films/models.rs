@@ -1,13 +1,12 @@
 use chrono::NaiveDate;
 use serde::Serialize;
-use src_macro::Fields;
 
 use crate::{
     characters::Character, directories::Directory, genres::Genre, languages::Language,
     persons::Person,
 };
 
-#[derive(Debug, Serialize, Fields)]
+#[derive(Debug, Serialize)]
 pub struct Film {
     pub id: u32,
     pub file: String,
