@@ -3,11 +3,7 @@ use rusqlite::{params, Transaction};
 use scraper::{Html, Selector};
 use std::num::ParseIntError;
 
-use crate::{
-    database::{create_connection, get_avatar_path, get_cover_path},
-    error::AppError,
-    images::store_image,
-};
+use crate::{database::create_connection, error::AppError};
 
 use super::{ScrapedDirector, ScrapedFilm, ScrapedStar};
 
@@ -277,7 +273,7 @@ fn parse_iso_duration(duration_str: &str) -> Result<i64, ParseIntError> {
     Ok((hours * 3600 + minutes * 60) as i64)
 }
 
-pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
+pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)>, AppError> {
     let mut conn = create_connection()?;
 
     // Start the transaction
@@ -427,33 +423,7 @@ pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
         return Err(AppError::from(e));
     }
 
-    // Handle image storage asynchronously after the transaction has been committed
-    let _avatar_storage_task = async move {
-        for (person_id, avatar_url) in persons_with_avatars {
-            if let Err(e) =
-                store_image(&avatar_url, &person_id.to_string(), get_avatar_path()).await
-            {
-                eprintln!("Failed to store image for person_id {}: {:?}", person_id, e);
-                return Err(e);
-            }
-        }
-        Ok(())
-    };
-
-    let _cover_image_storage_task = async {
-        if let Some(cover_image) = &film.cover_image {
-            if let Err(e) = store_image(cover_image, &film.id.to_string(), get_cover_path()).await {
-                eprintln!(
-                    "Failed to store cover image for film_id {}: {:?}",
-                    film.id, e
-                );
-                return Err(e);
-            }
-        }
-        Ok(())
-    };
-
-    Ok(())
+    Ok(persons_with_avatars)
 }
 
 fn insert_persons_and_characters(
