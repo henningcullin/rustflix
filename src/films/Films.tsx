@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 export interface Film {
   id: number;
   file: string;
-  directory: number;
+  directory: { id: number; path: string };
   link?: string;
   title?: string;
   synopsis?: string;
@@ -56,7 +56,7 @@ function Films() {
       <TableBody>
         {films.map((film) => (
           <TableRow>
-            <TableCell>{film.directory}</TableCell>
+            <TableCell>{film.directory.id}</TableCell>
             <TableCell>{film.file}</TableCell>
             <TableCell>
               <CheckBox state={film.registered} />
