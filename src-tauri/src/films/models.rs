@@ -94,7 +94,10 @@ impl Film {
             .get::<_, Option<String>>("keywords")?
             .unwrap_or_default()
             .split(',')
-            .map(|s| s.to_string())
+            .filter_map(|s| match s.len() {
+                0 => None,
+                _ => Some(s.to_string()),
+            })
             .collect();
 
         // Parse directors
