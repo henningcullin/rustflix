@@ -20,13 +20,16 @@ pub async fn store_image(
     // Create the full path where the file will be saved
     let file_path = target_path.join(format!("{}.jpg", file_name));
 
-    // Create the file and a buffered writer
-    let file = File::create(file_path)?;
-    let writer = BufWriter::new(file);
+    // Check if file already exists before attempting to create it
+    if !std::fs::metadata(&file_path).is_ok() {
+        // Create the file and a buffered writer
+        let file = File::create(file_path)?;
+        let writer = BufWriter::new(file);
 
-    // Encode the image as JPEG and save it to the specified path
-    let mut jpeg_encoder = JpegEncoder::new(writer);
-    jpeg_encoder.encode_image(&img)?;
+        // Encode the image as JPEG and save it to the specified path
+        let mut jpeg_encoder = JpegEncoder::new(writer);
+        jpeg_encoder.encode_image(&img)?;
+    }
 
     Ok(())
 }
