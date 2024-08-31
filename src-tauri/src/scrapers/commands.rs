@@ -16,7 +16,7 @@ pub async fn scrape_film(imdb_id: String, database_id: u32) -> bool {
 
     println!("{scraped_json}");
 
-    match insert_scraped_film(scraped_film) {
+    match insert_scraped_film(scraped_film).await {
         Ok(()) => true,
         Err(error) => {
             eprintln!("{error}");
