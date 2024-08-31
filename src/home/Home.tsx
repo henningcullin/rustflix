@@ -10,6 +10,7 @@ function Home() {
   async function getFilms() {
     try {
       const data: Film[] | null = await invoke('get_all_films');
+      await invoke('sync_new_films');
       if (data) setFilms(data);
       console.log(films);
     } catch (error) {
