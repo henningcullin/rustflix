@@ -257,8 +257,10 @@ fn stars(parsed_html: &Html) -> Result<Vec<ScrapedStar>, AppError> {
     Ok(stars)
 }
 
-pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
-    let conn = create_connection()?;
+pub fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
+    let mut conn = create_connection()?;
+
+    let tx = conn.transaction()?;
 
     let run_time: Option<i64> = film
         .run_time
@@ -282,7 +284,7 @@ pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
         };
     });
 
-    conn.execute(
+    tx.execute(
         r#"--sql
         UPDATE 
             films
@@ -311,7 +313,7 @@ pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
     )?;
 
     if let Some(cover_image) = &film.cover_image {
-        store_image(cover_image, &film.id.to_string(), get_cover_path()).await?;
+        let _ = store_image(cover_image, &film.id.to_string(), get_cover_path());
     }
 
     Ok(())
