@@ -19,11 +19,11 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
             f.release_date, f.plot, f.run_time, f.has_color, f.rating, 
             f.has_watched, f.left_off_point, f.registered,
             (d.id || ':' || d.path) as directory,
-            GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,
+            GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
             GROUP_CONCAT(DISTINCT k.keyword) as keywords,
-            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.avatar || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
-            GROUP_CONCAT(DISTINCT c.id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.avatar || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
+            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.name || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
+            GROUP_CONCAT(DISTINCT c.film_id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.name || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
         FROM films f
         LEFT JOIN directories d ON f.directory = d.id
         LEFT JOIN film_genres fg ON f.id = fg.film_id
@@ -33,8 +33,7 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
         LEFT JOIN film_keywords k ON f.id = k.film_id
         LEFT JOIN film_directors fd ON f.id = fd.film_id
         LEFT JOIN persons p ON fd.person_id = p.id
-        LEFT JOIN film_characters fc ON f.id = fc.film_id
-        LEFT JOIN characters c ON fc.character_id = c.id
+        LEFT JOIN characters c ON f.id = c.film_id
         LEFT JOIN persons ap ON c.actor = ap.id
             GROUP BY f.id
     "#)?;
@@ -55,13 +54,13 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
             f.release_date, f.plot, f.run_time, f.has_color, f.rating, 
             f.has_watched, f.left_off_point, f.registered,
             (d.id || ':' || d.path) as directory,
-            GROUP_CONCAT(DISTINCT g.id || ':' || g.path) as genres,
+            GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
             GROUP_CONCAT(DISTINCT k.keyword) as keywords,
-            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.avatar || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
-            GROUP_CONCAT(DISTINCT c.id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.avatar || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
+            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.name || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
+            GROUP_CONCAT(DISTINCT c.film_id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.name || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
         FROM films f
-        INNER JOIN directories d ON f.directory = d.id
+        LEFT JOIN directories d ON f.directory = d.id
         LEFT JOIN film_genres fg ON f.id = fg.film_id
         LEFT JOIN genres g ON fg.genre_id = g.id
         LEFT JOIN film_languages fl ON f.id = fl.film_id
@@ -69,8 +68,7 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
         LEFT JOIN film_keywords k ON f.id = k.film_id
         LEFT JOIN film_directors fd ON f.id = fd.film_id
         LEFT JOIN persons p ON fd.person_id = p.id
-        LEFT JOIN film_characters fc ON f.id = fc.film_id
-        LEFT JOIN characters c ON fc.character_id = c.id
+        LEFT JOIN characters c ON f.id = c.film_id
         LEFT JOIN persons ap ON c.actor = ap.id
             WHERE f.id = ?1")?;
     let film = stmt.query_row([id], |row| Ok(Film::from_row(row)?))?;

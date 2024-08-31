@@ -292,7 +292,7 @@ pub async fn insert_scraped_film(film: ScrapedFilm) -> Result<(), AppError> {
             release_date = $3,
             plot = $4,
             run_time = $5,
-            color = $6,
+            has_color = $6,
             rating = $7,
             registered = 1
         WHERE
