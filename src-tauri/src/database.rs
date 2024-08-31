@@ -104,8 +104,8 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         r#"--sql
         CREATE TABLE IF NOT EXISTS characters (
             film_id INTEGER NOT NULL,
-            actor INTEGER NOT NULL,
             description TEXT NOT NULL,
+            actor INTEGER NOT NULL,
             FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
             FOREIGN KEY (actor) REFERENCES persons(id) ON DELETE CASCADE,
             PRIMARY KEY (film_id, actor)
@@ -124,7 +124,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
             release_date    TEXT,
             plot            TEXT,
             run_time        INTEGER,
-            has_color           INTEGER,
+            has_color       INTEGER,
             rating          REAL,
             has_watched     INTEGER NOT NULL DEFAULT 0,
             left_off_point  INTEGER NOT NULL DEFAULT 0,
