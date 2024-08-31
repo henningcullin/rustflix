@@ -407,29 +407,6 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
         }
     }
 
-    // Handle persons and characters synchronously
-    let persons_with_avatars = match insert_persons_and_characters(&tx, &film) {
-        Ok(persons) => persons,
-        Err(e) => {
-            eprintln!("Failed to insert persons and characters: {:?}", e);
-            tx.rollback()?;
-            return Err(e);
-        }
-    };
-
-    // Commit the transaction
-    if let Err(e) = tx.commit() {
-        eprintln!("Failed to commit transaction: {:?}", e);
-        return Err(AppError::from(e));
-    }
-
-    Ok(persons_with_avatars)
-}
-
-fn insert_persons_and_characters(
-    tx: &Transaction<'_>,
-    film: &ScrapedFilm,
-) -> Result<Vec<(i64, String)>, AppError> {
     let mut persons_with_avatars = Vec::new();
 
     // Insert directors
@@ -515,6 +492,14 @@ fn insert_persons_and_characters(
             );
             continue;
         }
+    }
+
+    // Handle persons and characters synchronously
+
+    // Commit the transaction
+    if let Err(e) = tx.commit() {
+        eprintln!("Failed to commit transaction: {:?}", e);
+        return Err(AppError::from(e));
     }
 
     Ok(persons_with_avatars)
