@@ -22,8 +22,15 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
             GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
             GROUP_CONCAT(DISTINCT k.keyword) as keywords,
-            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.name || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
-            GROUP_CONCAT(DISTINCT c.film_id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.name || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
+            GROUP_CONCAT(DISTINCT 
+                COALESCE(p.id, '') || ':' || COALESCE(p.imdb_id, '') || ':' || COALESCE(p.name, '') || ':' || 
+                COALESCE(p.age, '') || ':' || COALESCE(p.gender, '') || ':' || COALESCE(p.birthplace, '')
+            ) as directors,
+            GROUP_CONCAT(DISTINCT 
+                COALESCE(c.film_id, '') || ':' || COALESCE(c.description, '') || ':' || COALESCE(ap.id, '') || ':' || 
+                COALESCE(ap.imdb_id, '') || ':' || COALESCE(ap.name, '') || ':' || COALESCE(ap.age, '') || ':' || 
+                COALESCE(ap.gender, '') || ':' || COALESCE(ap.birthplace, '')
+            ) as stars
         FROM films f
         LEFT JOIN directories d ON f.directory = d.id
         LEFT JOIN film_genres fg ON f.id = fg.film_id
@@ -57,8 +64,15 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
             GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
             GROUP_CONCAT(DISTINCT k.keyword) as keywords,
-            GROUP_CONCAT(DISTINCT p.id || ':' || p.imdb_id || ':' || p.name || ':' || p.age || ':' || p.gender || ':' || p.birthplace) as directors,
-            GROUP_CONCAT(DISTINCT c.film_id || ':' || c.description || ':' || ap.id || ':' || ap.imdb_id || ':' || ap.name || ':' || ap.age || ':' || ap.gender || ':' || ap.birthplace) as stars
+            GROUP_CONCAT(DISTINCT 
+                COALESCE(p.id, '') || ':' || COALESCE(p.imdb_id, '') || ':' || COALESCE(p.name, '') || ':' || 
+                COALESCE(p.age, '') || ':' || COALESCE(p.gender, '') || ':' || COALESCE(p.birthplace, '')
+            ) as directors,
+            GROUP_CONCAT(DISTINCT 
+                COALESCE(c.film_id, '') || ':' || COALESCE(c.description, '') || ':' || COALESCE(ap.id, '') || ':' || 
+                COALESCE(ap.imdb_id, '') || ':' || COALESCE(ap.name, '') || ':' || COALESCE(ap.age, '') || ':' || 
+                COALESCE(ap.gender, '') || ':' || COALESCE(ap.birthplace, '')
+            ) as stars
         FROM films f
         LEFT JOIN directories d ON f.directory = d.id
         LEFT JOIN film_genres fg ON f.id = fg.film_id
@@ -129,6 +143,86 @@ pub fn sync_new_films() -> Result<(), AppError> {
             }
         }
     }
+
+    /* print_all_tables(&conn)?; */
+
+    Ok(())
+}
+
+// DEBUG FUNCTION
+pub fn _print_all_tables(conn: &rusqlite::Connection) -> Result<(), AppError> {
+    // Define the list of tables and their respective queries
+    let tables = vec![
+        ("directories", "SELECT * FROM directories"),
+        ("genres", "SELECT * FROM genres"),
+        ("languages", "SELECT * FROM languages"),
+        ("persons", "SELECT * FROM persons"),
+        ("characters", "SELECT * FROM characters"),
+        ("films", "SELECT * FROM films"),
+        ("film_genres", "SELECT * FROM film_genres"),
+        ("film_languages", "SELECT * FROM film_languages"),
+        ("film_keywords", "SELECT * FROM film_keywords"),
+        ("film_directors", "SELECT * FROM film_directors"),
+    ];
+
+    for (table_name, query) in tables {
+        println!("--- Contents of table: {} ---", table_name);
+
+        let mut stmt = conn.prepare(query)?;
+
+        // Get the column names before iterating over the rows
+        let column_names: Vec<String> = (0..stmt.column_count())
+            .map(|i| stmt.column_name(i).unwrap_or("").to_string())
+            .collect();
+
+        let rows = stmt.query_map([], |row| {
+            let mut values = Vec::new();
+            for i in 0..row.as_ref().column_count() {
+                values.push(row.get::<usize, rusqlite::types::Value>(i)?);
+            }
+            Ok(values)
+        })?;
+
+        for row in rows {
+            match row {
+                Ok(values) => {
+                    for (i, value) in values.iter().enumerate() {
+                        print!("{}: {:?} ", column_names[i], value);
+                    }
+                    println!();
+                }
+                Err(e) => println!("Failed to retrieve row: {:?}", e),
+            }
+        }
+        println!(); // Add an empty line for better readability
+    }
+
+    let test_row_1 = conn.query_row(
+        r#"
+    SELECT persons.name
+        FROM persons
+    JOIN characters ON persons.id = characters.actor
+        WHERE characters.film_id = 5;
+    "#,
+        [],
+        |row| row.get::<_, String>(0),
+    )?;
+
+    println!("{:?}", test_row_1);
+
+    let test_row_2 = conn.query_row(
+        r#"
+    SELECT p.name, c.description
+    FROM persons p
+    JOIN characters c ON p.id = c.actor
+    JOIN films f ON c.film_id = f.id
+    WHERE f.title IS NOT NULL;
+    "#,
+        [],
+        |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+    )?;
+
+    println!("{:?}", test_row_2);
 
     Ok(())
 }
