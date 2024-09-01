@@ -1,5 +1,5 @@
 use html_escape::decode_html_entities;
-use rusqlite::{params, Transaction};
+use rusqlite::params;
 use scraper::{Html, Selector};
 use std::num::ParseIntError;
 
