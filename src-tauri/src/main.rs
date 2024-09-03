@@ -14,6 +14,7 @@ mod scrapers;
 
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film, sync_new_films};
+use images::{get_avatar, get_cover};
 use scrapers::scrape_film;
 
 #[tauri::command]
@@ -43,7 +44,10 @@ fn main() {
             // MISC
             fetch_data,
             // SCRAPER
-            scrape_film
+            scrape_film,
+            // IMAGES
+            get_avatar,
+            get_cover
         ])
         .setup(|_app| {
             match database::initialize_database() {

@@ -3118,6 +3118,7 @@ dependencies = [
 name = "rustflix"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "dirs",
  "html-escape",

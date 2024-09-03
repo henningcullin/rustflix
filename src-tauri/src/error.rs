@@ -17,6 +17,7 @@ pub enum AppError {
     ScrapeError(String),
     ImageError(ImageError),
     IoError(IoError),
+    StringError(String),
 }
 
 impl AppError {
@@ -61,6 +62,12 @@ impl From<IoError> for AppError {
     }
 }
 
+impl From<String> for AppError {
+    fn from(value: String) -> Self {
+        Self::StringError(value)
+    }
+}
+
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -71,6 +78,7 @@ impl fmt::Display for AppError {
             Self::ReqwestError(ref err) => write!(f, "Reqwest error: {}", err),
             Self::ImageError(ref err) => write!(f, "Image error: {}", err),
             Self::IoError(ref err) => write!(f, "IO error: {}", err),
+            Self::StringError(ref err) => write!(f, "IO error: {}", err),
         }
     }
 }
@@ -85,6 +93,7 @@ impl std::error::Error for AppError {
             Self::ReqwestError(ref err) => Some(err),
             Self::ImageError(ref err) => Some(err),
             Self::IoError(ref err) => Some(err),
+            Self::StringError(_) => None,
         }
     }
 }

@@ -1,8 +1,12 @@
+use base64::engine::general_purpose;
+use base64::Engine;
 use image::codecs::jpeg::JpegEncoder;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::BufWriter;
 use std::path::PathBuf;
+use tauri::command;
 
+use crate::database::{get_avatar_path, get_cover_path};
 use crate::error::AppError;
 
 pub async fn store_image(
@@ -32,4 +36,33 @@ pub async fn store_image(
     }
 
     Ok(())
+}
+
+fn image_to_base64(path: PathBuf) -> Result<String, String> {
+    match fs::read(&path) {
+        Ok(image_data) => {
+            let base64_data = general_purpose::STANDARD.encode(&image_data);
+            let mime_type = if path.extension().unwrap_or_default() == "jpg" {
+                "image/jpeg"
+            } else {
+                "image/png"
+            };
+            Ok(format!("data:{};base64,{}", mime_type, base64_data))
+        }
+        Err(e) => Err(format!("Failed to read image: {}", e)),
+    }
+}
+
+#[command]
+pub fn get_avatar(id: u32) -> Result<String, String> {
+    let path = get_avatar_path();
+    let image_path = path.join(format!("{}.jpg", id));
+    image_to_base64(image_path)
+}
+
+#[command]
+pub fn get_cover(id: u32) -> Result<String, String> {
+    let path = get_cover_path();
+    let image_path = path.join(format!("{}.jpg", id));
+    image_to_base64(image_path)
 }
