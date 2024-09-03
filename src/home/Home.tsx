@@ -1,41 +1,44 @@
-import { Film } from '@/films/Films';
 import { filmAtom } from '@/lib/atoms';
+import { Film } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useQuery } from 'react-query';
 
 function Home() {
   const [films, setFilms] = useAtom(filmAtom);
 
-  async function getFilms() {
-    try {
-      const data: Film[] | null = await invoke('get_all_films');
-      await invoke('sync_new_films');
-      if (data) setFilms(data);
-      console.log(films);
-    } catch (error) {
-      console.error('Failed to fetch films:', error);
+  const { error, isLoading } = useQuery<Film[], Error>(
+    'films',
+    async () => {
+      const data = await invoke<Film[]>('get_all_films');
+      return data || [];
+    },
+    {
+      onSuccess: (data) => {
+        setFilms(data);
+      },
     }
+  );
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  useEffect(() => {
-    getFilms();
-  }, []);
+  if (error) {
+    return <div>Error fetching films: {error.message}</div>;
+  }
 
   return (
-    <>
-      <div>
-        {films
-          .filter((film) => film.registered)
-          .map((film) => (
-            <div key={film.id}>
-              <h2>{film.title}</h2>
-              <p>File: {film.file}</p>
-              <p>Link: {film.link}</p>
-            </div>
-          ))}
-      </div>
-    </>
+    <div>
+      {films
+        .filter((film) => film.registered)
+        .map((film) => (
+          <div key={film.id}>
+            <h2>{film.title}</h2>
+            <p>File: {film.file}</p>
+          </div>
+        ))}
+    </div>
   );
 }
 

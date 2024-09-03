@@ -1,6 +1,6 @@
 import { Directory } from '@/directories/Directories';
-import { Film } from '@/films/Films';
 import { atom } from "jotai";
+import { Film } from './types';
 
 export const directoryAtom = atom<Directory[]>([]);
 
