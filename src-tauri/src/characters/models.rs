@@ -5,8 +5,8 @@ use crate::persons::Person;
 #[derive(Debug, Serialize)]
 pub struct Character {
     pub film_id: u32,
-    pub actor: Person,
     pub description: String,
+    pub actor: Person,
 }
 
 impl Character {
