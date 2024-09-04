@@ -1,6 +1,8 @@
 use html_escape::decode_html_entities;
+use reqwest::{header::HeaderMap, Client};
 use rusqlite::params;
 use scraper::{Html, Selector};
+use std::collections::HashMap;
 use std::num::ParseIntError;
 
 use crate::{database::create_connection, error::AppError};
@@ -9,7 +11,15 @@ use super::{ScrapedDirector, ScrapedFilm, ScrapedStar};
 
 pub async fn scrape_film(imdb_id: String, database_id: u32) -> Result<ScrapedFilm, AppError> {
     let url = format!("https://www.imdb.com/title/{}/", imdb_id);
-    let raw_html = get_page(&url).await?;
+
+    // TODO: let user chose region
+    // option 1 (easy): Let user choose between local or US
+    // option 2 (complicated): Let user choose any region based on imdb languages
+
+    let mut cookies = HashMap::new();
+    cookies.insert("lc-main".to_string(), "en_US".to_string());
+
+    let raw_html = get_page(&url, None, Some(cookies)).await?;
     let parsed_html = Html::parse_document(&raw_html);
 
     let data_object = get_data_object(&parsed_html)?;
@@ -47,8 +57,31 @@ pub async fn scrape_film(imdb_id: String, database_id: u32) -> Result<ScrapedFil
     Ok(info)
 }
 
-async fn get_page(url: &str) -> Result<String, AppError> {
-    let response = reqwest::get(url).await?;
+async fn get_page(
+    url: &str,
+    headers: Option<HeaderMap>,
+    cookies: Option<HashMap<String, String>>,
+) -> Result<String, AppError> {
+    let client = Client::new();
+    let mut request = client.get(url);
+
+    // Add headers if provided
+    if let Some(headers) = headers {
+        request = request.headers(headers);
+    }
+
+    // Add cookies if provided
+    if let Some(cookies) = cookies {
+        let cookie_header = cookies
+            .into_iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<_>>()
+            .join("; ");
+
+        request = request.header("Cookie", cookie_header);
+    }
+
+    let response = request.send().await?;
     let html = response.text().await?;
     Ok(html)
 }
