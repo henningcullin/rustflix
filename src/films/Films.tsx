@@ -46,7 +46,7 @@ function Films() {
 
   return (
     <>
-      <div>
+      <div className='pt-12 p-4'>
         <Button onClick={syncNewFilms}>Sync new films</Button>
       </div>
       <Table>

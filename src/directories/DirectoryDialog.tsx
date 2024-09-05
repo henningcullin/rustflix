@@ -50,9 +50,9 @@ export function DirectoryDialog({ children }: { children: ReactElement }) {
       <DialogTrigger>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader></DialogHeader>
-        <div style={{ width: '450px', padding: '0.5em' }}>
+        <div className='w-[450px] p-1'>
           <Label>Directory</Label>
-          <div style={{ display: 'flex', gap: '5px' }}>
+          <div className='flex gap-4'>
             <Input value={directory} readOnly disabled />
             <Button onClick={selectDirectory}>Select Directory</Button>
           </div>
