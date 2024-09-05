@@ -6,6 +6,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 
 function Home() {
+  // TODO:
+  // - EditFilm make all fields viewable and editable
+  // - ViewFilm/Film component for user friendly film details
+  // - optimize rendering
+  // - make image commands downscale images
+
   const {
     data: films,
     error,
