@@ -1,5 +1,9 @@
+import { useParams } from 'react-router-dom';
+
 function Film() {
-  return <b>Film</b>;
+  const { filmId } = useParams();
+
+  return <b>filmId: {filmId}</b>;
 }
 
 export default Film;
