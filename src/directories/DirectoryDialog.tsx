@@ -1,10 +1,5 @@
-import { directoryAtom } from '@/lib/atoms';
-
 import { invoke } from '@tauri-apps/api/tauri';
 import { ReactElement, useState } from 'react';
-
-import { useAtom } from 'jotai';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,24 +9,33 @@ import {
   DialogHeader,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Directory } from './Directories';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Directory } from '@/lib/types';
 
 export function DirectoryDialog({ children }: { children: ReactElement }) {
   const [directory, setDirectory] = useState<string>('');
-  const [directories, setDirectories] = useAtom(directoryAtom);
+  const [open, setOpen] = useState(false); // For controlling the dialog state
+  const queryClient = useQueryClient();
 
-  async function addDirectory(path: string) {
-    try {
-      const dir: Directory | null = await invoke('add_directory', { path });
-      if (dir) {
-        setDirectory('');
-        setDirectories([...directories, dir]);
-      }
-    } catch (error) {
+  // Mutation to add a directory
+  const addDirectoryMutation = useMutation<Directory, Error, string>({
+    mutationFn: async (path: string) => {
+      const dir = await invoke<Directory>('add_directory', { path });
+      return dir;
+    },
+    onSuccess: () => {
+      // Invalidate the 'directories' query to trigger refetching in the table
+      queryClient.invalidateQueries({ queryKey: ['directories'] });
+      // Clear the directory input and close the dialog
+      setDirectory('');
+      setOpen(false);
+    },
+    onError: (error: Error) => {
       console.error('Failed to add directory', error);
-    }
-  }
+    },
+  });
 
+  // Function to select a directory
   async function selectDirectory() {
     try {
       const path: string | null = await invoke('select_directory');
@@ -42,17 +46,23 @@ export function DirectoryDialog({ children }: { children: ReactElement }) {
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader></DialogHeader>
-        <div style={{ width: '450px' }}>
+        <div style={{ width: '450px', padding: '0.5em' }}>
           <Label>Directory</Label>
           <div style={{ display: 'flex', gap: '5px' }}>
             <Input value={directory} readOnly disabled />
             <Button onClick={selectDirectory}>Select Directory</Button>
           </div>
-          <Button onClick={() => addDirectory(directory)}>Add Directory</Button>
+          <br />
+          <Button
+            onClick={() => addDirectoryMutation.mutate(directory)}
+            disabled={!directory || addDirectoryMutation.isPending}
+          >
+            {addDirectoryMutation.isPending ? 'Adding...' : 'Add Directory'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
