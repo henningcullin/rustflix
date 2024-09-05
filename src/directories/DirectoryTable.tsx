@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -15,37 +14,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
 import { invoke } from '@tauri-apps/api/tauri';
-import { Directory } from './Directories';
-import { useAtom } from 'jotai';
-import { directoryAtom } from '@/lib/atoms';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Directory } from '@/lib/types';
 
 export function DirectoryTable() {
-  const [directories, setDirectories] = useAtom(directoryAtom);
+  const queryClient = useQueryClient();
 
-  async function getDirectories() {
-    try {
-      const data: Directory[] | null = await invoke('get_all_directories');
-      if (data) setDirectories(data);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // Fetch directories using useQuery
+  const {
+    data: directories,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<Directory[], Error>({
+    queryFn: async () => {
+      const data = await invoke<Directory[]>('get_all_directories');
+      return data || [];
+    },
+    queryKey: ['directories'],
+  });
 
-  async function deleteDirectory(id: number) {
-    try {
-      const wasDeleted: boolean = await invoke('delete_directory', { id });
-      if (wasDeleted) setDirectories(directories.filter((d) => d.id !== id));
-    } catch (error) {
+  // Mutation to delete a directory
+  const deleteDirectoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const wasDeleted = await invoke<boolean>('delete_directory', { id });
+      return wasDeleted;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch the directories query after successful deletion
+      queryClient.invalidateQueries({ queryKey: ['directories'] });
+    },
+    onError: (error: Error) => {
       console.error('Failed to delete directory', error);
-    }
-  }
-
-  useEffect(() => {
-    getDirectories();
-  }, []);
+    },
+  });
 
   return (
     <Table>
@@ -56,27 +61,51 @@ export function DirectoryTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {directories.map((directory) => (
+        {isLoading ? (
           <TableRow>
-            <TableCell>{directory.path}</TableCell>
             <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <DotsVerticalIcon />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => deleteDirectory(directory.id)}
-                  >
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Skeleton />
+            </TableCell>
+            <TableCell>
+              <Skeleton />
             </TableCell>
           </TableRow>
-        ))}
+        ) : isError ? (
+          <TableRow>
+            <TableCell>{error.message}</TableCell>
+          </TableRow>
+        ) : directories?.length ? (
+          directories.map((directory) => (
+            <TableRow key={directory.id}>
+              <TableCell>{directory.path}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <DotsVerticalIcon />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() =>
+                        deleteDirectoryMutation.mutate(directory.id)
+                      }
+                      disabled={deleteDirectoryMutation.isPending}
+                    >
+                      {deleteDirectoryMutation.isPending
+                        ? 'Deleting...'
+                        : 'Delete'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell>No directories found</TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
