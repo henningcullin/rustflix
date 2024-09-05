@@ -1,8 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Film } from '../Films';
-import { invoke } from '@tauri-apps/api/tauri';
 import { useParams } from 'react-router-dom';
-
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +16,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -29,6 +24,10 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invoke } from '@tauri-apps/api/tauri';
+import { Film } from '@/lib/types';
+import { useEffect } from 'react';
 
 const formSchema = z.object({
   link: z.string(),
@@ -42,16 +41,79 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 function EditFilm() {
-  const [film, setFilm] = useState<Film>();
-
   const { filmId } = useParams();
+  const queryClient = useQueryClient();
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      link: '',
       title: '',
+      synopsis: '',
+      release_date: new Date(),
+      duration: 0,
+      cover_image: '',
     },
   });
+
+  // Fetch film details using useQuery
+  const {
+    data: film,
+    isLoading: isFetchingFilm,
+    isError: isFilmError,
+  } = useQuery<Film, Error>({
+    queryKey: ['film', filmId],
+    queryFn: async () => {
+      if (!filmId) throw new Error('Invalid filmId');
+      const id = parseInt(filmId);
+      if (isNaN(id)) throw new Error('Invalid filmId');
+      const result = await invoke<Film>('get_film', { id });
+      if (!result) throw new Error('Film not found');
+      return result;
+    },
+    enabled: !!filmId,
+  });
+
+  // Update form when film data is available
+  useEffect(() => {
+    /* if (film) {
+      form.reset({
+        link: film.link,
+        title: film.title,
+        synopsis: film.synopsis,
+        release_date: new Date(film.release_date),
+        duration: film.duration,
+        cover_image: film.cover_image,
+      });
+    } */
+  }, [film, form]);
+
+  // Mutation for scraping film
+  const scrapeFilmMutation = useMutation<
+    boolean,
+    Error,
+    { imdbId: string; databaseId: number }
+  >({
+    mutationFn: async ({ imdbId, databaseId }) => {
+      return invoke<boolean>('scrape_film', { imdbId, databaseId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['film', filmId] });
+      queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+    onError: (error) => {
+      console.error('Scraping failed:', error);
+    },
+  });
+
+  // Handling the film selection
+  const handleFilmSelect = (imdbId: string | undefined) => {
+    if (!filmId || !imdbId) return;
+    const databaseId = parseInt(filmId);
+    if (isNaN(databaseId)) return;
+
+    scrapeFilmMutation.mutate({ imdbId, databaseId });
+  };
 
   function onSuccess(values: FormSchema) {
     console.log(values);
@@ -61,36 +123,14 @@ function EditFilm() {
     console.log('error');
   }
 
-  async function getFilm(id: number) {
-    try {
-      const data: Film | undefined = await invoke('get_film', { id });
-      if (data) setFilm(data);
-    } catch (error) {
-      console.error('Could not get film', error);
-    }
-  }
+  if (isFetchingFilm) return <p>Loading film data...</p>;
 
-  useEffect(() => {
-    if (typeof filmId !== 'string') return;
-    const id = parseInt(filmId);
-    if (typeof id !== 'number') return;
-    getFilm(id);
-  }, [filmId]);
+  if (isFilmError) return <p>Failed to load film.</p>;
 
   return (
     <div>
-      <SelectFilmPopup
-        onSelect={async (imdbId) => {
-          if (typeof filmId !== 'string' || typeof imdbId !== 'string') return;
-          const databaseId = parseInt(filmId);
-          if (!Number.isInteger(databaseId)) return;
-          invoke('scrape_film', {
-            imdbId,
-            databaseId,
-          });
-        }}
-        filePath={film?.file}
-      />
+      <SelectFilmPopup onSelect={handleFilmSelect} filePath={film?.file} />
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSuccess, onError)}
@@ -109,7 +149,7 @@ function EditFilm() {
                 <FormMessage />
               </FormItem>
             )}
-          ></FormField>
+          />
           <FormField
             control={form.control}
             name='title'
@@ -185,7 +225,9 @@ function EditFilm() {
               </FormItem>
             )}
           />
-          <Button type='submit'>Submit</Button>
+          <Button type='submit' disabled={scrapeFilmMutation.isPending}>
+            {scrapeFilmMutation.isPending ? 'Scraping...' : 'Submit'}
+          </Button>
         </form>
       </Form>
     </div>
