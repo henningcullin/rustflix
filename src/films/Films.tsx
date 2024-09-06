@@ -101,14 +101,10 @@ function Films() {
 }
 
 function CheckBox({ state }: { state: boolean }) {
-  return (
-    <>
-      {state ? (
-        <CheckIcon className='text-green-700 w-6 h-6' />
-      ) : (
-        <Cross2Icon className='text-red-700 w-6 h-6' />
-      )}
-    </>
+  return state ? (
+    <CheckIcon className='text-green-700 w-8 h-8' />
+  ) : (
+    <Cross2Icon className='text-red-700 w-8 h-8' />
   );
 }
 
