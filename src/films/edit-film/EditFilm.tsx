@@ -28,17 +28,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Film } from '@/lib/types';
 import { useEffect } from 'react';
-
-const formSchema = z.object({
-  link: z.string(),
-  title: z.string(),
-  synopsis: z.string(),
-  release_date: z.date(),
-  duration: z.number(),
-  cover_image: z.string(),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
+import { formSchema, FormSchema } from './formUtils';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -47,12 +37,24 @@ function EditFilm() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      link: '',
+      id: '',
+      file: '',
+      directory: '',
+      imdb_id: '',
       title: '',
-      synopsis: '',
       release_date: new Date(),
-      duration: 0,
-      cover_image: '',
+      plot: '',
+      run_time: 0,
+      has_color: false,
+      rating: 0,
+      has_watched: false,
+      left_off_point: 0,
+      registered: false,
+      genres: [],
+      directors: [],
+      stars: [],
+      languages: [],
+      keywords: [],
     },
   });
 
@@ -75,18 +77,7 @@ function EditFilm() {
   });
 
   // Update form when film data is available
-  useEffect(() => {
-    /* if (film) {
-      form.reset({
-        link: film.link,
-        title: film.title,
-        synopsis: film.synopsis,
-        release_date: new Date(film.release_date),
-        duration: film.duration,
-        cover_image: film.cover_image,
-      });
-    } */
-  }, [film, form]);
+  useEffect(() => {}, [film, form]);
 
   // Mutation for scraping film
   const scrapeFilmMutation = useMutation<
