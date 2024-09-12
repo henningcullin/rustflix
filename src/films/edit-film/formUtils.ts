@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
 export const formSchema = z.object({
-    id: z.string(),
-    file: z.string().optional(),
-    directory: z.string().optional(),
     imdb_id: z.string(),
     title: z.string(),
     release_date: z.date(),
