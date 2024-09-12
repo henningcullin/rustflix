@@ -42,60 +42,62 @@ function Films() {
     },
   });
 
-  if (isError) return <div>{error.message}</div>;
-
   return (
     <>
       <div className='pt-12 p-4'>
         <Button onClick={syncNewFilms}>Sync new films</Button>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Directory</TableHead>
-            <TableHead>Path</TableHead>
-            <TableHead>Registered</TableHead>
-            <TableHead>Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
+      {isError ? (
+        <div>An error occured when retrieving the films</div>
+      ) : (
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell>
-                <Skeleton />
-              </TableCell>
-              <TableCell>
-                <Skeleton />
-              </TableCell>
-              <TableCell>
-                <Skeleton />
-              </TableCell>
-              <TableCell>
-                <Skeleton />
-              </TableCell>
+              <TableHead>Directory</TableHead>
+              <TableHead>Path</TableHead>
+              <TableHead>Registered</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
-          ) : films ? (
-            films.map((film) => (
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
               <TableRow>
-                <TableCell>{film.directory.id}</TableCell>
-                <TableCell>{film.file}</TableCell>
                 <TableCell>
-                  <CheckBox state={film.registered} />
+                  <Skeleton />
                 </TableCell>
                 <TableCell>
-                  <Link to={`/film/edit/${film.id}`}>
-                    <Pencil2Icon /> Edit
-                  </Link>
+                  <Skeleton />
+                </TableCell>
+                <TableCell>
+                  <Skeleton />
+                </TableCell>
+                <TableCell>
+                  <Skeleton />
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell>No films found</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ) : films ? (
+              films.map((film) => (
+                <TableRow>
+                  <TableCell>{film.directory.id}</TableCell>
+                  <TableCell>{film.file}</TableCell>
+                  <TableCell>
+                    <CheckBox state={film.registered} />
+                  </TableCell>
+                  <TableCell>
+                    <Link to={`/film/edit/${film.id}`}>
+                      <Pencil2Icon /> Edit
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell>No films found</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
     </>
   );
 }
