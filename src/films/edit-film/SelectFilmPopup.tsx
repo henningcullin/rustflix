@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import FilmList from './FilmList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { getFilmName } from '@/lib/utils';
 
 interface Arguments {
   onSelect: (imdb_id: string | undefined) => void;
@@ -49,15 +50,6 @@ async function searchFilms(searchValue: string): Promise<SearchItem[]> {
   const items = parsed.d;
   const filmItems = items.filter((item) => item.id.includes('tt'));
   return filmItems;
-}
-/**
- * Sanitze filenames in attempt to get a search term for the film
- */
-function getFilmName(filePath: string | undefined): string {
-  const fileName = filePath?.split('\\')?.pop();
-  const value = // @ts-ignore
-    fileName?.replace(/\.\d{4}.*\.(mp4|mkv)$/, '')?.replaceAll('.', ' ') ?? '';
-  return value;
 }
 
 function SelectFilmPopup({ onSelect, filePath }: Arguments) {
