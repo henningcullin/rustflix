@@ -120,7 +120,28 @@ function EditFilm() {
 
   return (
     <div>
-      <SelectFilmPopup onSelect={handleFilmSelect} filePath={film?.file} />
+      <div className='container mx-auto rounded-md border p-12'>
+        <div className='pb-4 text-3xl font-bold'>Film</div>
+        <ValueDisplay
+          label='Id'
+          value={film?.id?.toString()}
+          icon={<IdCardIcon className='h-6 w-6' aria-label='Id Card Icon' />}
+        />
+        <ValueDisplay
+          label='Directory'
+          value={film?.directory?.path}
+          icon={
+            <DirectoryIcon className='h-6 w-6' aria-label='Directory Icon' />
+          }
+        />
+        <ValueDisplay
+          label='File'
+          value={film?.file}
+          icon={<FileIcon className='h-6 w-6' aria-label='File Icon' />}
+        />
+      </div>
+
+      <Separator className='mt-8 mb-8' />
 
       <Form {...form}>
         <form
