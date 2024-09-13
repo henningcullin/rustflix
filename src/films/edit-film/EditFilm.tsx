@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,11 +17,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from '@radix-ui/react-icons';
+import { CalendarIcon, FileIcon, IdCardIcon } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,6 +28,10 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Film } from '@/lib/types';
 import { useEffect } from 'react';
 import { formSchema, FormSchema } from './formUtils';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import DirectoryIcon from '@/components/icons/DirectoryIcon';
+import ValueDisplay from './ValueDisplay';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -37,9 +40,6 @@ function EditFilm() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: '',
-      file: '',
-      directory: '',
       imdb_id: '',
       title: '',
       release_date: new Date(),
@@ -146,18 +146,24 @@ function EditFilm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSuccess, onError)}
-          className='max-w-96 space-y-6 p-5'
+          className='container mx-auto'
         >
           <FormField
             control={form.control}
-            name='link'
+            name='imdb_id'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Link</FormLabel>
+                <FormLabel>IMDB Id</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter the link' {...field} />
+                  <div className='flex gap-3'>
+                    <Input placeholder='' {...field} />
+                    <SelectFilmPopup
+                      onSelect={handleFilmSelect}
+                      filePath={film?.file}
+                    />
+                  </div>
                 </FormControl>
-                <FormDescription>Link to imdb source</FormDescription>
+                <FormDescription>The id of the film on IMDB</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -178,21 +184,19 @@ function EditFilm() {
           />
           <FormField
             control={form.control}
-            name='synopsis'
+            name='plot'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Synopsis</FormLabel>
+                <FormLabel>Plot</FormLabel>
                 <FormControl>
-                  <Textarea placeholder='Enter the synopsis' {...field} />
+                  <Textarea placeholder='Enter the plot' {...field} />
                 </FormControl>
-                <FormDescription>
-                  Synopsis of the motion picture
-                </FormDescription>
+                <FormDescription>Plot of the motion picture</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name='release_date'
             render={({ field }) => (
@@ -236,7 +240,7 @@ function EditFilm() {
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
           <Button type='submit' disabled={scrapeFilmMutation.isPending}>
             {scrapeFilmMutation.isPending ? 'Scraping...' : 'Submit'}
           </Button>
