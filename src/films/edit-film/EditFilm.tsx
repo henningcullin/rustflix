@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, getFilmName } from '@/lib/utils';
 import { CalendarIcon, FileIcon, IdCardIcon } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
@@ -28,7 +28,6 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Film } from '@/lib/types';
 import { useEffect } from 'react';
 import { formSchema, FormSchema } from './formUtils';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import DirectoryIcon from '@/components/icons/DirectoryIcon';
 import ValueDisplay from './ValueDisplay';
@@ -121,7 +120,12 @@ function EditFilm() {
   return (
     <div>
       <div className='container mx-auto rounded-md border p-12'>
-        <div className='pb-4 text-3xl font-bold'>Film</div>
+        <div className='pb-4 text-3xl font-bold'>
+          Editing film
+          {getFilmName(film?.file)?.length
+            ? `: ${getFilmName(film?.file)}`
+            : ''}
+        </div>
         <ValueDisplay
           label='Id'
           value={film?.id?.toString()}
@@ -196,7 +200,7 @@ function EditFilm() {
               </FormItem>
             )}
           />
-          {/* <FormField
+          <FormField
             control={form.control}
             name='release_date'
             render={({ field }) => (
@@ -240,7 +244,7 @@ function EditFilm() {
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
+          />
           <Button type='submit' disabled={scrapeFilmMutation.isPending}>
             {scrapeFilmMutation.isPending ? 'Scraping...' : 'Submit'}
           </Button>
