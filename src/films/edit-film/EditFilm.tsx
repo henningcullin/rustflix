@@ -49,7 +49,6 @@ function EditFilm() {
       rating: 0,
       has_watched: false,
       left_off_point: 0,
-      registered: false,
       genres: [],
       directors: [],
       stars: [],
@@ -96,7 +95,6 @@ function EditFilm() {
         rating: film.rating,
         has_watched: film.has_watched,
         left_off_point: film.left_off_point,
-        registered: film.registered,
         genres: genreIds,
         directors: directorIds,
         stars: starIds,
@@ -295,6 +293,48 @@ function EditFilm() {
           />
           <FormField
             control={form.control}
+            name='rating'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Rating</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    step='0.1'
+                    placeholder='IMDB Rating'
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  IMDB Rating of the motion picture
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='left_off_point'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Left off point (secs)</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    step='1'
+                    placeholder='Timestamp of where viewing stopped'
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Timestamp of where viewing was stopped
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name='has_color'
             render={({ field }) => (
               <FormItem>
@@ -306,6 +346,25 @@ function EditFilm() {
                 </FormControl>
                 <FormLabel>Has color</FormLabel>
                 <FormDescription>Plot of the motion picture</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='has_watched'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel>Has watched</FormLabel>
+                <FormDescription>
+                  Has the motion picture been watched
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
