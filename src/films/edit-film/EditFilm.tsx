@@ -31,6 +31,7 @@ import { formSchema, FormSchema } from './formUtils';
 import { Separator } from '@/components/ui/separator';
 import DirectoryIcon from '@/components/icons/DirectoryIcon';
 import ValueDisplay from './ValueDisplay';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -268,6 +269,43 @@ function EditFilm() {
                 <FormDescription>
                   Release date of the motion picture
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='run_time'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Runtime (secs)</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    placeholder='Set the runtime'
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Runtime of the motion picture in seconds
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='has_color'
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel>Has color</FormLabel>
+                <FormDescription>Plot of the motion picture</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
