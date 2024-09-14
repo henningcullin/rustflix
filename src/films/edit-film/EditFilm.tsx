@@ -57,6 +57,8 @@ function EditFilm() {
     },
   });
 
+  const { reset } = form;
+
   // Fetch film details using useQuery
   const {
     data: film,
@@ -75,8 +77,33 @@ function EditFilm() {
     enabled: !!filmId,
   });
 
-  // Update form when film data is available
-  useEffect(() => {}, [film, form]);
+  useEffect(() => {
+    if (film) {
+      const genreIds = film?.genres?.map((genre) => genre.id);
+      const directorIds = film?.directors?.map((director) => director.id);
+      const starIds = film?.stars?.map((star) => star.actor.id);
+      const languageIds = film?.languages?.map((language) => language.id);
+
+      // Reset the form with the fetched film data
+      reset({
+        imdb_id: film.imdb_id,
+        title: film.title,
+        release_date: new Date(film.release_date ?? ''), // Ensure the date is a Date object
+        plot: film.plot,
+        run_time: film.run_time,
+        has_color: film.has_color,
+        rating: film.rating,
+        has_watched: film.has_watched,
+        left_off_point: film.left_off_point,
+        registered: film.registered,
+        genres: genreIds,
+        directors: directorIds,
+        stars: starIds,
+        languages: languageIds,
+        keywords: film.keywords,
+      });
+    }
+  }, [film, reset]);
 
   // Mutation for scraping film
   const scrapeFilmMutation = useMutation<
