@@ -67,9 +67,9 @@ function EditFilm() {
   } = useQuery<Film, Error>({
     queryKey: ['film', filmId],
     queryFn: async () => {
-      if (!filmId) throw new Error('Invalid filmId');
+      if (!filmId) throw new Error('No film id specified');
       const id = parseInt(filmId);
-      if (isNaN(id)) throw new Error('Invalid filmId');
+      if (isNaN(id)) throw new Error('Invalid film id');
       const result = await invoke<Film>('get_film', { id });
       if (!result) throw new Error('Film not found');
       return result;
