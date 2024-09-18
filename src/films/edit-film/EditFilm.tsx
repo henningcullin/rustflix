@@ -26,6 +26,7 @@ import {
   IdCardIcon,
   InputIcon,
   ListBulletIcon,
+  PersonIcon,
 } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
@@ -39,6 +40,14 @@ import DirectoryIcon from '@/components/icons/DirectoryIcon';
 import ValueDisplay from './ValueDisplay';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HoverCard } from '@/components/ui/hover-card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -169,12 +178,16 @@ function EditFilm() {
         <div className='grid place-items-center'>
           <TabsList>
             <TabsTrigger value='mainForm'>
-              <InputIcon />
+              <InputIcon className='mr-2' />
               Main form
             </TabsTrigger>
-            <TabsTrigger value='extraFields'>
-              <ListBulletIcon />
-              Extra fields
+            <TabsTrigger value='categories'>
+              <ListBulletIcon className='mr-2' />
+              Categories
+            </TabsTrigger>
+            <TabsTrigger value='credits'>
+              <PersonIcon className='mr-2' />
+              Credits
             </TabsTrigger>
           </TabsList>
         </div>
@@ -393,16 +406,52 @@ function EditFilm() {
             </form>
           </Form>
         </TabsContent>
-        <TabsContent value='extraFields'>
-          <div className='container mx-auto'>
-            Here we will handle:
-            <ol>
-              <li>Languages</li>
-              <li>Genres</li>
-              <li>Characters</li>
-              <li>Directors</li>
-            </ol>
+        <TabsContent value='categories' className='container mx-auto'>
+          Here we will handle:
+          <ol>
+            <li>Languages</li>
+            <li>Genres</li>
+            <li>Keywords</li>
+          </ol>
+          <div>
+            {film?.keywords?.map((keyword) => (
+              <Badge>{keyword}</Badge>
+            ))}
           </div>
+        </TabsContent>
+        <TabsContent value='credits' className='container mx-auto'>
+          <Accordion type='single' collapsible>
+            <AccordionItem value='item-1'>
+              <AccordionTrigger>Characters</AccordionTrigger>
+              <AccordionContent>
+                <ul>
+                  {film?.stars.map((star, index, stars) => (
+                    <li>
+                      <h4>{star.description}</h4>
+                      <span>Played by {star.actor.name}</span>
+                      {index < stars?.length - 1 && <Separator></Separator>}
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <Accordion type='single' collapsible>
+            <AccordionItem value='item-1'>
+              <AccordionTrigger>Directors</AccordionTrigger>
+              <AccordionContent>
+                <ul>
+                  {film?.directors.map((director, index, directors) => (
+                    <li>
+                      <h4>{director.name}</h4>
+                      <i>IMDB Id {director.imdb_id}</i>
+                      {index < directors?.length - 1 && <Separator></Separator>}
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </TabsContent>
       </Tabs>
     </div>
