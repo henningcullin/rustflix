@@ -56,11 +56,6 @@ function EditFilm() {
       rating: 0,
       has_watched: false,
       left_off_point: 0,
-      genres: [],
-      directors: [],
-      stars: [],
-      languages: [],
-      keywords: [],
     },
   });
 
@@ -86,11 +81,6 @@ function EditFilm() {
 
   useEffect(() => {
     if (film) {
-      const genreIds = film?.genres?.map((genre) => genre.id);
-      const directorIds = film?.directors?.map((director) => director.id);
-      const starIds = film?.stars?.map((star) => star.actor.id);
-      const languageIds = film?.languages?.map((language) => language.id);
-
       // Reset the form with the fetched film data
       reset({
         imdb_id: film.imdb_id,
@@ -102,11 +92,6 @@ function EditFilm() {
         rating: film.rating,
         has_watched: film.has_watched,
         left_off_point: film.left_off_point,
-        genres: genreIds,
-        directors: directorIds,
-        stars: starIds,
-        languages: languageIds,
-        keywords: film.keywords,
       });
     }
   }, [film, reset]);
