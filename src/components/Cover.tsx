@@ -9,7 +9,7 @@ interface CoverProps {
   errorText?: string;
 }
 
-const Cover: React.FC<CoverProps> = ({ id }) => {
+function Cover({ id }: CoverProps): React.ReactElement {
   const {
     data: src,
     error,
@@ -28,6 +28,6 @@ const Cover: React.FC<CoverProps> = ({ id }) => {
   }
 
   return <img src={src || ''} className='w-[375px] h-[525px]' />;
-};
+}
 
 export default Cover;
