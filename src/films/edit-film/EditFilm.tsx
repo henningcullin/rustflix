@@ -71,6 +71,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Avatar from '@/components/Avatar';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -452,14 +453,18 @@ function EditFilm() {
                   </TableCaption>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Avatar</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Actor</TableHead>
-                      <TableHead className='w-8'>Actions</TableHead>
+                      <TableHead className='w-12'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {film?.stars?.map((character) => (
                       <TableRow>
+                        <TableCell>
+                          <Avatar id={character.actor.id}></Avatar>
+                        </TableCell>
                         <TableCell>{character.description}</TableCell>
                         <TableCell>
                           <HoverCard>
@@ -475,10 +480,15 @@ function EditFilm() {
                             </HoverCardContent>
                           </HoverCard>
                         </TableCell>
-                        <TableCell className='grid place-items-center'>
+                        <TableCell className=''>
                           <DropdownMenu>
                             <DropdownMenuTrigger>
-                              <DotsHorizontalIcon className='w-6 h-6' />
+                              <Button
+                                variant='outline'
+                                className='w-10 h-10 p-0'
+                              >
+                                <DotsHorizontalIcon />
+                              </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>

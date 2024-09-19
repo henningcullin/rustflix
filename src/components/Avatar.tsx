@@ -20,7 +20,7 @@ function Avatar({ id }: AvatarProps): React.ReactElement {
   });
 
   if (isLoading) {
-    return <Skeleton className='rounded-full w-[64] h-[64px]' />;
+    return <Skeleton className='rounded-full w-[64px] h-[64px]' />;
   }
 
   if (error) {
