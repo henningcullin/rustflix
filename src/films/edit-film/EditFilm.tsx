@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn, getFilmName } from '@/lib/utils';
 import {
   CalendarIcon,
+  DotsHorizontalIcon,
   FileIcon,
   IdCardIcon,
   InputIcon,
@@ -40,7 +41,6 @@ import DirectoryIcon from '@/components/icons/DirectoryIcon';
 import ValueDisplay from './ValueDisplay';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HoverCard } from '@/components/ui/hover-card';
 import {
   Accordion,
   AccordionContent,
@@ -48,6 +48,20 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -143,7 +157,6 @@ function EditFilm() {
   if (isFetchingFilm) return <p>Loading film data...</p>;
 
   if (isFilmError) return <p>Failed to load film.</p>;
-
   return (
     <div>
       <div className='container mx-auto rounded-md border p-12'>
@@ -424,15 +437,42 @@ function EditFilm() {
             <AccordionItem value='item-1'>
               <AccordionTrigger>Characters</AccordionTrigger>
               <AccordionContent>
-                <ul>
-                  {film?.stars.map((star, index, stars) => (
-                    <li>
-                      <h4>{star.description}</h4>
-                      <span>Played by {star.actor.name}</span>
-                      {index < stars?.length - 1 && <Separator></Separator>}
-                    </li>
-                  ))}
-                </ul>
+                <Table>
+                  <TableCaption>
+                    List of all characters in the film
+                  </TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Actor</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {film?.stars?.map((character) => (
+                      <TableRow>
+                        <TableCell>{character.description}</TableCell>
+                        <TableCell>
+                          <HoverCard>
+                            <HoverCardTrigger>
+                              <Button variant='link'>
+                                {character.actor.name}
+                              </Button>
+                            </HoverCardTrigger>
+                            <HoverCardContent>
+                              <b>{character.actor.id}</b>
+                              <br />
+                              <i>{character.actor.imdb_id}</i>
+                            </HoverCardContent>
+                          </HoverCard>
+                        </TableCell>
+                        <TableCell>
+                          <DotsHorizontalIcon />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
