@@ -23,11 +23,14 @@ import { cn, getFilmName } from '@/lib/utils';
 import {
   CalendarIcon,
   DotsHorizontalIcon,
+  EyeOpenIcon,
   FileIcon,
   IdCardIcon,
   InputIcon,
   ListBulletIcon,
+  Pencil2Icon,
   PersonIcon,
+  TrashIcon,
 } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
@@ -493,11 +496,20 @@ function EditFilm() {
                             <DropdownMenuContent>
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem>View</DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <EyeOpenIcon className='w-5 h-5 mr-2' />
+                                View
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuGroup>
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem>Delete</DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Pencil2Icon className='w-5 h-5 mr-2' />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <TrashIcon className='w-5 h-5 mr-2' />
+                                  Delete
+                                </DropdownMenuItem>
                               </DropdownMenuGroup>
                             </DropdownMenuContent>
                           </DropdownMenu>
