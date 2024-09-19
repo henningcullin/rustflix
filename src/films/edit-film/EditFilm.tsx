@@ -62,6 +62,15 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -445,7 +454,7 @@ function EditFilm() {
                     <TableRow>
                       <TableHead>Description</TableHead>
                       <TableHead>Actor</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className='w-8'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -455,9 +464,9 @@ function EditFilm() {
                         <TableCell>
                           <HoverCard>
                             <HoverCardTrigger>
-                              <Button variant='link'>
+                              <span className='hover:underline underline-offset-4 cursor-pointer'>
                                 {character.actor.name}
-                              </Button>
+                              </span>
                             </HoverCardTrigger>
                             <HoverCardContent>
                               <b>{character.actor.id}</b>
@@ -466,8 +475,22 @@ function EditFilm() {
                             </HoverCardContent>
                           </HoverCard>
                         </TableCell>
-                        <TableCell>
-                          <DotsHorizontalIcon />
+                        <TableCell className='grid place-items-center'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <DotsHorizontalIcon className='w-6 h-6' />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem>View</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuGroup>
+                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                <DropdownMenuItem>Delete</DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
