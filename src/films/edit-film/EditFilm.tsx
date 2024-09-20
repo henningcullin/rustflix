@@ -51,30 +51,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import Avatar from '@/components/Avatar';
+import CharacterTable from './CharacterTable';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -151,13 +128,13 @@ function EditFilm() {
   });
 
   // Handling the film selection
-  const handleFilmSelect = (imdbId: string | undefined) => {
+  function handleFilmSelect(imdbId: string | undefined) {
     if (!filmId || !imdbId) return;
     const databaseId = parseInt(filmId);
     if (isNaN(databaseId)) return;
 
     scrapeFilmMutation.mutate({ imdbId, databaseId });
-  };
+  }
 
   function onSuccess(values: FormSchema) {
     console.log(values);
@@ -450,74 +427,7 @@ function EditFilm() {
             <AccordionItem value='item-1'>
               <AccordionTrigger>Characters</AccordionTrigger>
               <AccordionContent>
-                <Table>
-                  <TableCaption>
-                    List of all characters in the film
-                  </TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Avatar</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Actor</TableHead>
-                      <TableHead className='w-12'>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {film?.stars?.map((character) => (
-                      <TableRow>
-                        <TableCell>
-                          <Avatar id={character.actor.id}></Avatar>
-                        </TableCell>
-                        <TableCell>{character.description}</TableCell>
-                        <TableCell>
-                          <HoverCard>
-                            <HoverCardTrigger>
-                              <span className='hover:underline underline-offset-4 cursor-pointer'>
-                                {character.actor.name}
-                              </span>
-                            </HoverCardTrigger>
-                            <HoverCardContent>
-                              <b>{character.actor.id}</b>
-                              <br />
-                              <i>{character.actor.imdb_id}</i>
-                            </HoverCardContent>
-                          </HoverCard>
-                        </TableCell>
-                        <TableCell className=''>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger>
-                              <Button
-                                variant='outline'
-                                className='w-10 h-10 p-0'
-                              >
-                                <DotsHorizontalIcon />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <EyeOpenIcon className='w-5 h-5 mr-2' />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem>
-                                  <Pencil2Icon className='w-5 h-5 mr-2' />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <TrashIcon className='w-5 h-5 mr-2' />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <CharacterTable film={film}></CharacterTable>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
