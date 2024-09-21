@@ -42,24 +42,55 @@ import {
 } from '@radix-ui/react-icons';
 import { useCallback, useState } from 'react';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { invoke } from '@tauri-apps/api';
+import { useToast } from '@/hooks/use-toast';
+
 function CharacterTable({ film }: { film: Film | undefined }) {
-  const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false); // Controls alert visibility
+  const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null
-  ); // Tracks selected character
+  );
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Function to handle the delete callback
+  const deleteCharacterMutation = useMutation({
+    mutationFn: async (character: Character) => {
+      await invoke('delete_character', {
+        filmId: character.film_id,
+        actor: character.actor.id,
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to delete the character',
+        description: error.message,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Character deleted',
+        description: `Character: ${selectedCharacter?.description} was successfully removed from ${film?.title}`,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['film', film?.id?.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+  });
+
   const handleDelete = useCallback(() => {
     if (selectedCharacter) {
-      console.log('Delete confirmed for character:', selectedCharacter);
-      // Here you can call your delete logic or API to delete the character
-      setIsAlertOpen(false); // Close the dialog after action
+      deleteCharacterMutation.mutate(selectedCharacter);
+      setIsAlertOpen(false);
     }
-  }, [selectedCharacter]);
+  }, [selectedCharacter, deleteCharacterMutation]);
 
   const openDeleteConfirm = (character: Character) => {
-    setSelectedCharacter(character); // Set selected character
-    setIsAlertOpen(true); // Open the dialog
+    setSelectedCharacter(character);
+    setIsAlertOpen(true);
   };
 
   return (
@@ -91,7 +122,7 @@ function CharacterTable({ film }: { film: Film | undefined }) {
         </TableHeader>
         <TableBody>
           {film?.stars?.map((character) => (
-            <TableRow>
+            <TableRow key={character.actor.id}>
               <TableCell>
                 <Avatar id={character.actor.id}></Avatar>
               </TableCell>
@@ -110,7 +141,7 @@ function CharacterTable({ film }: { film: Film | undefined }) {
                   </HoverCardContent>
                 </HoverCard>
               </TableCell>
-              <TableCell className=''>
+              <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <Button variant='outline' className='w-10 h-10 p-0'>
