@@ -1,14 +1,4 @@
 import Avatar from '@/components/Avatar';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -35,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import { Character, Film } from '@/lib/types';
 import {
+  Cross2Icon,
   DotsHorizontalIcon,
   EyeOpenIcon,
   Pencil2Icon,
@@ -45,9 +36,17 @@ import { useCallback, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 function CharacterTable({ film }: { film: Film | undefined }) {
-  const [isAlertOpen, setIsAlertOpen] = useState<boolean>(false);
+  const [isDeleteOpen, setisDeleteOpen] = useState<boolean>(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null
   );
@@ -72,7 +71,7 @@ function CharacterTable({ film }: { film: Film | undefined }) {
     onSuccess: () => {
       toast({
         title: 'Character deleted',
-        description: `Character: ${selectedCharacter?.description} was successfully removed from ${film?.title}`,
+        description: `${selectedCharacter?.description} was successfully removed from ${film?.title}`,
       });
       queryClient.invalidateQueries({
         queryKey: ['film', film?.id?.toString()],
@@ -84,32 +83,44 @@ function CharacterTable({ film }: { film: Film | undefined }) {
   const handleDelete = useCallback(() => {
     if (selectedCharacter) {
       deleteCharacterMutation.mutate(selectedCharacter);
-      setIsAlertOpen(false);
+      setisDeleteOpen(false);
     }
   }, [selectedCharacter, deleteCharacterMutation]);
 
   const openDeleteConfirm = (character: Character) => {
     setSelectedCharacter(character);
-    setIsAlertOpen(true);
+    setisDeleteOpen(true);
   };
 
   return (
     <>
-      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={isDeleteOpen} onOpenChange={setisDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
               Are you sure you want to delete {selectedCharacter?.description}?
               This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setisDeleteOpen(false)}>
+              <Cross2Icon className='w-5 h-5 mr-2' />
+              Cancel
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={() => {
+                handleDelete();
+                setisDeleteOpen(false);
+              }}
+            >
+              <TrashIcon className='w-5 h-5 mr-2' />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Table>
         <TableCaption>List of all characters in the film</TableCaption>
         <TableHeader>
