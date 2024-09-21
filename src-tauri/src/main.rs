@@ -12,6 +12,7 @@ mod languages;
 mod persons;
 mod scrapers;
 
+use characters::delete_character;
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film, sync_new_films};
 use images::{get_avatar, get_cover};
@@ -47,7 +48,9 @@ fn main() {
             scrape_film,
             // IMAGES
             get_avatar,
-            get_cover
+            get_cover,
+            // CHARACTERS
+            delete_character,
         ])
         .setup(|_app| {
             match database::initialize_database() {
