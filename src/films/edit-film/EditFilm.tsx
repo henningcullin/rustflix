@@ -22,15 +22,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn, getFilmName } from '@/lib/utils';
 import {
   CalendarIcon,
-  DotsHorizontalIcon,
-  EyeOpenIcon,
   FileIcon,
   IdCardIcon,
   InputIcon,
   ListBulletIcon,
-  Pencil2Icon,
   PersonIcon,
-  TrashIcon,
 } from '@radix-ui/react-icons';
 import { Calendar } from '@/components/ui/calendar';
 import SelectFilmPopup from './SelectFilmPopup';
