@@ -44,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import SaveCartridgeIcon from '@/components/icons/SaveCartridgeIcon';
 
 function CharacterTable({ film }: { film: Film | undefined }) {
   const [isDeleteOpen, setisDeleteOpen] = useState<boolean>(false);
