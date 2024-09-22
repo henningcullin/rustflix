@@ -92,15 +92,17 @@ function EditFilm() {
     if (film) {
       // Reset the form with the fetched film data
       reset({
-        imdb_id: film.imdb_id,
-        title: film.title,
-        release_date: new Date(film.release_date ?? ''), // Ensure the date is a Date object
-        plot: film.plot,
-        run_time: film.run_time,
-        has_color: film.has_color,
-        rating: film.rating,
-        has_watched: film.has_watched,
-        left_off_point: film.left_off_point,
+        imdb_id: film?.imdb_id,
+        title: film?.title,
+        release_date: film?.release_date
+          ? new Date(film?.release_date)
+          : new Date(), // Ensure the date is a Date object
+        plot: film?.plot,
+        run_time: film?.run_time,
+        has_color: film?.has_color,
+        rating: film?.rating,
+        has_watched: film?.has_watched,
+        left_off_point: film?.left_off_point,
       });
     }
   }, [film, reset]);
