@@ -7,7 +7,8 @@ import { Link } from 'react-router-dom';
 
 function Home() {
   // TODO:
-  // - EditFilm make all fields viewable and editable
+  // - PersonBox async fetching of persons with limit and where query clauses
+  // - Continue working on Editfilm component and make everything work
   // - ViewFilm/Film component for user friendly film details
   // - optimize rendering
   // - make image commands downscale images
