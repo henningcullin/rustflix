@@ -119,6 +119,7 @@ function EditFilm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['film', filmId] });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+      queryClient.invalidateQueries({ queryKey: ['persons'] });
     },
     onError: (error) => {
       console.error('Scraping failed:', error);
