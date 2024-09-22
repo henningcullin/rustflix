@@ -31,7 +31,7 @@ import {
   Pencil2Icon,
   TrashIcon,
 } from '@radix-ui/react-icons';
-import { useCallback, useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
@@ -46,8 +46,9 @@ import {
 } from '@/components/ui/dialog';
 import SaveCartridgeIcon from '@/components/icons/SaveCartridgeIcon';
 
-function CharacterTable({ film }: { film: Film | undefined }) {
-  const [isDeleteOpen, setisDeleteOpen] = useState<boolean>(false);
+// Encapsulated Delete Logic Hook
+function useCharacterDelete(film: Film | undefined) {
+  const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null
   );
@@ -84,18 +85,18 @@ function CharacterTable({ film }: { film: Film | undefined }) {
   const handleDelete = useCallback(() => {
     if (selectedCharacter) {
       deleteCharacterMutation.mutate(selectedCharacter);
-      setisDeleteOpen(false);
+      setIsDeleteOpen(false);
     }
   }, [selectedCharacter, deleteCharacterMutation]);
 
-  const openDeleteConfirm = (character: Character) => {
+  const characterDelete = useCallback((character: Character) => {
     setSelectedCharacter(character);
-    setisDeleteOpen(true);
-  };
+    setIsDeleteOpen(true);
+  }, []);
 
-  return (
-    <>
-      <Dialog open={isDeleteOpen} onOpenChange={setisDeleteOpen}>
+  const DeleteDialog = useCallback(() => {
+    return (
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
@@ -105,7 +106,7 @@ function CharacterTable({ film }: { film: Film | undefined }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setisDeleteOpen(false)}>
+            <Button variant='outline' onClick={() => setIsDeleteOpen(false)}>
               <Cross2Icon className='w-5 h-5 mr-2' />
               Cancel
             </Button>
@@ -113,7 +114,6 @@ function CharacterTable({ film }: { film: Film | undefined }) {
               variant='destructive'
               onClick={() => {
                 handleDelete();
-                setisDeleteOpen(false);
               }}
             >
               <TrashIcon className='w-5 h-5 mr-2' />
@@ -122,6 +122,52 @@ function CharacterTable({ film }: { film: Film | undefined }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    );
+  }, [isDeleteOpen, selectedCharacter, handleDelete]);
+
+  return { characterDelete, DeleteDialog };
+}
+
+function CharacterTable({ film }: { film: Film | undefined }) {
+  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
+    null
+  );
+
+  // Use the custom hook for character deletion
+  const { characterDelete, DeleteDialog } = useCharacterDelete(film);
+
+  const openEditDialog = useCallback((character: Character) => {
+    setSelectedCharacter(character);
+    setIsEditOpen(true);
+  }, []);
+
+  return (
+    <>
+      {/* Render the delete dialog from the hook */}
+      <DeleteDialog />
+
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Character</DialogTitle>
+            <DialogDescription>
+              Editing character {selectedCharacter?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsEditOpen(false)}>
+              <Cross2Icon className='w-5 h-5 mr-2' />
+              Cancel
+            </Button>
+            <Button type='submit'>
+              <SaveCartridgeIcon className='w-5 h-5 mr-2' />
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Table>
         <TableCaption>List of all characters in the film</TableCaption>
         <TableHeader>
@@ -169,12 +215,14 @@ function CharacterTable({ film }: { film: Film | undefined }) {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => openEditDialog(character)}
+                      >
                         <Pencil2Icon className='w-5 h-5 mr-2' />
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => openDeleteConfirm(character)}
+                        onClick={() => characterDelete(character)}
                       >
                         <TrashIcon className='w-5 h-5 mr-2' />
                         Delete
