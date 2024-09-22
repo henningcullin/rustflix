@@ -14,7 +14,7 @@ import {
 import { invoke } from '@tauri-apps/api/tauri';
 import { Person } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { CommandLoading } from 'cmdk';
 
