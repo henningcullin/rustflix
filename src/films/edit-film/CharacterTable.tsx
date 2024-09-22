@@ -246,7 +246,6 @@ function useCharacterEdit(film: Film | undefined) {
                 </DialogFooter>
               </form>
             </Form>
-            <PersonBox value='' onChange={() => {}} />
           </DialogContent>
         </DialogOverlay>
       </Dialog>
