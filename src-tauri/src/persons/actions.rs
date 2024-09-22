@@ -15,7 +15,9 @@ pub fn get_all_persons() -> Result<Vec<Person>, AppError> {
             gender,  
             birthplace
         FROM
-            persons"#,
+            persons
+        ORDER BY
+            name ASC"#,
     )?;
 
     let persons = stmt
