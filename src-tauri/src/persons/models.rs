@@ -1,4 +1,5 @@
 use serde::Serialize;
+
 #[derive(Debug, Serialize)]
 pub enum Gender {
     Male,
@@ -50,6 +51,30 @@ impl Person {
                 .next()
                 .and_then(|s| s.parse::<i32>().ok())
                 .map(map_birthplace),
+        })
+    }
+
+    pub fn from_row(row: &rusqlite::Row) -> Result<Person, rusqlite::Error> {
+        let id: u32 = row.get("id")?;
+        let imdb_id: Option<String> = row.get("imdb_id")?;
+        let name: Option<String> = row.get("name")?;
+        let age: Option<u32> = row.get("age")?;
+        let gender = row
+            .get::<_, Option<i32>>("gender")?
+            .and_then(|gender| match gender {
+                1 => Some(Gender::Male),
+                2 => Some(Gender::Female),
+                _ => None,
+            });
+        let birthplace = row.get::<_, Option<i32>>("birthplace")?.map(map_birthplace);
+
+        Ok(Person {
+            id,
+            imdb_id,
+            name,
+            age,
+            gender,
+            birthplace,
         })
     }
 }
