@@ -5,8 +5,6 @@ import { invoke } from '@tauri-apps/api/tauri';
 
 interface AvatarProps {
   id: number;
-  loadingText?: string;
-  errorText?: string;
 }
 
 function Avatar({ id }: AvatarProps): React.ReactElement {
@@ -24,7 +22,7 @@ function Avatar({ id }: AvatarProps): React.ReactElement {
   }
 
   if (error) {
-    return <div>{error.message}</div>;
+    return <div className='rounded-full w-[64px] h-[64px]' />;
   }
 
   return <img src={src || ''} className='rounded-full w-[64px] h-[64px]' />;
