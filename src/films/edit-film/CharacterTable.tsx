@@ -176,7 +176,7 @@ function useCharacterEdit(film: Film | undefined) {
       description: selectedCharacter?.description,
       actor: selectedCharacter?.actor.id,
     });
-  }, [selectedCharacter]);
+  }, [selectedCharacter, open]);
 
   const onSuccess = useCallback((values: FormSchema) => {
     console.log(values);
