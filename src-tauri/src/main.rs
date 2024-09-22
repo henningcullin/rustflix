@@ -16,6 +16,7 @@ use characters::delete_character;
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film, sync_new_films};
 use images::{get_avatar, get_cover};
+use persons::get_all_persons;
 use scrapers::scrape_film;
 
 #[tauri::command]
@@ -51,6 +52,8 @@ fn main() {
             get_cover,
             // CHARACTERS
             delete_character,
+            // PERSONS
+            get_all_persons
         ])
         .setup(|_app| {
             match database::initialize_database() {
