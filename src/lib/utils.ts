@@ -16,12 +16,13 @@ export function getFilmName(filePath: string | undefined): string {
   return value;
 }
 
-export const i32 = z
-  .number()
-  .int('Has to be an integer')
-  .min(-2147483648, {
-    message: 'Value must be greater than or equal to -2,147,483,648.',
-  })
-  .max(2147483647, {
-    message: 'Value must be less than or equal to 2,147,483,647.',
-  });
+export const i32 = (errorMessage: string) =>
+  z
+    .number()
+    .int('Has to be an integer')
+    .min(-2147483648, {
+      message: errorMessage,
+    })
+    .max(2147483647, {
+      message: errorMessage,
+    });
