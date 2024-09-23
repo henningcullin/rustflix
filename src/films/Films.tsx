@@ -31,7 +31,6 @@ function Films() {
 
   const {
     data: films,
-    error,
     isError,
     isLoading,
   } = useQuery<Film[], Error>({
