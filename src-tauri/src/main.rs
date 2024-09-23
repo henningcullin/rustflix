@@ -12,7 +12,7 @@ mod languages;
 mod persons;
 mod scrapers;
 
-use characters::delete_character;
+use characters::{delete_character, update_character};
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use films::{get_all_films, get_film, sync_new_films};
 use images::{get_avatar, get_cover};
@@ -52,6 +52,7 @@ fn main() {
             get_cover,
             // CHARACTERS
             delete_character,
+            update_character,
             // PERSONS
             get_all_persons
         ])
