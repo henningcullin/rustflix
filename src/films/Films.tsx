@@ -77,7 +77,7 @@ function Films() {
               </TableRow>
             ) : films ? (
               films.map((film) => (
-                <TableRow>
+                <TableRow key={film.id}>
                   <TableCell>{film.directory.id}</TableCell>
                   <TableCell>{film.file}</TableCell>
                   <TableCell>

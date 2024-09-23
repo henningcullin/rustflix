@@ -417,7 +417,7 @@ function EditFilm() {
           </ol>
           <div>
             {film?.keywords?.map((keyword) => (
-              <Badge>{keyword}</Badge>
+              <Badge key={keyword}>{keyword}</Badge>
             ))}
           </div>
         </TabsContent>
@@ -436,7 +436,7 @@ function EditFilm() {
               <AccordionContent>
                 <ul>
                   {film?.directors.map((director, index, directors) => (
-                    <li>
+                    <li key={director.id}>
                       <h4>{director.name}</h4>
                       <i>IMDB Id {director.imdb_id}</i>
                       {index < directors?.length - 1 && <Separator></Separator>}

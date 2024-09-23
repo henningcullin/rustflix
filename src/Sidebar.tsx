@@ -51,7 +51,10 @@ function Sidebar() {
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup heading='Views'>
               {views.map((view) => (
-                <CommandItem onSelect={() => travel(view.destination)}>
+                <CommandItem
+                  onSelect={() => travel(view.destination)}
+                  key={view.label}
+                >
                   {view.label}
                 </CommandItem>
               ))}
