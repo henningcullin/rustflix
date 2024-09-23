@@ -47,7 +47,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import CharacterTable from './CharacterTable';
+import CharacterTable from './CharacterTable/CharacterTable';
 
 function EditFilm() {
   const { filmId } = useParams();
