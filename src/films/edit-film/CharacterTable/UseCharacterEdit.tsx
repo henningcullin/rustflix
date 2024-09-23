@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogClose,
@@ -55,6 +55,35 @@ function useCharacterEdit(film: Film | undefined) {
     },
   });
 
+  const editCharacterMutation = useMutation({
+    mutationFn: async (formValues: FormSchema) => {
+      await invoke('update_character', {
+        filmId: film?.id,
+        actor: selectedCharacter?.actor?.id,
+        newDescription: formValues.description,
+        newActor: formValues.actor,
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to update the character',
+        description: error.message,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Character updated',
+        description: `${selectedCharacter?.description} was successfully updated`,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['film', film?.id?.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+  });
+
   const { reset } = form;
 
   useEffect(() => {
@@ -65,7 +94,7 @@ function useCharacterEdit(film: Film | undefined) {
   }, [selectedCharacter, open]);
 
   const onSuccess = useCallback((values: FormSchema) => {
-    console.log(values);
+    editCharacterMutation.mutate(values);
   }, []);
 
   const characterEdit = useCallback((character: Character) => {
@@ -125,7 +154,10 @@ function useCharacterEdit(film: Film | undefined) {
                       Cancel
                     </Button>
                   </DialogClose>
-                  <Button type='submit'>
+                  <Button
+                    type='submit'
+                    disabled={editCharacterMutation.isPending}
+                  >
                     <SaveCartridgeIcon className='w-5 h-5 mr-2' />
                     Save
                   </Button>
