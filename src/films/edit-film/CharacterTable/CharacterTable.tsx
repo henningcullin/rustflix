@@ -34,7 +34,6 @@ import useCharacterDelete from './useCharacterDelete';
 import useCharacterEdit from './UseCharacterEdit';
 
 function CharacterTable({ film }: { film: Film | undefined }) {
-  // Use the custom hook for character deletion
   const { characterDelete, DeleteDialog } = useCharacterDelete(film);
   const { characterEdit, EditDialog } = useCharacterEdit(film);
 
@@ -82,11 +81,6 @@ function CharacterTable({ film }: { film: Film | undefined }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <EyeOpenIcon className='w-5 h-5 mr-2' />
-                      View
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                       <DropdownMenuItem
