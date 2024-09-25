@@ -24,11 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Film } from '@/lib/types';
-import {
-  DotsHorizontalIcon,
-  Pencil2Icon,
-  TrashIcon,
-} from '@radix-ui/react-icons';
+import { DotsHorizontalIcon, TrashIcon } from '@radix-ui/react-icons';
 import useDirectorDelete from './useDirectorDelete';
 
 function DirectorTable({ film }: { film: Film | undefined }) {
@@ -42,29 +38,27 @@ function DirectorTable({ film }: { film: Film | undefined }) {
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>
-            <TableHead>Description</TableHead>
             <TableHead>Actor</TableHead>
             <TableHead className='w-12'>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {film?.stars?.map((character) => (
-            <TableRow key={character.actor.id}>
+          {film?.directors?.map((director) => (
+            <TableRow key={director.id}>
               <TableCell>
-                <Avatar id={character.actor.id}></Avatar>
+                <Avatar id={director.id}></Avatar>
               </TableCell>
-              <TableCell>{character.description}</TableCell>
               <TableCell>
                 <HoverCard>
                   <HoverCardTrigger>
                     <span className='hover:underline underline-offset-4 cursor-pointer'>
-                      {character.actor.name}
+                      {director.name}
                     </span>
                   </HoverCardTrigger>
                   <HoverCardContent>
-                    <b>{character.actor.id}</b>
+                    <b>{director.id}</b>
                     <br />
-                    <i>{character.actor.imdb_id}</i>
+                    <i>{director.imdb_id}</i>
                   </HoverCardContent>
                 </HoverCard>
               </TableCell>
@@ -80,13 +74,7 @@ function DirectorTable({ film }: { film: Film | undefined }) {
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                       <DropdownMenuItem
-                        onClick={() => characterEdit(character)}
-                      >
-                        <Pencil2Icon className='w-5 h-5 mr-2' />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => characterDelete(character)}
+                        onClick={() => directorDelete(director)}
                       >
                         <TrashIcon className='w-5 h-5 mr-2' />
                         Delete
