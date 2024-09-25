@@ -34,8 +34,8 @@ function DirectorTable({ film }: { film: Film | undefined }) {
 
   return (
     <>
-      <CreateDialog />
       <DeleteDialog />
+      <CreateDialog />
       <Button variant='outline' onClick={directorCreate} className='my-4'>
         <PlusIcon />
         Add director
