@@ -24,15 +24,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Film } from '@/lib/types';
-import { DotsHorizontalIcon, TrashIcon } from '@radix-ui/react-icons';
+import { DotsHorizontalIcon, PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import useDirectorDelete from './useDirectorDelete';
+import useDirectorCreate from './useDirectorCreate';
 
 function DirectorTable({ film }: { film: Film | undefined }) {
   const { directorDelete, DeleteDialog } = useDirectorDelete(film);
+  const { directorCreate, CreateDialog } = useDirectorCreate(film);
 
   return (
     <>
+      <CreateDialog />
       <DeleteDialog />
+      <Button variant='outline' onClick={directorCreate} className='my-4'>
+        <PlusIcon />
+        Add director
+      </Button>
       <Table>
         <TableCaption>List of all characters in the film</TableCaption>
         <TableHeader>
