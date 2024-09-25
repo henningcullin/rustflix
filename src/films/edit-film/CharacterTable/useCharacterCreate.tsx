@@ -69,6 +69,7 @@ function useCharacterCreate(film: Film | undefined) {
       });
     },
     onSuccess: () => {
+      setOpen(false);
       toast({
         title: 'Character created',
         description: `Character was successfully created`,
