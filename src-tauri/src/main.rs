@@ -13,7 +13,7 @@ mod languages;
 mod persons;
 mod scrapers;
 
-use characters::{delete_character, update_character};
+use characters::{create_character, delete_character, update_character};
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use directors::{create_director, delete_director};
 use films::{get_all_films, get_film, sync_new_films};
@@ -55,6 +55,7 @@ fn main() {
             // CHARACTERS
             delete_character,
             update_character,
+            create_character,
             // PERSONS
             get_all_persons,
             // DIRECTORS

@@ -33,3 +33,19 @@ pub fn update_character(
         }
     }
 }
+
+#[command]
+pub fn create_character(film_id: i32, actor_id: i32, description: String) -> Result<(), String> {
+    match actions::create_character(film_id, actor_id, &description) {
+        Ok(rows_affected) => match rows_affected {
+            0 => Err("Character was not added".into()),
+            _ => Ok(()),
+        },
+        Err(error) => {
+            eprintln!(
+                "Error when inserting character {error}, film_id: {film_id}, actor_id: {actor_id}, description: {description}"
+            );
+            Err("Failed to add character".into())
+        }
+    }
+}
