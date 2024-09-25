@@ -38,7 +38,7 @@ function DirectorTable({ film }: { film: Film | undefined }) {
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>
-            <TableHead>Actor</TableHead>
+            <TableHead>Director</TableHead>
             <TableHead className='w-12'>Actions</TableHead>
           </TableRow>
         </TableHeader>
