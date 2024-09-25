@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import CharacterTable from './CharacterTable/CharacterTable';
+import DirectorTable from './DirectorTable/DirectorTable';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -426,7 +427,7 @@ function EditFilm() {
             <AccordionItem value='item-1'>
               <AccordionTrigger>Characters</AccordionTrigger>
               <AccordionContent>
-                <CharacterTable film={film}></CharacterTable>
+                <CharacterTable film={film} />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -434,15 +435,7 @@ function EditFilm() {
             <AccordionItem value='item-1'>
               <AccordionTrigger>Directors</AccordionTrigger>
               <AccordionContent>
-                <ul>
-                  {film?.directors.map((director, index, directors) => (
-                    <li key={director.id}>
-                      <h4>{director.name}</h4>
-                      <i>IMDB Id {director.imdb_id}</i>
-                      {index < directors?.length - 1 && <Separator></Separator>}
-                    </li>
-                  ))}
-                </ul>
+                <DirectorTable film={film} />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
