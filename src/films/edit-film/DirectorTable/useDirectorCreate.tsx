@@ -53,7 +53,7 @@ function useDirectorCreate(film: Film | undefined) {
     mutationFn: async (formValues: FormSchema) => {
       await invoke('create_director', {
         filmId: film?.id,
-        person: formValues?.person,
+        personId: formValues?.person,
       });
     },
     onError: (error) => {
@@ -87,7 +87,7 @@ function useDirectorCreate(film: Film | undefined) {
     setOpen(true);
   }, []);
 
-  const EditDialog = useCallback(() => {
+  const CreateDialog = useCallback(() => {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogOverlay>
@@ -135,7 +135,7 @@ function useDirectorCreate(film: Film | undefined) {
     );
   }, [open]);
 
-  return { directorCreate, EditDialog };
+  return { directorCreate, CreateDialog };
 }
 
 export default useDirectorCreate;
