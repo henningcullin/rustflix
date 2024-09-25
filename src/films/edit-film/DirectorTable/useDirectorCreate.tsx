@@ -80,6 +80,7 @@ function useDirectorCreate(film: Film | undefined) {
 
   const onSuccess = useCallback((values: FormSchema) => {
     createDirectorMutation.mutate(values);
+    setOpen(false);
   }, []);
 
   const directorCreate = useCallback(() => {
