@@ -24,14 +24,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Film } from '@/lib/types';
-import { DotsHorizontalIcon, TrashIcon } from '@radix-ui/react-icons';
+import {
+  DotsHorizontalIcon,
+  Pencil2Icon,
+  TrashIcon,
+} from '@radix-ui/react-icons';
 import useDirectorDelete from './useDirectorDelete';
+import useDirectorEdit from './useDirectorEdit';
 
 function DirectorTable({ film }: { film: Film | undefined }) {
   const { directorDelete, DeleteDialog } = useDirectorDelete(film);
+  const { directorEdit, EditDialog } = useDirectorEdit(film);
 
   return (
     <>
+      <EditDialog />
       <DeleteDialog />
       <Table>
         <TableCaption>List of all characters in the film</TableCaption>
@@ -73,6 +80,10 @@ function DirectorTable({ film }: { film: Film | undefined }) {
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={() => directorEdit(director)}>
+                        <Pencil2Icon className='w-5 h-5 mr-2' />
+                        Edit
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => directorDelete(director)}
                       >
