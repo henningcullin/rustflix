@@ -26,7 +26,6 @@ import {
 import { Film } from '@/lib/types';
 import {
   DotsHorizontalIcon,
-  EyeOpenIcon,
   Pencil2Icon,
   TrashIcon,
 } from '@radix-ui/react-icons';
