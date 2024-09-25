@@ -27,7 +27,7 @@ function useDirectorDelete(film: Film | undefined) {
     mutationFn: async (director: Person) => {
       await invoke('delete_director', {
         filmId: film?.id,
-        person: director.id,
+        personId: director.id,
       });
     },
     onError: (error) => {
