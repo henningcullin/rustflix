@@ -4,6 +4,7 @@
 mod characters;
 mod database;
 mod directories;
+mod directors;
 mod error;
 mod films;
 mod genres;
