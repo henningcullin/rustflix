@@ -30,3 +30,14 @@ pub fn update_character(
 
     Ok(rows_affected)
 }
+
+pub fn create_character(film_id: i32, actor: i32, description: &String) -> Result<usize, AppError> {
+    let conn = create_connection()?;
+
+    let rows_affected = conn.execute(
+        "INSERT INTO characters (film_id, actor, description) VALUES (?1, ?2, ?3)",
+        params![film_id, actor, description],
+    )?;
+
+    Ok(rows_affected)
+}
