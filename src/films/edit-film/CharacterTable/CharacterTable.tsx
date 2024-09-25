@@ -27,19 +27,27 @@ import { Film } from '@/lib/types';
 import {
   DotsHorizontalIcon,
   Pencil2Icon,
+  PlusIcon,
   TrashIcon,
 } from '@radix-ui/react-icons';
 import useCharacterDelete from './useCharacterDelete';
 import useCharacterEdit from './UseCharacterEdit';
+import useCharacterCreate from './useCharacterCreate';
 
 function CharacterTable({ film }: { film: Film | undefined }) {
   const { characterDelete, DeleteDialog } = useCharacterDelete(film);
   const { characterEdit, EditDialog } = useCharacterEdit(film);
+  const { characterCreate, CreateDialog } = useCharacterCreate(film);
 
   return (
     <>
       <DeleteDialog />
       <EditDialog />
+      <CreateDialog />
+      <Button variant='outline' onClick={characterCreate} className='my-4'>
+        <PlusIcon />
+        Add character
+      </Button>
       <Table>
         <TableCaption>List of all characters in the film</TableCaption>
         <TableHeader>
