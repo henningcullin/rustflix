@@ -100,17 +100,18 @@ function EditFilm() {
           <MainForm film={film} />
         </TabsContent>
         <TabsContent value='categories' className='container mx-auto'>
-          Here we will handle:
-          <ol>
-            <li>Languages</li>
-            <li>Genres</li>
-            <li>Keywords</li>
-          </ol>
-          <div>
-            {film?.keywords?.map((keyword) => (
-              <Badge key={keyword}>{keyword}</Badge>
-            ))}
-          </div>
+          <Tabs>
+            <div className='grid place-items-center'>
+              <TabsList>
+                <TabsTrigger value='languageForm'>Languages</TabsTrigger>
+                <TabsTrigger value='genreForm'>Genres</TabsTrigger>
+                <TabsTrigger value='keywordForm'>Keywords</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value='languageForm'>Languages</TabsContent>
+            <TabsContent value='genreForm'>Genres</TabsContent>
+            <TabsContent value='keywordForm'>Keywords</TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value='credits' className='container mx-auto'>
           <Accordion type='single' collapsible>
