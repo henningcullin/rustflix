@@ -17,7 +17,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -41,7 +40,6 @@ function DirectorTable({ film }: { film: Film | undefined }) {
         Add director
       </Button>
       <Table>
-        <TableCaption>List of all characters in the film</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>

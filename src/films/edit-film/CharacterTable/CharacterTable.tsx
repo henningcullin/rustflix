@@ -17,7 +17,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -49,7 +48,6 @@ function CharacterTable({ film }: { film: Film | undefined }) {
         Add character
       </Button>
       <Table>
-        <TableCaption>List of all characters in the film</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>
