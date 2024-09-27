@@ -79,7 +79,7 @@ function EditFilm() {
 
       <Separator className='mt-8 mb-8' />
 
-      <Tabs defaultValue='mainForm'>
+      <Tabs defaultValue='mainForm' className='pb-8'>
         <div className='grid place-items-center'>
           <TabsList>
             <TabsTrigger value='mainForm'>
