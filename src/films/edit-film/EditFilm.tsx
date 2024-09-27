@@ -20,10 +20,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import CharacterTable from './CharacterTable/CharacterTable';
 import DirectorTable from './DirectorTable/DirectorTable';
 import MainForm from './MainForm/MainForm';
+import KeywordForm from './KeywordForm';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -110,7 +110,9 @@ function EditFilm() {
             </div>
             <TabsContent value='languageForm'>Languages</TabsContent>
             <TabsContent value='genreForm'>Genres</TabsContent>
-            <TabsContent value='keywordForm'>Keywords</TabsContent>
+            <TabsContent value='keywordForm'>
+              <KeywordForm film={film} />
+            </TabsContent>
           </Tabs>
         </TabsContent>
         <TabsContent value='credits' className='container mx-auto'>
