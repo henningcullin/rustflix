@@ -23,7 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import CharacterTable from './CharacterTable/CharacterTable';
 import DirectorTable from './DirectorTable/DirectorTable';
-import MainForm from './MainForm';
+import MainForm from './MainForm/MainForm';
 
 function EditFilm() {
   const { filmId } = useParams();

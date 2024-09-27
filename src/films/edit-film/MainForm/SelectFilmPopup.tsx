@@ -19,10 +19,10 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { Input } from '@/components/ui/input';
 import { shell } from '@tauri-apps/api';
 import { useQuery } from '@tanstack/react-query';
-import FilmList from './FilmList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { getFilmName } from '@/lib/utils';
+import FilmList from './FilmList';
 
 interface Arguments {
   onSelect: (imdb_id: string | undefined) => void;
