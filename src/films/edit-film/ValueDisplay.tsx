@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useCallback } from 'react';
 
 interface ValueDisplayProps {
   label: string;
@@ -12,7 +13,7 @@ interface ValueDisplayProps {
 function ValueDisplay({ label, value, icon }: ValueDisplayProps) {
   const { toast } = useToast();
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     if (value) {
       navigator.clipboard
         .writeText(value)
@@ -31,7 +32,7 @@ function ValueDisplay({ label, value, icon }: ValueDisplayProps) {
           });
         });
     }
-  };
+  }, [label, value]);
 
   if (!value) return null;
 
