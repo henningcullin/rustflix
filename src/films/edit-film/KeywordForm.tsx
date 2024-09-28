@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { Film } from '@/lib/types';
@@ -90,47 +91,52 @@ function KeywordForm({ film }: { film: Film | undefined }) {
   );
 
   return (
-    <div className='max-w-md mx-auto p-6 bg-background rounded-lg shadow'>
-      <h2 className='text-2xl font-bold mb-4'>Keywords</h2>
-      <div className='mb-4'>
-        <div className='flex flex-wrap gap-2'>
-          {film?.keywords?.map((keyword) => (
-            <Badge
-              key={keyword}
-              variant='secondary'
-              className='text-sm py-1 px-2'
-            >
-              {keyword}
-              <button
-                disabled={actionDisabled}
-                onClick={() => deleteKeyword(keyword)}
-                className='ml-2 text-muted-foreground hover:text-foreground'
-                aria-label={`Remove ${keyword} keyword`}
+    <Card>
+      <CardHeader>
+        <CardTitle>Keywords</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <h2 className='text-2xl font-bold mb-4'>Keywords</h2>
+        <div className='mb-4'>
+          <div className='flex flex-wrap gap-2'>
+            {film?.keywords?.map((keyword) => (
+              <Badge
+                key={keyword}
+                variant='secondary'
+                className='text-sm py-1 px-2'
               >
-                <Cross2Icon className='h-3 w-3' />
-              </button>
-            </Badge>
-          ))}
+                {keyword}
+                <button
+                  disabled={actionDisabled}
+                  onClick={() => deleteKeyword(keyword)}
+                  className='ml-2 text-muted-foreground hover:text-foreground'
+                  aria-label={`Remove ${keyword} keyword`}
+                >
+                  <Cross2Icon className='h-3 w-3' />
+                </button>
+              </Badge>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className='flex space-x-2'>
-        <Input
-          type='text'
-          placeholder='Add a keyword'
-          value={newKeyword}
-          onChange={(e) => setNewKeyword(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              addKeyword();
-            }
-          }}
-          className='flex-grow'
-        />
-        <Button disabled={addDisabled} onClick={addKeyword}>
-          Add
-        </Button>
-      </div>
-    </div>
+        <div className='flex space-x-2'>
+          <Input
+            type='text'
+            placeholder='Add a keyword'
+            value={newKeyword}
+            onChange={(e) => setNewKeyword(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                addKeyword();
+              }
+            }}
+            className='flex-grow'
+          />
+          <Button disabled={addDisabled} onClick={addKeyword}>
+            Add
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
