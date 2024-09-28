@@ -30,14 +30,6 @@ function useDirectorDelete(film: Film | undefined) {
         personId: director.id,
       });
     },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to delete the director',
-        description: error.message,
-      });
-    },
     onSuccess: () => {
       toast({
         title: 'Director deleted',
@@ -47,6 +39,14 @@ function useDirectorDelete(film: Film | undefined) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to delete the director',
+        description: error.message,
+      });
     },
   });
 

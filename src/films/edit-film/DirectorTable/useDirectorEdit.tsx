@@ -58,14 +58,6 @@ function useDirectorEdit(film: Film | undefined) {
         newActor: formValues.person,
       });
     },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to update the director',
-        description: error.message,
-      });
-    },
     onSuccess: () => {
       toast({
         title: 'Director updated',
@@ -75,6 +67,14 @@ function useDirectorEdit(film: Film | undefined) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to update the director',
+        description: error.message,
+      });
     },
   });
 

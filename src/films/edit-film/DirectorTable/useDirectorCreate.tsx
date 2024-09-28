@@ -56,14 +56,6 @@ function useDirectorCreate(film: Film | undefined) {
         personId: formValues?.person,
       });
     },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to create the director',
-        description: error.message,
-      });
-    },
     onSuccess: () => {
       setOpen(false);
       toast({
@@ -74,6 +66,14 @@ function useDirectorCreate(film: Film | undefined) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create the director',
+        description: error.message,
+      });
     },
   });
 

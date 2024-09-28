@@ -64,14 +64,6 @@ function useCharacterEdit(film: Film | undefined) {
         newActor: formValues.actor,
       });
     },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to update the character',
-        description: error.message,
-      });
-    },
     onSuccess: () => {
       toast({
         title: 'Character updated',
@@ -81,6 +73,14 @@ function useCharacterEdit(film: Film | undefined) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to update the character',
+        description: error.message,
+      });
     },
   });
 

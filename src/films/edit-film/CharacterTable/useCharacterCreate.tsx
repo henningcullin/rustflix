@@ -60,14 +60,6 @@ function useCharacterCreate(film: Film | undefined) {
         description: formValues.description,
       });
     },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to create the character',
-        description: error.message,
-      });
-    },
     onSuccess: () => {
       setOpen(false);
       toast({
@@ -78,6 +70,14 @@ function useCharacterCreate(film: Film | undefined) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create the character',
+        description: error.message,
+      });
     },
   });
 
