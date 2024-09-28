@@ -24,6 +24,8 @@ import CharacterTable from './CharacterTable/CharacterTable';
 import DirectorTable from './DirectorTable/DirectorTable';
 import MainForm from './MainForm/MainForm';
 import KeywordForm from './KeywordForm';
+import GenreForm from './GenreForm';
+import LanguageForm from './LanguageForm';
 
 function EditFilm() {
   const { filmId } = useParams();
@@ -100,20 +102,11 @@ function EditFilm() {
           <MainForm film={film} />
         </TabsContent>
         <TabsContent value='categories' className='container mx-auto'>
-          <Tabs>
-            <div className='grid place-items-center'>
-              <TabsList>
-                <TabsTrigger value='languageForm'>Languages</TabsTrigger>
-                <TabsTrigger value='genreForm'>Genres</TabsTrigger>
-                <TabsTrigger value='keywordForm'>Keywords</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value='languageForm'>Languages</TabsContent>
-            <TabsContent value='genreForm'>Genres</TabsContent>
-            <TabsContent value='keywordForm'>
-              <KeywordForm film={film} />
-            </TabsContent>
-          </Tabs>
+          <div>
+            <GenreForm film={film} />
+            <LanguageForm film={film} />
+            <KeywordForm film={film} />
+          </div>
         </TabsContent>
         <TabsContent value='credits' className='container mx-auto'>
           <Accordion type='single' collapsible>
