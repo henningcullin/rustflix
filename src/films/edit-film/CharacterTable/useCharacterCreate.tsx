@@ -13,7 +13,6 @@ import {
   DialogOverlay,
   DialogTitle,
 } from '@/components/ui/dialog';
-import SaveCartridgeIcon from '@/components/icons/SaveCartridgeIcon';
 import { z } from 'zod';
 import { i32 } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
@@ -31,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import PersonBox from '@/components/PersonBox';
 import { Film } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Cross2Icon } from '@radix-ui/react-icons';
+import { Cross2Icon, PlusIcon } from '@radix-ui/react-icons';
 
 function useCharacterCreate(film: Film | undefined) {
   const [open, setOpen] = useState<boolean>(false);
@@ -149,8 +148,8 @@ function useCharacterCreate(film: Film | undefined) {
                     type='submit'
                     disabled={createCharacterMutation.isPending}
                   >
-                    <SaveCartridgeIcon className='w-5 h-5 mr-2' />
-                    Save
+                    <PlusIcon className='w-5 h-5 mr-2' />
+                    Create
                   </Button>
                 </DialogFooter>
               </form>
