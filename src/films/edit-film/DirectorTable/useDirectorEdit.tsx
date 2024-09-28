@@ -13,7 +13,6 @@ import {
   DialogOverlay,
   DialogTitle,
 } from '@/components/ui/dialog';
-import SaveCartridgeIcon from '@/components/icons/SaveCartridgeIcon';
 import { z } from 'zod';
 import { i32 } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
@@ -30,7 +29,7 @@ import {
 import PersonBox from '@/components/PersonBox';
 import { Film, Person } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Cross2Icon } from '@radix-ui/react-icons';
+import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
 
 function useDirectorEdit(film: Film | undefined) {
   const [open, setOpen] = useState<boolean>(false);
@@ -133,7 +132,7 @@ function useDirectorEdit(film: Film | undefined) {
                     type='submit'
                     disabled={editDirectorMutation.isPending}
                   >
-                    <SaveCartridgeIcon className='w-5 h-5 mr-2' />
+                    <CheckIcon className='w-5 h-5 mr-2' />
                     Save
                   </Button>
                 </DialogFooter>
