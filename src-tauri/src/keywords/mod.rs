@@ -1,4 +1,4 @@
 pub mod actions;
 pub mod commands;
 
-pub use commands::create_keyword;
+pub use commands::{create_keyword, delete_keyword};

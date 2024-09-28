@@ -15,3 +15,17 @@ pub fn create_keyword(film_id: i32, keyword: String) -> Result<(), String> {
         }
     }
 }
+
+#[command]
+pub fn delete_keyword(film_id: i32, keyword: String) -> Result<(), String> {
+    match actions::delete_keyword(film_id, &keyword) {
+        Ok(rows_affected) => match rows_affected {
+            0 => Err("Keyword was not deleted".into()),
+            _ => Ok(()),
+        },
+        Err(error) => {
+            eprintln!("Error when deleting keyword {error}, film_id: {film_id}, actor: {keyword}");
+            Err("Failed to delete keyword".into())
+        }
+    }
+}

@@ -19,7 +19,7 @@ use directories::{add_directory, delete_directory, get_all_directories, select_d
 use directors::{create_director, delete_director};
 use films::{get_all_films, get_film, sync_new_films};
 use images::{get_avatar, get_cover};
-use keywords::create_keyword;
+use keywords::{create_keyword, delete_keyword};
 use persons::get_all_persons;
 use scrapers::scrape_film;
 
@@ -65,6 +65,7 @@ fn main() {
             create_director,
             // KEYWORDS
             create_keyword,
+            delete_keyword,
         ])
         .setup(|_app| {
             match database::initialize_database() {
