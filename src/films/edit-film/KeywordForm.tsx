@@ -26,6 +26,7 @@ function KeywordForm({ film }: { film: Film | undefined }) {
         title: 'Keyword created',
         description: `Keyword was successfully created`,
       });
+      setNewKeyword('');
     },
     onError: (error) => {
       console.error(error);
