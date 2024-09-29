@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::{
     characters::Character, directories::Directory, genres::Genre, languages::Language,
-    persons::Person,
+    persons::Person, FromRow,
 };
 
 #[derive(Debug, Serialize)]
@@ -28,8 +28,8 @@ pub struct Film {
     pub registered: bool,
 }
 
-impl Film {
-    pub fn from_row(row: &rusqlite::Row) -> rusqlite::Result<Film> {
+impl FromRow for Film {
+    fn from_row(row: &rusqlite::Row) -> Result<Film, rusqlite::Error> {
         let id: u32 = row.get("film_id")?;
         let file: String = row.get("file")?;
 

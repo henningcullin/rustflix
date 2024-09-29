@@ -1,4 +1,4 @@
-use crate::{database::create_connection, error::AppError};
+use crate::{database::create_connection, error::AppError, FromRow};
 
 use super::Person;
 
@@ -21,7 +21,7 @@ pub fn get_all_persons() -> Result<Vec<Person>, AppError> {
     )?;
 
     let persons = stmt
-        .query_map([], |row| Person::from_row(row))?
+        .query_map([], Person::from_row)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(persons)

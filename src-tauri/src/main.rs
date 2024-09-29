@@ -35,6 +35,10 @@ async fn fetch_data(url: String) -> Result<String, String> {
     }
 }
 
+pub trait FromRow: Sized {
+    fn from_row(row: &rusqlite::Row) -> Result<Self, rusqlite::Error>;
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![

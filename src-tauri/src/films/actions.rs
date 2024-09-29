@@ -6,6 +6,7 @@ use crate::{
     database::create_connection,
     directories::{actions::get_all_directories, Directory},
     error::AppError,
+    FromRow,
 };
 
 use super::Film;
@@ -46,7 +47,7 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
     "#)?;
 
     let films = stmt
-        .query_map([], |row| Film::from_row(row))?
+        .query_map([], Film::from_row)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(films)

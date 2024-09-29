@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::FromRow;
+
 #[derive(Debug, Serialize)]
 pub enum Gender {
     Male,
@@ -32,29 +34,8 @@ pub struct Person {
     pub birthplace: Option<Country>,
 }
 
-impl Person {
-    pub fn from_parts<'a, I>(parts: &mut I) -> Option<Person>
-    where
-        I: Iterator<Item = &'a str>,
-    {
-        Some(Person {
-            id: parts.next()?.parse().ok()?,
-            imdb_id: parts.next().map(|s| s.to_string()),
-            name: parts.next().map(|s| s.to_string()),
-            age: parts.next().and_then(|s| s.parse().ok()),
-            gender: parts.next().and_then(|s| match s.parse::<i32>().ok()? {
-                1 => Some(Gender::Male),
-                2 => Some(Gender::Female),
-                _ => None,
-            }),
-            birthplace: parts
-                .next()
-                .and_then(|s| s.parse::<i32>().ok())
-                .map(map_birthplace),
-        })
-    }
-
-    pub fn from_row(row: &rusqlite::Row) -> Result<Person, rusqlite::Error> {
+impl FromRow for Person {
+    fn from_row(row: &rusqlite::Row) -> Result<Person, rusqlite::Error> {
         let id: u32 = row.get("id")?;
         let imdb_id: Option<String> = row.get("imdb_id")?;
         let name: Option<String> = row.get("name")?;
@@ -75,6 +56,29 @@ impl Person {
             age,
             gender,
             birthplace,
+        })
+    }
+}
+
+impl Person {
+    pub fn from_parts<'a, I>(parts: &mut I) -> Option<Person>
+    where
+        I: Iterator<Item = &'a str>,
+    {
+        Some(Person {
+            id: parts.next()?.parse().ok()?,
+            imdb_id: parts.next().map(|s| s.to_string()),
+            name: parts.next().map(|s| s.to_string()),
+            age: parts.next().and_then(|s| s.parse().ok()),
+            gender: parts.next().and_then(|s| match s.parse::<i32>().ok()? {
+                1 => Some(Gender::Male),
+                2 => Some(Gender::Female),
+                _ => None,
+            }),
+            birthplace: parts
+                .next()
+                .and_then(|s| s.parse::<i32>().ok())
+                .map(map_birthplace),
         })
     }
 }
