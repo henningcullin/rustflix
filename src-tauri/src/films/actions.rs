@@ -86,7 +86,7 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
         LEFT JOIN characters c ON f.id = c.film_id
         LEFT JOIN persons ap ON c.actor = ap.id
             WHERE f.id = ?1")?;
-    let film = stmt.query_row([id], |row| Ok(Film::from_row(row)?))?;
+    let film = stmt.query_row([id], Film::from_row)?;
 
     Ok(film)
 }
