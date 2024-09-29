@@ -21,6 +21,7 @@ use films::{get_all_films, get_film, sync_new_films};
 use genres::get_all_genres;
 use images::{get_avatar, get_cover};
 use keywords::{create_keyword, delete_keyword};
+use languages::get_all_languages;
 use persons::get_all_persons;
 use scrapers::scrape_film;
 
@@ -58,6 +59,8 @@ fn main() {
             scrape_film,
             // GENRES
             get_all_genres,
+            // LANGUAGES
+            get_all_languages,
             // IMAGES
             get_avatar,
             get_cover,
