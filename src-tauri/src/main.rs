@@ -18,6 +18,7 @@ use characters::{create_character, delete_character, update_character};
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use directors::{create_director, delete_director};
 use films::{get_all_films, get_film, sync_new_films};
+use genres::get_all_genres;
 use images::{get_avatar, get_cover};
 use keywords::{create_keyword, delete_keyword};
 use persons::get_all_persons;
@@ -55,6 +56,8 @@ fn main() {
             fetch_data,
             // SCRAPER
             scrape_film,
+            // GENRES
+            get_all_genres,
             // IMAGES
             get_avatar,
             get_cover,
