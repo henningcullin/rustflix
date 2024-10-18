@@ -401,7 +401,6 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
         .languages
         .iter()
         .filter_map(|language| {
-            println!("Should have added language {}", language);
             if let Err(e) = tx.execute(
                 r#"--sql
                 INSERT INTO languages (name) VALUES (?) ON CONFLICT(name) DO NOTHING
