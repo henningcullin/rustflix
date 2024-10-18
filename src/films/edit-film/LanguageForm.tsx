@@ -5,7 +5,9 @@ function LanguageForm({ film }: { film: Film | undefined }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Languages</CardTitle>
+        <CardTitle>
+          <h2 className='text-2xl font-bold mb-4'>Languages</h2>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <b>Language list</b>

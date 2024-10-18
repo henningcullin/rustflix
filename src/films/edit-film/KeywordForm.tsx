@@ -93,10 +93,11 @@ function KeywordForm({ film }: { film: Film | undefined }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Keywords</CardTitle>
+        <CardTitle>
+          <h2 className='text-2xl font-bold mb-4'>Keywords</h2>
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <h2 className='text-2xl font-bold mb-4'>Keywords</h2>
         <div className='mb-4'>
           <div className='flex flex-wrap gap-2'>
             {film?.keywords?.map((keyword) => (
