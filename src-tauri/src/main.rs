@@ -18,7 +18,7 @@ use characters::{create_character, delete_character, update_character};
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
 use directors::{create_director, delete_director};
 use films::{get_all_films, get_film, sync_new_films};
-use genres::get_all_genres;
+use genres::{add_genre_to_film, get_all_genres, remove_genre_from_film};
 use images::{get_avatar, get_cover};
 use keywords::{create_keyword, delete_keyword};
 use languages::{add_language_to_film, get_all_languages, remove_language_from_film};
@@ -59,6 +59,8 @@ fn main() {
             scrape_film,
             // GENRES
             get_all_genres,
+            add_genre_to_film,
+            remove_genre_from_film,
             // LANGUAGES
             get_all_languages,
             add_language_to_film,
