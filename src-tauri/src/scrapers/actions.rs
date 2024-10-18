@@ -144,7 +144,7 @@ fn color(parsed_html: &Html) -> Result<String, AppError> {
 
 fn languages(parsed_html: &Html) -> Vec<String> {
     let selector = match Selector::parse(
-        r#"[data-testid="title-details-languages"] a[href*="/search/title?title_type=feature&primary_language="]"#,
+        r#"[data-testid="title-details-languages"] a.ipc-metadata-list-item__list-content-item.ipc-metadata-list-item__list-content-item--link"#,
     ) {
         Ok(sel) => sel,
         Err(error) => {
@@ -401,6 +401,7 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
         .languages
         .iter()
         .filter_map(|language| {
+            println!("Should have added language {}", language);
             if let Err(e) = tx.execute(
                 r#"--sql
                 INSERT INTO languages (name) VALUES (?) ON CONFLICT(name) DO NOTHING
