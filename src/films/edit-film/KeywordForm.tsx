@@ -148,7 +148,7 @@ function KeywordForm({ film }: { film: Film | undefined }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <ScrollArea className='max-h-60'>
+          <ScrollArea className='h-48'>
             <div className='flex flex-wrap gap-2 mb-4'>
               {filteredKeywords.length > 0 ? (
                 filteredKeywords.map((keyword) => (
