@@ -22,7 +22,7 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
             (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
-            GROUP_CONCAT(DISTINCT k.keyword) as keywords,
+            GROUP_CONCAT(DISTINCT k.id || ':' || k.name) as keywords,
             GROUP_CONCAT(DISTINCT 
                 COALESCE(p.id, '') || ':' || COALESCE(p.imdb_id, '') || ':' || COALESCE(p.name, '') || ':' || 
                 COALESCE(p.age, '') || ':' || COALESCE(p.gender, '') || ':' || COALESCE(p.birthplace, '')
@@ -64,7 +64,7 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
             (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
-            GROUP_CONCAT(DISTINCT k.keyword) as keywords,
+            GROUP_CONCAT(DISTINCT k.id || ':' || k.name) as keywords,
             GROUP_CONCAT(DISTINCT 
                 COALESCE(p.id, '') || ':' || COALESCE(p.imdb_id, '') || ':' || COALESCE(p.name, '') || ':' || 
                 COALESCE(p.age, '') || ':' || COALESCE(p.gender, '') || ':' || COALESCE(p.birthplace, '')

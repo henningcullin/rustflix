@@ -440,6 +440,40 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
         }
     }
 
+    let keyword_ids: Vec<i64> = film
+        .keywords
+        .iter()
+        .filter_map(|keyword| {
+            if let Err(e) = tx.execute(
+                r#"INSERT INTO keywords (name) VALUES (?) ON CONFLICT(name) DO NOTHING"#,
+                params![keyword],
+            ) {
+                eprintln!("Failed to insert keyword '{}': {:?}", keyword, e);
+                return None;
+            }
+            match tx.query_row(
+                r#"SELECT id FROM keywords WHERE name = ?"#,
+                params![keyword],
+                |row| row.get(0),
+            ) {
+                Ok(id) => Some(id),
+                Err(e) => {
+                    eprintln!("Failed to retrieve keyword ID for '{}': {:?}", keyword, e);
+                    None
+                }
+            }
+        })
+        .collect();
+
+    for keyword_id in &keyword_ids {
+        if let Err(e) = tx.execute(
+            r#"--sql INSERT INTO film_keywords (film_id, keyword_id) VALUES (?, ?) ON CONFLICT(film_id, keyword_id) DO NOTHING"#,
+            params![film.id, keyword_id],
+        ) {
+            eprintln!("Failed to link keyword to Film ID {}, Error: {:?}", keyword_id, e);
+        }
+    }
+
     let mut persons_with_avatars = Vec::new();
 
     // Insert directors

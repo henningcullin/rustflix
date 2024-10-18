@@ -2,8 +2,8 @@ use chrono::NaiveDate;
 use serde::Serialize;
 
 use crate::{
-    characters::Character, directories::Directory, genres::Genre, languages::Language,
-    persons::Person, FromRow,
+    characters::Character, directories::Directory, genres::Genre, keywords::Keyword,
+    languages::Language, persons::Person, FromRow,
 };
 
 #[derive(Debug, Serialize)]
@@ -20,7 +20,7 @@ pub struct Film {
     pub has_color: Option<bool>,
     pub rating: Option<f64>,
     pub languages: Vec<Language>,
-    pub keywords: Vec<String>,
+    pub keywords: Vec<Keyword>,
     pub directors: Vec<Person>,
     pub stars: Vec<Character>,
     pub has_watched: bool,
@@ -90,13 +90,16 @@ impl FromRow for Film {
             .collect();
 
         // Parse keywords
-        let keywords: Vec<String> = row
+        let keywords: Vec<Keyword> = row
             .get::<_, Option<String>>("keywords")?
             .unwrap_or_default()
             .split(',')
-            .filter_map(|s| match s.len() {
-                0 => None,
-                _ => Some(s.to_string()),
+            .filter_map(|keyword| {
+                let mut parts = keyword.split(':');
+                Some(Keyword {
+                    id: parts.next()?.parse().ok()?,
+                    name: parts.next()?.to_string(),
+                })
             })
             .collect();
 
