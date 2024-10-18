@@ -94,8 +94,11 @@ function GenreForm({ film }: { film: Film | undefined }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Genres</CardTitle>
+        <CardTitle>
+          <h2 className='text-2xl font-bold mb-4'>Genres</h2>
+        </CardTitle>
       </CardHeader>
+
       <CardContent>
         {/* Selected Genres Grid */}
         <div className='flex flex-wrap gap-2 mb-4'>
@@ -103,7 +106,7 @@ function GenreForm({ film }: { film: Film | undefined }) {
             <Badge
               key={genre.id}
               variant='secondary'
-              className='text-sm py-1 px-2'
+              className='text-sm py-1 px-2 select-none'
             >
               {genre.name}
               <button
@@ -120,7 +123,7 @@ function GenreForm({ film }: { film: Film | undefined }) {
         {/* Accordion for Available Genres */}
         <Accordion type='single' collapsible className='w-full'>
           <AccordionItem value='genres'>
-            <AccordionTrigger className='flex justify-between items-center py-2'>
+            <AccordionTrigger className='flex justify-between items-center py-2 select-none'>
               <span>Select Genres</span>
             </AccordionTrigger>
             <AccordionContent className='p-1'>
@@ -139,7 +142,7 @@ function GenreForm({ film }: { film: Film | undefined }) {
                       <Badge
                         key={genre.id}
                         variant={genre.isSelected ? 'default' : 'secondary'}
-                        className='text-sm py-1 px-2 cursor-pointer'
+                        className='text-sm py-1 px-2 cursor-pointer select-none'
                         onClick={() => handleGenreClicked(genre)}
                       >
                         {genre.name}
