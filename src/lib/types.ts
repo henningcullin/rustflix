@@ -11,7 +11,7 @@ export type Film = {
   has_color?: boolean;
   rating?: number;
   languages: Language[];
-  keywords: string[];
+  keywords: Keyword[];
   directors: Person[];
   stars: Character[];
   has_watched: boolean;
@@ -30,6 +30,11 @@ export type Genre = {
 };
 
 export type Language = {
+  id: number;
+  name: string;
+};
+
+export type Keyword = {
   id: number;
   name: string;
 };

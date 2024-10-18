@@ -1,56 +1,73 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/hooks/use-toast';
-import { Film } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 import { Cross2Icon } from '@radix-ui/react-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Film, Keyword } from '@/lib/types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { useCallback, useState } from 'react';
+import { toast } from '@/hooks/use-toast';
+
+// Extend the database keyword with component-specific props
+type SelectableKeyword = Keyword & { isSelected: boolean };
 
 function KeywordForm({ film }: { film: Film | undefined }) {
-  const [newKeyword, setNewKeyword] = useState('');
-
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedKeywords, setSelectedKeywords] = useState<Keyword[]>(
+    film?.keywords ?? []
+  );
   const queryClient = useQueryClient();
 
-  const createKeywordMutation = useMutation<void, Error, { keyword: string }>({
-    mutationFn: async ({ keyword }) => {
-      return invoke<void>('create_keyword', { filmId: film?.id, keyword });
-    },
+  // Fetch all available keywords
+  const { data: keywords = [] } = useQuery({
+    queryKey: ['keywords'],
+    queryFn: async () => invoke<Keyword[]>('get_all_keywords'),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Add keyword mutation
+  const addKeywordMutation = useMutation<void, Error, Keyword>({
+    mutationFn: async (keyword) =>
+      invoke('add_keyword_to_film', {
+        filmId: film?.id,
+        keywordId: keyword.id,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
       toast({
-        title: 'Keyword created',
-        description: `Keyword was successfully created`,
+        title: 'Keyword added',
+        description: 'Keyword successfully added.',
       });
-      setNewKeyword('');
     },
     onError: (error) => {
       console.error(error);
       toast({
         variant: 'destructive',
-        title: 'Failed to create the keyword',
+        title: 'Failed to add the keyword',
         description: error.message,
       });
     },
   });
 
-  const deleteKeywordMutation = useMutation<void, Error, { keyword: string }>({
-    mutationFn: async ({ keyword }) => {
-      return invoke<void>('delete_keyword', { filmId: film?.id, keyword });
-    },
+  // Remove keyword mutation
+  const removeKeywordMutation = useMutation<void, Error, Keyword>({
+    mutationFn: async (keyword) =>
+      invoke('remove_keyword_from_film', {
+        filmId: film?.id,
+        keywordId: keyword.id,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
       toast({
-        title: 'Keyword deleted',
-        description: `Keyword was successfully deleted`,
+        title: 'Keyword removed',
+        description: 'Keyword successfully removed.',
       });
     },
     onError: (error) => {
@@ -63,31 +80,34 @@ function KeywordForm({ film }: { film: Film | undefined }) {
     },
   });
 
-  const isUnique = useCallback(
-    () => film?.keywords?.includes(newKeyword),
-    [film?.keywords, newKeyword]
+  const handleKeywordClicked = useCallback(
+    (keyword: SelectableKeyword) => {
+      if (keyword.isSelected) return removeKeyword(keyword);
+      setSelectedKeywords((prev) => [...prev, keyword]);
+      addKeywordMutation.mutate(keyword);
+    },
+    [selectedKeywords]
   );
 
-  const actionDisabled =
-    deleteKeywordMutation.isPending ||
-    createKeywordMutation.isPending ||
-    typeof film?.id !== 'number' ||
-    isNaN(film?.id);
-
-  const addDisabled = actionDisabled || newKeyword?.length < 1 || isUnique();
-
-  const addKeyword = useCallback(() => {
-    if (addDisabled) return;
-    createKeywordMutation.mutate({ keyword: newKeyword });
-  }, [film?.id, newKeyword, addDisabled]);
-
-  const deleteKeyword = useCallback(
-    (keyword: string) => {
-      if (actionDisabled) return;
-
-      deleteKeywordMutation.mutate({ keyword });
+  const removeKeyword = useCallback(
+    (keyword: Keyword) => {
+      setSelectedKeywords((prev) => prev.filter((k) => k.id !== keyword.id));
+      removeKeywordMutation.mutate(keyword);
     },
-    [film?.id, actionDisabled]
+    [selectedKeywords]
+  );
+
+  const filteredKeywords = useMemo<SelectableKeyword[]>(
+    () =>
+      keywords
+        .filter((keyword) =>
+          keyword.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .map((keyword) => ({
+          ...keyword,
+          isSelected: selectedKeywords.some((k) => k.id === keyword.id),
+        })),
+    [keywords, selectedKeywords, searchTerm]
   );
 
   return (
@@ -97,44 +117,55 @@ function KeywordForm({ film }: { film: Film | undefined }) {
           <h2 className='text-2xl font-bold mb-4'>Keywords</h2>
         </CardTitle>
       </CardHeader>
+
       <CardContent>
-        <div className='mb-4'>
-          <div className='flex flex-wrap gap-2'>
-            {film?.keywords?.map((keyword) => (
-              <Badge
-                key={keyword}
-                variant='secondary'
-                className='text-sm py-1 px-2'
+        {/* Selected Keywords Grid */}
+        <div className='flex flex-wrap gap-2 mb-4'>
+          {selectedKeywords.map((keyword) => (
+            <Badge
+              key={keyword.id}
+              variant='default'
+              className='text-sm py-1 px-2 select-none'
+            >
+              {keyword.name}
+              <button
+                onClick={() => removeKeyword(keyword)}
+                className='ml-2 text-muted-foreground hover:text-red-600'
+                aria-label={`Remove ${keyword.name}`}
               >
-                {keyword}
-                <button
-                  disabled={actionDisabled}
-                  onClick={() => deleteKeyword(keyword)}
-                  className='ml-2 text-muted-foreground hover:text-foreground'
-                  aria-label={`Remove ${keyword} keyword`}
-                >
-                  <Cross2Icon className='h-3 w-3' />
-                </button>
-              </Badge>
-            ))}
-          </div>
+                <Cross2Icon className='h-3 w-3' />
+              </button>
+            </Badge>
+          ))}
         </div>
-        <div className='flex space-x-2'>
-          <Input
-            type='text'
-            placeholder='Add a keyword'
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                addKeyword();
-              }
-            }}
-            className='flex-grow'
-          />
-          <Button disabled={addDisabled} onClick={addKeyword}>
-            Add
-          </Button>
+
+        <div className='p-1 w-full'>
+          <div className='mb-2'>
+            <Input
+              type='text'
+              placeholder='Search keywords...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <ScrollArea className='max-h-60'>
+            <div className='flex flex-wrap gap-2 mb-4'>
+              {filteredKeywords.length > 0 ? (
+                filteredKeywords.map((keyword) => (
+                  <Badge
+                    key={keyword.id}
+                    variant={keyword.isSelected ? 'default' : 'secondary'}
+                    className='text-sm py-1 px-2 cursor-pointer select-none'
+                    onClick={() => handleKeywordClicked(keyword)}
+                  >
+                    {keyword.name}
+                  </Badge>
+                ))
+              ) : (
+                <p className='text-muted-foreground'>No keywords found</p>
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </CardContent>
     </Card>
