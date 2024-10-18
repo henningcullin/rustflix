@@ -130,13 +130,13 @@ function LanguageForm({ film }: { film: Film | undefined }) {
           {selectedLanguages.map((language) => (
             <Badge
               key={language.id}
-              variant='secondary'
+              variant='default'
               className='text-sm py-1 px-2 select-none'
             >
               {language.name}
               <button
                 onClick={() => removeLanguage(language)}
-                className='ml-2 text-muted-foreground hover:text-foreground'
+                className='ml-2 text-muted-foreground hover:text-red-600'
                 aria-label={`Remove ${language.name}`}
               >
                 <Cross2Icon className='h-3 w-3' />
@@ -145,42 +145,34 @@ function LanguageForm({ film }: { film: Film | undefined }) {
           ))}
         </div>
 
-        {/* Accordion for Available Languages */}
-        <Accordion type='single' collapsible className='w-full'>
-          <AccordionItem value='languages'>
-            <AccordionTrigger className='flex justify-between items-center py-2 select-none'>
-              <span>Select Languages</span>
-            </AccordionTrigger>
-            <AccordionContent className='p-1'>
-              <div className='mb-2'>
-                <Input
-                  type='text'
-                  placeholder='Search languages...'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <ScrollArea className='max-h-60'>
-                <div className='flex flex-wrap gap-2 mb-4'>
-                  {filteredLanguages.length > 0 ? (
-                    filteredLanguages.map((language) => (
-                      <Badge
-                        key={language.id}
-                        variant={language.isSelected ? 'default' : 'secondary'}
-                        className='text-sm py-1 px-2 cursor-pointer select-none'
-                        onClick={() => handleLanguageClicked(language)}
-                      >
-                        {language.name}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className='text-muted-foreground'>No languages found</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+        <div className='p-1 w-full'>
+          <div className='mb-2'>
+            <Input
+              type='text'
+              placeholder='Search languages...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <ScrollArea className='max-h-60'>
+            <div className='flex flex-wrap gap-2 mb-4'>
+              {filteredLanguages.length > 0 ? (
+                filteredLanguages.map((language) => (
+                  <Badge
+                    key={language.id}
+                    variant={language.isSelected ? 'default' : 'secondary'}
+                    className='text-sm py-1 px-2 cursor-pointer select-none'
+                    onClick={() => handleLanguageClicked(language)}
+                  >
+                    {language.name}
+                  </Badge>
+                ))
+              ) : (
+                <p className='text-muted-foreground'>No languages found</p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );
