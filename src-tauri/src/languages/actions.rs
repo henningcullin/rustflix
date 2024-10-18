@@ -1,3 +1,5 @@
+use rusqlite::params;
+
 use crate::{database::create_connection, error::AppError, FromRow};
 
 use super::Language;
