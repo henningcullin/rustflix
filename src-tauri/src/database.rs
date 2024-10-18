@@ -89,6 +89,15 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
 
     conn.execute(
         r#"--sql
+        CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE
+        )"#,
+        [],
+    )?;
+
+    conn.execute(
+        r#"--sql
         CREATE TABLE IF NOT EXISTS persons (
             id INTEGER PRIMARY KEY,
             imdb_id TEXT UNIQUE,
@@ -162,9 +171,10 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         r#"--sql
         CREATE TABLE IF NOT EXISTS film_keywords (
             film_id INTEGER NOT NULL,
-            keyword TEXT NOT NULL,
+            keyword_id INTEGER NOT NULL,
             FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
-            PRIMARY KEY (film_id, keyword)
+            FOREIGN KEY (keyword_id) REFERENCES keywords(id) ON DELETE CASCADE,
+            PRIMARY KEY (film_id, keyword_id)
         )"#,
         [],
     )?;
