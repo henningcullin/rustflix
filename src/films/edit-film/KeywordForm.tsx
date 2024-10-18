@@ -91,7 +91,7 @@ function KeywordForm({ film }: { film: Film | undefined }) {
   );
 
   return (
-    <Card>
+    <Card className='flex-1'>
       <CardHeader>
         <CardTitle>
           <h2 className='text-2xl font-bold mb-4'>Keywords</h2>

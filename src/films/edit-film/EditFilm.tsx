@@ -102,7 +102,7 @@ function EditFilm() {
           <MainForm film={film} />
         </TabsContent>
         <TabsContent value='categories' className='container mx-auto'>
-          <div>
+          <div className='inline-flex gap-4 mt-10 pb-60'>
             <GenreForm film={film} />
             <LanguageForm film={film} />
             <KeywordForm film={film} />
