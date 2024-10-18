@@ -43,6 +43,14 @@ function GenreForm({ film }: { film: Film | undefined }) {
       queryClient.invalidateQueries({ queryKey: ['films'] });
       toast({ title: 'Genre added', description: 'Genre successfully added.' });
     },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to add the genre',
+        description: error.message,
+      });
+    },
   });
 
   // Remove genre mutation
@@ -57,6 +65,14 @@ function GenreForm({ film }: { film: Film | undefined }) {
       toast({
         title: 'Genre removed',
         description: 'Genre successfully removed.',
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to delete the genre',
+        description: error.message,
       });
     },
   });
