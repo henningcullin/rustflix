@@ -38,7 +38,8 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
         LEFT JOIN genres g ON fg.genre_id = g.id
         LEFT JOIN film_languages fl ON f.id = fl.film_id
         LEFT JOIN languages l ON fl.language_id = l.id
-        LEFT JOIN film_keywords k ON f.id = k.film_id
+        LEFT JOIN film_keywords fk ON f.id = fk.film_id
+        LEFT JOIN keywords k on fk.keyword_id = k.id
         LEFT JOIN film_directors fd ON f.id = fd.film_id
         LEFT JOIN persons p ON fd.person_id = p.id
         LEFT JOIN characters c ON f.id = c.film_id
@@ -80,7 +81,8 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
         LEFT JOIN genres g ON fg.genre_id = g.id
         LEFT JOIN film_languages fl ON f.id = fl.film_id
         LEFT JOIN languages l ON fl.language_id = l.id
-        LEFT JOIN film_keywords k ON f.id = k.film_id
+        LEFT JOIN film_keywords fk ON f.id = fk.film_id
+        LEFT JOIN keywords k on fk.keyword_id = k.id
         LEFT JOIN film_directors fd ON f.id = fd.film_id
         LEFT JOIN persons p ON fd.person_id = p.id
         LEFT JOIN characters c ON f.id = c.film_id

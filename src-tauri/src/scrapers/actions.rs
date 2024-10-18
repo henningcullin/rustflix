@@ -402,14 +402,18 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
         .iter()
         .filter_map(|language| {
             if let Err(e) = tx.execute(
-                r#"INSERT INTO languages (name) VALUES (?) ON CONFLICT(name) DO NOTHING"#,
+                r#"--sql
+                INSERT INTO languages (name) VALUES (?) ON CONFLICT(name) DO NOTHING
+                "#,
                 params![language],
             ) {
                 eprintln!("Failed to insert language '{}': {:?}", language, e);
                 return None;
             }
             match tx.query_row(
-                r#"SELECT id FROM languages WHERE name = ?"#,
+                r#"--sql
+                SELECT id FROM languages WHERE name = ?
+                "#,
                 params![language],
                 |row| row.get(0),
             ) {
@@ -424,19 +428,12 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
 
     for language_id in &language_ids {
         if let Err(e) = tx.execute(
-            r#"INSERT INTO film_languages (film_id, language_id) VALUES (?, ?) ON CONFLICT(film_id, language_id) DO NOTHING"#,
+            r#"--sql
+            INSERT INTO film_languages (film_id, language_id) VALUES (?, ?) ON CONFLICT(film_id, language_id) DO NOTHING
+            "#,
             params![film.id, language_id],
         ) {
             eprintln!("Failed to link film to language ID {}: {:?}", language_id, e);
-        }
-    }
-
-    for keyword in &film.keywords {
-        if let Err(e) = tx.execute(
-            r#"INSERT INTO film_keywords (film_id, keyword) VALUES (?, ?) ON CONFLICT(film_id, keyword) DO NOTHING"#,
-            params![film.id, keyword],
-        ) {
-            eprintln!("Failed to insert keyword '{}': {:?}", keyword, e);
         }
     }
 
@@ -445,14 +442,18 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
         .iter()
         .filter_map(|keyword| {
             if let Err(e) = tx.execute(
-                r#"INSERT INTO keywords (name) VALUES (?) ON CONFLICT(name) DO NOTHING"#,
+                r#"--sql
+                INSERT INTO keywords (name) VALUES (?) ON CONFLICT(name) DO NOTHING
+                "#,
                 params![keyword],
             ) {
                 eprintln!("Failed to insert keyword '{}': {:?}", keyword, e);
                 return None;
             }
             match tx.query_row(
-                r#"SELECT id FROM keywords WHERE name = ?"#,
+                r#"--sql
+                SELECT id FROM keywords WHERE name = ?
+                "#,
                 params![keyword],
                 |row| row.get(0),
             ) {
@@ -467,7 +468,9 @@ pub async fn insert_scraped_film(film: &ScrapedFilm) -> Result<Vec<(i64, String)
 
     for keyword_id in &keyword_ids {
         if let Err(e) = tx.execute(
-            r#"--sql INSERT INTO film_keywords (film_id, keyword_id) VALUES (?, ?) ON CONFLICT(film_id, keyword_id) DO NOTHING"#,
+            r#"--sql
+            INSERT INTO film_keywords (film_id, keyword_id) VALUES (?, ?) ON CONFLICT(film_id, keyword_id) DO NOTHING
+            "#,
             params![film.id, keyword_id],
         ) {
             eprintln!("Failed to link keyword to Film ID {}, Error: {:?}", keyword_id, e);
