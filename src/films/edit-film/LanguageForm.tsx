@@ -38,6 +38,7 @@ function LanguageForm({ film }: { film: Film | undefined }) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+      queryClient.invalidateQueries({ queryKey: ['languages'] });
       toast({
         title: 'Language added',
         description: 'Language successfully added.',
@@ -65,6 +66,7 @@ function LanguageForm({ film }: { film: Film | undefined }) {
         queryKey: ['film', film?.id?.toString()],
       });
       queryClient.invalidateQueries({ queryKey: ['films'] });
+      queryClient.invalidateQueries({ queryKey: ['languages'] });
       toast({
         title: 'Language removed',
         description: 'Language successfully removed.',
