@@ -24,7 +24,7 @@ function Home() {
   }
 
   return (
-    <div className='grid grid-cols-4 p-4'>
+    <div className='inline-flex flex-wrap gap-24 p-6'>
       {isLoading ? (
         <Skeleton className='w-[375px] h-[525px]'></Skeleton>
       ) : !films ? (
