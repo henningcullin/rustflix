@@ -22,7 +22,9 @@ function Cover({ id, className }: CoverProps): React.ReactElement {
   });
 
   if (isLoading) {
-    return <Skeleton className={cn('w-[375px] h-[525px]', className)} />;
+    return (
+      <Skeleton className={cn('w-[375px] h-[525px] rounded-lg', className)} />
+    );
   }
 
   if (error) {
