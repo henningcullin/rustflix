@@ -24,12 +24,12 @@ import { Separator } from '@/components/ui/separator';
 import { getFilmName } from '@/lib/utils';
 import FilmList from './FilmList';
 
-interface Arguments {
+type Arguments = {
   onSelect: (imdb_id: string | undefined) => void;
   filePath: string | undefined;
-}
+};
 
-export interface SearchItem {
+export type SearchItem = {
   i: { height: number; imageUrl: string; width: number };
   id: string;
   l: string;
@@ -38,7 +38,7 @@ export interface SearchItem {
   rank: number;
   s: string;
   y: number;
-}
+};
 
 /**
  * Get films from imdb

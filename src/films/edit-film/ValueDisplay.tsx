@@ -4,11 +4,11 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useCallback } from 'react';
 
-interface ValueDisplayProps {
+type ValueDisplayProps = {
   label: string;
   value: string | undefined;
   icon: React.ReactNode; // The icon component to display
-}
+};
 
 function ValueDisplay({ label, value, icon }: ValueDisplayProps) {
   const { toast } = useToast();
