@@ -27,6 +27,13 @@ base64 = "0.22.1"
 html-escape = "0.2.13"
 iso8601 = "0.6.1"
 
+# For setting up an HTTP server with Axum
+axum = "0.6"
+# For handling asynchronous streams
+tokio-util = "0.7"
+# For file streaming over HTTP
+hyper = "0.14"
+
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]

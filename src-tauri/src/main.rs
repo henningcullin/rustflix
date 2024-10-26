@@ -13,6 +13,7 @@ mod keywords;
 mod languages;
 mod persons;
 mod scrapers;
+mod server;
 
 use characters::{create_character, delete_character, update_character};
 use directories::{add_directory, delete_directory, get_all_directories, select_directory};
@@ -93,6 +94,14 @@ fn main() {
                     eprintln!("{err:?}");
                 }
             };
+
+            // Start the axum server in an async task
+            tauri::async_runtime::spawn(async {
+                if let Err(e) = server::stream_film::start_server().await {
+                    eprintln!("Failed to start axum server: {e}");
+                }
+            });
+
             Ok(())
         })
         .run(tauri::generate_context!())

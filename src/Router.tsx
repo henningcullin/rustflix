@@ -6,7 +6,7 @@ import Layout from './Layout';
 import Directories from './directories/Directories';
 import Home from './home/Home';
 import EditFilm from './films/edit-film/EditFilm';
-import Film from './films/film/Film';
+import FilmPage from './films/film/Film';
 
 const router = createMemoryRouter([
   {
@@ -30,7 +30,7 @@ const router = createMemoryRouter([
           },
           {
             path: ':filmId',
-            element: <Film />,
+            element: <FilmPage />,
           },
         ],
       },
