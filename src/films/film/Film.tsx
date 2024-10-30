@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Film } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
+import ReactPlayer from 'react-player';
 
 function FilmPage() {
   const { filmId } = useParams();
@@ -25,13 +26,15 @@ function FilmPage() {
   });
 
   if (isFetchingFilm) return <div>Getting film info...</div>;
-
   if (isFilmError) return <div>Error getting film</div>;
 
   return (
     <div>
-      <h2>Should show it, {film?.file}</h2>
-      <video src={`localhost:3000/film/${film?.id}`}></video>
+      <h2>Playing {film?.title}</h2>
+      <ReactPlayer
+        url={`http://localhost:3000/film/${film?.id}`} // Full URL for streaming
+        controls
+      />
     </div>
   );
 }

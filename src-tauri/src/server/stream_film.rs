@@ -3,7 +3,7 @@ use std::{error::Error, sync::Arc};
 use axum::{
     extract::Path,
     http::{header, HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::get,
     Router,
 };
@@ -19,6 +19,8 @@ use tokio::io::{AsyncReadExt, AsyncSeekExt}; // For async reading and seeking
 
 use crate::database::create_connection;
 
+const INITIAL_CHUNK_SIZE: u64 = 1_048_576; // 1 MB for faster initial load
+
 // Query to get the file path for the given film ID
 fn get_file_path(film_id: i32) -> Result<String, StatusCode> {
     let conn = create_connection().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -30,10 +32,7 @@ fn get_file_path(film_id: i32) -> Result<String, StatusCode> {
     result.map_err(|_| StatusCode::NOT_FOUND)
 }
 
-async fn stream_film(
-    Path(film_id): Path<i32>,
-    headers: HeaderMap,
-) -> Result<impl IntoResponse, StatusCode> {
+async fn stream_film(Path(film_id): Path<i32>, headers: HeaderMap) -> Result<Response, StatusCode> {
     // Build the full path and open the file with Tokio
     let file_path = get_file_path(film_id)?;
     let file = TokioFile::open(&file_path)
@@ -64,12 +63,17 @@ async fn stream_film(
                 .unwrap_or(file_length - 1);
             (start, end)
         }
-        _ => (0, file_length - 1),
+        // When there's no range header, send an initial small chunk for faster loading
+        _ => (0, INITIAL_CHUNK_SIZE.min(file_length) - 1),
     };
+
+    if start >= file_length || end >= file_length || start > end {
+        return Err(StatusCode::RANGE_NOT_SATISFIABLE);
+    }
 
     // Set headers for partial content response
     let mut response_headers = HeaderMap::new();
-    response_headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("video/mp4")); // Change MIME type if needed
+    response_headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("video/mp4"));
     response_headers.insert(
         header::CONTENT_LENGTH,
         HeaderValue::from_str(&(end - start + 1).to_string()).unwrap(),
@@ -81,7 +85,7 @@ async fn stream_film(
     response_headers.insert(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"));
 
     // Read the requested byte range from the file
-    let mut file = file.lock().await; // Await the lock
+    let mut file = file.lock().await;
     file.seek(SeekFrom::Start(start))
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -90,21 +94,13 @@ async fn stream_film(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let headers = HeaderMap::from_iter([
-        (header::CONTENT_TYPE, HeaderValue::from_static("video/mp4")),
-        (
-            header::CONTENT_LENGTH,
-            HeaderValue::from(end - start + 1), // Create owned HeaderValue
-        ),
-        (
-            header::CONTENT_RANGE,
-            HeaderValue::from_str(format!("bytes {}-{}/{}", start, end, file_length).as_str())
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
-        ),
-        (header::ACCEPT_RANGES, HeaderValue::from_static("bytes")),
-    ]);
-
-    Ok((StatusCode::PARTIAL_CONTENT, headers, Bytes::from(buffer)))
+    // Return the response with partial content and headers
+    Ok((
+        StatusCode::PARTIAL_CONTENT,
+        response_headers,
+        Bytes::from(buffer),
+    )
+        .into_response())
 }
 
 // Function to create the axum router
