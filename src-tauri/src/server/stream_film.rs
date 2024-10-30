@@ -1,18 +1,18 @@
 use std::{error::Error, sync::Arc};
 
 use axum::{
+    body::StreamBody,
     extract::Path,
     http::{header, HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    response::Response,
     routing::get,
     Router,
 };
 use rusqlite::params;
 use tokio::task;
 
-use axum::{body::Bytes, http::HeaderValue};
 use std::io::SeekFrom;
-use tokio::sync::Mutex;
+use tokio_util::io::ReaderStream;
 
 use tokio::fs::File as TokioFile; // Import Tokio's file type for async file operations
 use tokio::io::{AsyncReadExt, AsyncSeekExt}; // For async reading and seeking
@@ -32,24 +32,21 @@ fn get_file_path(film_id: i32) -> Result<String, StatusCode> {
     result.map_err(|_| StatusCode::NOT_FOUND)
 }
 
-async fn stream_film(Path(film_id): Path<i32>, headers: HeaderMap) -> Result<Response, StatusCode> {
-    // Build the full path and open the file with Tokio
+async fn stream_film(
+    Path(film_id): Path<i32>,
+    headers: HeaderMap,
+) -> Result<Response<StreamBody<ReaderStream<tokio::io::Take<tokio::fs::File>>>>, StatusCode> {
     let file_path = get_file_path(film_id)?;
-    let file = TokioFile::open(&file_path)
+    let mut file = TokioFile::open(&file_path)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
-    let file = Arc::new(Mutex::new(file)); // Use Arc to share ownership across async tasks
 
-    // Get file size
     let file_length = file
-        .lock()
-        .await
         .metadata()
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .len();
 
-    // Parse the range header
     let range = headers
         .get(header::RANGE)
         .and_then(|range_header| range_header.to_str().ok());
@@ -63,7 +60,6 @@ async fn stream_film(Path(film_id): Path<i32>, headers: HeaderMap) -> Result<Res
                 .unwrap_or(file_length - 1);
             (start, end)
         }
-        // When there's no range header, send an initial small chunk for faster loading
         _ => (0, INITIAL_CHUNK_SIZE.min(file_length) - 1),
     };
 
@@ -71,36 +67,29 @@ async fn stream_film(Path(film_id): Path<i32>, headers: HeaderMap) -> Result<Res
         return Err(StatusCode::RANGE_NOT_SATISFIABLE);
     }
 
-    // Set headers for partial content response
-    let mut response_headers = HeaderMap::new();
-    response_headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("video/mp4"));
-    response_headers.insert(
-        header::CONTENT_LENGTH,
-        HeaderValue::from_str(&(end - start + 1).to_string()).unwrap(),
-    );
-    response_headers.insert(
-        header::CONTENT_RANGE,
-        HeaderValue::from_str(&format!("bytes {}-{}/{}", start, end, file_length)).unwrap(),
-    );
-    response_headers.insert(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"));
-
-    // Read the requested byte range from the file
-    let mut file = file.lock().await;
+    // Seek to the start position for the requested range
     file.seek(SeekFrom::Start(start))
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let mut buffer = vec![0; (end - start + 1) as usize];
-    file.read_exact(&mut buffer)
-        .await
+
+    // Create a stream that reads from the file in chunks
+    let stream = ReaderStream::new(file.take(end - start + 1));
+    let body = StreamBody::new(stream);
+
+    // Build the response with individual headers and the streaming body
+    let response = Response::builder()
+        .status(StatusCode::PARTIAL_CONTENT)
+        .header(header::CONTENT_TYPE, "video/mp4")
+        .header(header::CONTENT_LENGTH, (end - start + 1).to_string())
+        .header(
+            header::CONTENT_RANGE,
+            format!("bytes {}-{}/{}", start, end, file_length),
+        )
+        .header(header::ACCEPT_RANGES, "bytes")
+        .body(body)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Return the response with partial content and headers
-    Ok((
-        StatusCode::PARTIAL_CONTENT,
-        response_headers,
-        Bytes::from(buffer),
-    )
-        .into_response())
+    Ok(response)
 }
 
 // Function to create the axum router
