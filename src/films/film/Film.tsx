@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import clsx from 'clsx';
-import { PlayIcon, ResumeIcon } from '@radix-ui/react-icons';
+import {
+  GlobeIcon,
+  PlayIcon,
+  ResumeIcon,
+  StarIcon,
+} from '@radix-ui/react-icons';
 
 function FilmPage() {
   const { filmId } = useParams();
@@ -119,15 +124,17 @@ function FilmPage() {
             ))}
           </div>
           <div className='flex flex-wrap items-center space-x-2 space-y-2 mt-2'>
+            <GlobeIcon className='text-blue-400 mt-2' />
             <span className='font-medium'>Languages:</span>
             {film?.languages.map((lang) => (
               <Badge key={lang.id}>{lang.name}</Badge>
             ))}
           </div>
           <div className='flex items-center space-x-2 mt-2'>
+            <StarIcon className='text-yellow-400' />
             <span className='font-medium'>Rating:</span>
             <span
-              className={clsx(`px-3 py-1 rounded-full font-semibold`)}
+              className={clsx(`px-1 py-1 rounded-full font-semibold`)}
               style={{ color: `${ratingColor(film?.rating)}` }}
             >
               {film?.rating || 'N/A'}
@@ -136,9 +143,9 @@ function FilmPage() {
           <p className='mt-2'>
             <strong>Runtime:</strong>{' '}
             {film?.run_time
-              ? `${Math.floor(film.run_time / 60)} min ${
-                  film.run_time % 60
-                } sec`
+              ? `${Math.floor(film.run_time / 3600)}h ${Math.floor(
+                  (film.run_time % 3600) / 60
+                )}min`
               : 'N/A'}
           </p>
           <p>
