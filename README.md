@@ -36,7 +36,12 @@ cd rustflix
 pnpm i
 ```
 
-3. **Run the application:**
+3. **Run developer mode:**
 ```bash
 pnpm tauri dev
+```
+
+4. **Build for production:**
+```bash
+pnpm tauri build
 ```
