@@ -2,23 +2,9 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Film } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
-import ReactPlayer from 'react-player';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
-import clsx from 'clsx';
-import {
-  GlobeIcon,
-  PlayIcon,
-  ResumeIcon,
-  StarIcon,
-} from '@radix-ui/react-icons';
 
 function FilmPage() {
   const { filmId } = useParams();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [startFromLeftOff, setStartFromLeftOff] = useState(false);
 
   const {
     data: film,
