@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Film } from '@/lib/types';
+import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import ReactPlayer from 'react-player';
 import { forwardRef, memo, useState } from 'react';
@@ -20,6 +20,8 @@ import {
 } from '@radix-ui/react-icons';
 import { Badge } from '@/components/ui/badge';
 import { cn, isValidDate } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function FilmPage() {
   const { filmId } = useParams();
@@ -53,7 +55,6 @@ export default function FilmPage() {
   return (
     <div className='min-h-screen min-w-screen border-2 border-red-500 p-4'>
       <div className='flex'>
-        <div className='border-2 border-red-500 flex-1'>Poster area</div>
         <div className='border-2 border-red-500 flex-[2]'>
           <ReactPlayer
             url={`http://localhost:3000/film/${film?.id}`}
@@ -63,11 +64,13 @@ export default function FilmPage() {
             height='100%'
           />
         </div>
-        <div className='border-2 border-red-500 flex-1'>
+        <div className='border-2 border-red-500 flex-1 p-2'>
           <Card>
             <CardHeader>
-              <CardTitle>{film?.title}</CardTitle>
-              <CardDescription>{film?.plot}</CardDescription>
+              <CardTitle className='text-xl'>{film?.title}</CardTitle>
+              <CardDescription className='text-base'>
+                {film?.plot}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className='flex flex-wrap gap-2 2xl:flex-row sm:flex-col w-full'>
@@ -85,7 +88,7 @@ export default function FilmPage() {
                 />
                 <FilmReleaseDate
                   release_date={film?.release_date}
-                  className='flex-[1.6] whitespace-nowrap'
+                  className='flex-[1.1] whitespace-nowrap'
                 />
               </div>
 
@@ -107,7 +110,6 @@ export default function FilmPage() {
   );
 }
 
-// Component: FilmRating
 const FilmRating = memo(
   forwardRef<
     HTMLDivElement,
@@ -131,7 +133,6 @@ const FilmRating = memo(
   })
 );
 
-// Component: FilmColor
 const FilmColor = memo(
   forwardRef<
     HTMLDivElement,
@@ -150,7 +151,6 @@ const FilmColor = memo(
   })
 );
 
-// Component: FilmRuntime
 const FilmRuntime = memo(
   forwardRef<
     HTMLDivElement,
@@ -177,7 +177,6 @@ const FilmRuntime = memo(
   })
 );
 
-// Component: FilmReleaseDate
 const FilmReleaseDate = memo(
   forwardRef<
     HTMLDivElement,
