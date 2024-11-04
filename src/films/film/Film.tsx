@@ -89,29 +89,20 @@ export default function FilmPage() {
                 />
               </div>
 
-              <div className='pt-2'>
-                <p>Genres</p>
-                <div className='flex gap-1 pt-1'>
-                  {film?.genres.map((genre) => (
-                    <Badge>{genre.name}</Badge>
-                  ))}
-                </div>
-              </div>
-              <div className='pt-2'>
-                <p>Languages</p>
-                <div className='flex gap-1 pt-1'>
-                  {film?.languages.map((languages) => (
-                    <Badge>{languages.name}</Badge>
-                  ))}
-                </div>
-              </div>
+              <FilmGenres genres={film?.genres} />
+
+              <FilmLanguages languages={film?.languages} />
+
+              <Separator className='mt-4' />
+
+              <div className='flex'></div>
+
+              <ScrollArea></ScrollArea>
             </CardContent>
           </Card>
         </div>
       </div>
-      <div className='border-2 border-red-500 h-72'>
-        Directors and Characters
-      </div>
+      <div className='border-2 border-red-500'></div>
     </div>
   );
 }
@@ -201,6 +192,50 @@ const FilmReleaseDate = memo(
       <div ref={ref} className={cn('flex', className)} {...props}>
         <CalendarIcon className='h-5 w-5 mt-0.5 mr-1' />
         {date.toLocaleDateString()}
+      </div>
+    );
+  })
+);
+
+const FilmGenres = memo(
+  forwardRef<
+    HTMLDivElement,
+    { genres: Genre[] | undefined } & React.HTMLAttributes<HTMLDivElement>
+  >(function FilmGenres({ genres, ...props }, ref) {
+    if (!Array.isArray(genres)) return '';
+
+    const label = genres?.length > 1 ? 'Genres' : 'Genre';
+
+    return (
+      <div ref={ref} className={cn('pt-2', props.className)} {...props}>
+        <div className='flex'>{label}</div>
+        <div className='flex gap-1 pt-1'>
+          {genres.map((genres) => (
+            <Badge>{genres.name}</Badge>
+          ))}
+        </div>
+      </div>
+    );
+  })
+);
+
+const FilmLanguages = memo(
+  forwardRef<
+    HTMLDivElement,
+    { languages: Language[] | undefined } & React.HTMLAttributes<HTMLDivElement>
+  >(function FilmLanguages({ languages, ...props }, ref) {
+    if (!Array.isArray(languages)) return '';
+
+    const label = languages?.length > 1 ? 'Languages' : 'Language';
+
+    return (
+      <div ref={ref} className={cn('pt-2', props.className)} {...props}>
+        <div className='flex'>{label}</div>
+        <div className='flex gap-1 pt-1'>
+          {languages.map((languages) => (
+            <Badge>{languages.name}</Badge>
+          ))}
+        </div>
       </div>
     );
   })
