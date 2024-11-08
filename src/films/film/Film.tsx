@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import ReactPlayer from 'react-player';
-import { forwardRef, memo, useState } from 'react';
+import { forwardRef, memo, useMemo, useRef, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -16,17 +16,21 @@ import {
   CheckIcon,
   ClockIcon,
   Cross2Icon,
+  PlayIcon,
+  ResumeIcon,
   StarIcon,
 } from '@radix-ui/react-icons';
 import { Badge } from '@/components/ui/badge';
-import { cn, isValidDate } from '@/lib/utils';
+import { cn, isValidDate, toggleTauriFullScreen } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 
 export default function FilmPage() {
   const { filmId } = useParams();
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef<null | ReactPlayer>(null);
 
   const {
     data: film,
@@ -45,6 +49,11 @@ export default function FilmPage() {
     enabled: !!filmId,
   });
 
+  const resumeDisabled = useMemo(
+    () => typeof film?.left_off_point !== 'number' || film.left_off_point <= 0,
+    [film?.left_off_point]
+  );
+
   if (isFetchingFilm)
     return <div className='text-center p-4'>Getting film info...</div>;
   if (isFilmError)
@@ -60,6 +69,7 @@ export default function FilmPage() {
             url={`http://localhost:3000/film/${film?.id}`}
             controls
             playing={isPlaying}
+            ref={playerRef}
             width='100%'
             height='100%'
           />
@@ -98,7 +108,32 @@ export default function FilmPage() {
 
               <Separator className='mt-4' />
 
-              <div className='flex'></div>
+              <div className='flex mt-4 select-none'>
+                <Button
+                  className='mr-4'
+                  onClick={() => {
+                    toggleTauriFullScreen();
+                    setIsPlaying(true);
+                  }}
+                >
+                  <PlayIcon className='h-5 w-5 mt-0.5 mr-1' /> Play
+                </Button>
+                <Button
+                  variant='secondary'
+                  disabled={resumeDisabled}
+                  onClick={() => {
+                    if (resumeDisabled) return;
+                    toggleTauriFullScreen();
+                    playerRef?.current?.seekTo(
+                      film?.left_off_point ?? 0,
+                      'seconds'
+                    );
+                    setIsPlaying(true);
+                  }}
+                >
+                  <ResumeIcon className='h-5 w-5 mt-0.5 mr-2' /> Resume
+                </Button>
+              </div>
 
               <ScrollArea></ScrollArea>
             </CardContent>
