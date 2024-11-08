@@ -1,3 +1,4 @@
+import { appWindow } from '@tauri-apps/api/window';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
@@ -45,4 +46,9 @@ export function isValidDate(dateString: string | undefined) {
     date.getUTCMonth() === Number(month) - 1 &&
     date.getUTCDate() === Number(day)
   );
+}
+
+export async function toggleTauriFullScreen() {
+  const isFullscreen = await appWindow.isFullscreen();
+  await appWindow.setFullscreen(!isFullscreen); // Toggle
 }
