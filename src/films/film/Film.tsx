@@ -108,30 +108,36 @@ export default function FilmPage() {
 
               <Separator className='mt-4' />
 
-              <div className='flex mt-4 select-none'>
+              <div className='flex mt-4 select-none gap-3'>
                 <Button
-                  className='mr-4'
-                  onClick={() => {
-                    toggleTauriFullScreen();
-                    setIsPlaying(true);
-                  }}
+                  variant='default'
+                  className='flex-1'
+                  onClick={handlePlay}
                 >
-                  <PlayIcon className='h-5 w-5 mt-0.5 mr-1' /> Play
+                  <PlayIcon className={ICON_STYLE} /> Play
                 </Button>
                 <Button
-                  variant='secondary'
+                  variant='outline'
                   disabled={resumeDisabled}
-                  onClick={() => {
-                    if (resumeDisabled) return;
-                    toggleTauriFullScreen();
-                    playerRef?.current?.seekTo(
-                      film?.left_off_point ?? 0,
-                      'seconds'
-                    );
-                    setIsPlaying(true);
-                  }}
+                  className='flex-1'
+                  onClick={handleResume}
                 >
-                  <ResumeIcon className='h-5 w-5 mt-0.5 mr-2' /> Resume
+                  <ResumeIcon className={cn(ICON_STYLE, 'mr-1.5')} /> Resume
+                </Button>
+                <Button
+                  variant='outline'
+                  className='flex-1'
+                  onClick={handlePlayWith}
+                >
+                  <OpenInNewWindowIcon className={ICON_STYLE} /> Play with
+                </Button>
+                <Button
+                  variant='outline'
+                  className='flex-1'
+                  onClick={handleOpenIMDb}
+                >
+                  <ExternalLinkIcon className={ICON_STYLE} />
+                  Open IMDb Page
                 </Button>
               </div>
 
