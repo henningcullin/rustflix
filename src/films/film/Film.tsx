@@ -56,6 +56,34 @@ export default function FilmPage() {
     [film?.left_off_point]
   );
 
+  const PlayerPlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  // Toggle fullscreen on the wrapper div
+  const PlayerFullscreen = () => {
+    if (screenfull.isEnabled && playerWrapperRef.current) {
+      screenfull.toggle(playerWrapperRef.current);
+      setIsFullscreen(!isFullscreen);
+    }
+  };
+
+  function handlePlay() {
+    if (!playerWrapperRef?.current) return;
+    screenfull.request(playerWrapperRef?.current);
+    setIsPlaying(true);
+  }
+
+  function handleResume() {
+    if (resumeDisabled) return;
+    playerRef?.current?.seekTo(film?.left_off_point ?? 0, 'seconds');
+    handlePlay();
+  }
+
+  function handlePlayWith() {}
+
+  function handleOpenIMDb() {}
+
   if (isFetchingFilm)
     return <div className='text-center p-4'>Getting film info...</div>;
   if (isFilmError)
