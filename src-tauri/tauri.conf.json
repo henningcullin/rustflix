@@ -22,8 +22,8 @@
         "close": false,
         "create": false,
         "hide": false,
-        "maximize": true,
-        "minimize": true,
+        "maximize": false,
+        "minimize": false,
         "print": false,
         "requestUserAttention": false,
         "setAlwaysOnTop": false,
@@ -49,8 +49,8 @@
         "setTitle": false,
         "show": false,
         "startDragging": false,
-        "unmaximize": true,
-        "unminimize": true
+        "unmaximize": false,
+        "unminimize": false
       }
     },
     "windows": [
