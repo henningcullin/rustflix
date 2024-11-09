@@ -26,6 +26,8 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 
+const ICON_STYLE = 'h-5 w-5 mt-0.5 mr-1';
+
 export default function FilmPage() {
   const { filmId } = useParams();
 
@@ -167,7 +169,7 @@ const FilmRating = memo(
 
     return (
       <div ref={ref} className={cn('flex', className)} {...props}>
-        <StarIcon className={cn('h-5 w-5 mt-0.5 mr-1', colorClass)} />
+        <StarIcon className={cn(ICON_STYLE, colorClass)} />
         {rating}
       </div>
     );
@@ -182,9 +184,9 @@ const FilmColor = memo(
     return (
       <div ref={ref} className={cn('flex', className)} {...props}>
         {hasColor ? (
-          <CheckIcon className='h-5 w-5 mt-0.5 mr-1 text-green-300' />
+          <CheckIcon className={cn(ICON_STYLE, 'text-green-300')} />
         ) : (
-          <Cross2Icon className='h-5 w-5 mt-0.5 mr-1 text-red-300' />
+          <Cross2Icon className={cn(ICON_STYLE, 'text-red-300')} />
         )}
         Color
       </div>
@@ -211,7 +213,7 @@ const FilmRuntime = memo(
 
     return (
       <div ref={ref} className={cn('flex', className)} {...props}>
-        <ClockIcon className='h-5 w-5 mt-0.5 mr-1' />
+        <ClockIcon className={ICON_STYLE} />
         {runtimeString}
       </div>
     );
@@ -230,7 +232,7 @@ const FilmReleaseDate = memo(
 
     return (
       <div ref={ref} className={cn('flex', className)} {...props}>
-        <CalendarIcon className='h-5 w-5 mt-0.5 mr-1' />
+        <CalendarIcon className={ICON_STYLE} />
         {date.toLocaleDateString()}
       </div>
     );
