@@ -4,6 +4,7 @@ import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import ReactPlayer from 'react-player';
 import { forwardRef, memo, useMemo, useRef, useState } from 'react';
+import screenfull from 'screenfull';
 import {
   Card,
   CardContent,
@@ -16,12 +17,17 @@ import {
   CheckIcon,
   ClockIcon,
   Cross2Icon,
+  EnterFullScreenIcon,
+  ExitFullScreenIcon,
+  ExternalLinkIcon,
+  OpenInNewWindowIcon,
+  PauseIcon,
   PlayIcon,
   ResumeIcon,
   StarIcon,
 } from '@radix-ui/react-icons';
 import { Badge } from '@/components/ui/badge';
-import { cn, isValidDate, toggleTauriFullScreen } from '@/lib/utils';
+import { cn, isValidDate } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
