@@ -17,11 +17,8 @@ import {
   CheckIcon,
   ClockIcon,
   Cross2Icon,
-  EnterFullScreenIcon,
-  ExitFullScreenIcon,
   ExternalLinkIcon,
   OpenInNewWindowIcon,
-  PauseIcon,
   PlayIcon,
   ResumeIcon,
   StarIcon,
@@ -37,10 +34,8 @@ const ICON_STYLE = 'h-5 w-5 mt-0.5 mr-1';
 export default function FilmPage() {
   const { filmId } = useParams();
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<null | ReactPlayer>(null);
-  const playerWrapperRef = useRef<null | HTMLDivElement>(null);
 
   const {
     data: film,
@@ -64,21 +59,7 @@ export default function FilmPage() {
     [film?.left_off_point]
   );
 
-  const PlayerPlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  // Toggle fullscreen on the wrapper div
-  const PlayerFullscreen = () => {
-    if (screenfull.isEnabled && playerWrapperRef.current) {
-      screenfull.toggle(playerWrapperRef.current);
-      setIsFullscreen(!isFullscreen);
-    }
-  };
-
   function handlePlay() {
-    if (!playerWrapperRef?.current) return;
-    screenfull.request(playerWrapperRef?.current);
     setIsPlaying(true);
   }
 
@@ -102,26 +83,15 @@ export default function FilmPage() {
   return (
     <div className='min-h-screen min-w-screen border-2 border-red-500 p-4'>
       <div className='flex'>
-        <div
-          ref={playerWrapperRef}
-          className='border-2 border-red-500 flex-[2] player-wrapper'
-        >
+        <div className='border-2 border-red-500 flex-[2]'>
           <ReactPlayer
-            controls={false}
+            controls={true}
             url={`http://localhost:3000/film/${film?.id}`}
             playing={isPlaying}
             ref={playerRef}
             width='100%'
             height='100%'
           />
-          <div className='controls-overlay'>
-            <button onClick={PlayerPlayPause} className='control-button'>
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </button>
-            <button onClick={PlayerFullscreen} className='control-button'>
-              {isFullscreen ? <ExitFullScreenIcon /> : <EnterFullScreenIcon />}
-            </button>
-          </div>
         </div>
         <div className='border-2 border-red-500 flex-1 p-2'>
           <Card>
