@@ -48,7 +48,11 @@ export function isValidDate(dateString: string | undefined) {
   );
 }
 
-export async function toggleTauriFullScreen() {
+export async function toggleFullscreen() {
   const isFullscreen = await appWindow.isFullscreen();
-  await appWindow.setFullscreen(!isFullscreen); // Toggle
+  await setFullscreen(!isFullscreen);
+}
+
+export async function setFullscreen(beFullscreen: boolean) {
+  await appWindow.setFullscreen(beFullscreen); // Toggle fullscreen
 }

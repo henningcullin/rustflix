@@ -1,4 +1,4 @@
-import { appWindow } from '@tauri-apps/api/window';
+import { toggleFullscreen } from '@/lib/utils';
 import { useEffect } from 'react';
 
 export default function useFullscreen(): void {
@@ -8,8 +8,7 @@ export default function useFullscreen(): void {
       if (event.key === 'F11') {
         event.preventDefault(); // Prevent the default F11 behavior
 
-        const isFullscreen = await appWindow.isFullscreen();
-        await appWindow.setFullscreen(!isFullscreen); // Toggle fullscreen
+        await toggleFullscreen();
       }
     };
 
