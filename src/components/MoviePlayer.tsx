@@ -12,6 +12,7 @@ import { Component, createRef } from 'react';
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
 import { Slider } from './ui/slider';
+import { setFullscreen } from '@/lib/utils';
 
 type MoviePlayerProps = {
   url: string;
@@ -35,6 +36,7 @@ export default class MoviePlayer extends Component<
   MoviePlayerState
 > {
   innerPlayer = createRef<ReactPlayer>();
+  outerPlayerRef = createRef<HTMLDivElement>();
 
   constructor(props: MoviePlayerProps) {
     super(props);
@@ -108,11 +110,11 @@ export default class MoviePlayer extends Component<
     if (screenfull.isEnabled) {
       if (fullscreenState) {
         // Enter fullscreen
-        screenfull.request(
-          this.innerPlayer.current?.getInternalPlayer() as Element
-        );
+        setFullscreen(true);
+        screenfull.request(this.outerPlayerRef.current as Element);
       } else {
         // Exit fullscreen
+        setFullscreen(false);
         screenfull.exit();
       }
     }
@@ -120,8 +122,10 @@ export default class MoviePlayer extends Component<
 
   render() {
     return (
-      <div className='relative w-full h-full'>
-        {/* React Player */}
+      <div
+        className='relative w-full h-full bg-black'
+        ref={this.outerPlayerRef}
+      >
         <ReactPlayer
           ref={this.innerPlayer}
           url={this.props.url}
@@ -134,7 +138,7 @@ export default class MoviePlayer extends Component<
           onProgress={this.handleProgress}
           onDuration={this.handleDuration}
           controls={false}
-          className='z-0' // Ensure the player is behind the controls
+          className='z-0'
           height='100%'
           width='100%'
         />
