@@ -2,9 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
-import ReactPlayer from 'react-player';
-import { forwardRef, memo, useMemo, useRef, useState } from 'react';
-import screenfull from 'screenfull';
+import { forwardRef, memo, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -28,14 +26,12 @@ import { cn, isValidDate } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import MoviePlayer from '@/components/MoviePlayer';
 
 const ICON_STYLE = 'h-5 w-5 mt-0.5 mr-1';
 
 export default function FilmPage() {
   const { filmId } = useParams();
-
-  const [isPlaying, setIsPlaying] = useState(false);
-  const playerRef = useRef<null | ReactPlayer>(null);
 
   const {
     data: film,
@@ -59,14 +55,10 @@ export default function FilmPage() {
     [film?.left_off_point]
   );
 
-  function handlePlay() {
-    setIsPlaying(true);
-  }
+  function handlePlay() {}
 
   function handleResume() {
     if (resumeDisabled) return;
-    playerRef?.current?.seekTo(film?.left_off_point ?? 0, 'seconds');
-    handlePlay();
   }
 
   function handlePlayWith() {}
@@ -84,14 +76,7 @@ export default function FilmPage() {
     <div className='min-h-screen min-w-screen border-2 border-red-500 p-4'>
       <div className='flex'>
         <div className='border-2 border-red-500 flex-[2]'>
-          <ReactPlayer
-            controls={true}
-            url={`http://localhost:3000/film/${film?.id}`}
-            playing={isPlaying}
-            ref={playerRef}
-            width='100%'
-            height='100%'
-          />
+          <MoviePlayer url={`http://localhost:3000/film/${film?.id}`} />
         </div>
         <div className='border-2 border-red-500 flex-1 p-2'>
           <Card>
@@ -125,9 +110,9 @@ export default function FilmPage() {
 
               <FilmLanguages languages={film?.languages} />
 
-              <Separator className='mt-4' />
+              <Separator className='my-4' />
 
-              <div className='flex mt-4 select-none gap-3'>
+              <div className='flex select-none gap-3'>
                 <Button
                   variant='default'
                   className='flex-1'
@@ -160,7 +145,16 @@ export default function FilmPage() {
                 </Button>
               </div>
 
-              <ScrollArea></ScrollArea>
+              <Separator className='my-4' />
+
+              <ScrollArea className='max-h-52 overflow-y-auto'>
+                {film?.stars.map((star) => (
+                  <div key={star.actor.id}>
+                    <h4>{star.description}</h4>
+                    <p>{star.actor.name}</p>
+                  </div>
+                ))}
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
