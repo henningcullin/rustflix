@@ -152,6 +152,17 @@ pub fn sync_new_films() -> Result<(), AppError> {
     Ok(())
 }
 
+pub fn set_left_off_point(film_id: i32, played: i32) -> Result<usize, AppError> {
+    let conn = create_connection()?;
+
+    let rows_affected = conn.execute(
+        "UPDATE films SET left_off_point = ?1 WHERE id = ?2",
+        params![played, film_id],
+    )?;
+
+    Ok(rows_affected)
+}
+
 // DEBUG FUNCTION
 pub fn _print_all_tables(conn: &rusqlite::Connection) -> Result<(), AppError> {
     // Define the list of tables and their respective queries
