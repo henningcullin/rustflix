@@ -34,3 +34,19 @@ pub fn sync_new_films() -> Result<(), String> {
         }
     }
 }
+
+#[command]
+pub fn set_left_off_point(film_id: i32, played: i32) -> Result<(), String> {
+    match super::actions::set_left_off_point(film_id, played) {
+        Ok(rows_affected) => match rows_affected {
+            0 => Err("Left off point could was not stored".into()),
+            _ => Ok(()),
+        },
+        Err(error) => {
+            eprintln!(
+                "Error setting left_off_point for film error: {error}, film_id: {film_id}, played: {played}"
+            );
+            Err("Failed to set Left off point".into())
+        }
+    }
+}
