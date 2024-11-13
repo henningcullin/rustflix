@@ -72,16 +72,26 @@ export default function FilmPage() {
 
   function handleOpenIMDb() {}
 
-  function onDismount({ played }: { played: number }) {
+  function onDismount({
+    played,
+    duration,
+  }: {
+    played: number;
+    duration: number;
+  }) {
+    const left_off_point = Math.floor(played * duration);
+
     if (
-      typeof played !== 'number' ||
-      played <= 15 ||
+      typeof left_off_point !== 'number' ||
+      left_off_point <= 15 ||
       typeof film?.id !== 'number' ||
       film.id < 0
     )
       return;
     //No need to store watching first 15 seconds
-    invoke('set_left_off_point', { filmId: film?.id, played });
+    invoke('set_left_off_point', { filmId: film?.id, played: left_off_point })
+      .then(console.log)
+      .catch(console.error);
   }
 
   if (isFetchingFilm)
