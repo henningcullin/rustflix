@@ -57,10 +57,15 @@ export default function FilmPage() {
     [film?.left_off_point]
   );
 
-  function handlePlay() {}
+  function handlePlay() {
+    MoviePlayerRef.current?.setFullscreen(true);
+    MoviePlayerRef.current?.handlePlay();
+  }
 
   function handleResume() {
     if (resumeDisabled) return;
+    MoviePlayerRef.current?.seekTo(film?.left_off_point ?? 0, 'seconds');
+    handlePlay();
   }
 
   function handlePlayWith() {}
