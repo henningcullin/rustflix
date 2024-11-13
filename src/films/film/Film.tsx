@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
-import { forwardRef, memo, useMemo } from 'react';
+import { forwardRef, memo, useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -32,6 +32,8 @@ const ICON_STYLE = 'h-5 w-5 mt-0.5 mr-1';
 
 export default function FilmPage() {
   const { filmId } = useParams();
+
+  const MoviePlayerRef = useRef<null | MoviePlayer>(null);
 
   const {
     data: film,
@@ -65,6 +67,18 @@ export default function FilmPage() {
 
   function handleOpenIMDb() {}
 
+  function onDismount({ played }: { played: number }) {
+    if (
+      typeof played !== 'number' ||
+      played <= 15 ||
+      typeof film?.id !== 'number' ||
+      film.id < 0
+    )
+      return;
+    //No need to store watching first 15 seconds
+    invoke('set_left_off_point', { filmId: film?.id, played });
+  }
+
   if (isFetchingFilm)
     return <div className='text-center p-4'>Getting film info...</div>;
   if (isFilmError)
@@ -76,7 +90,11 @@ export default function FilmPage() {
     <div className='min-h-screen min-w-screen border-2 border-red-500 p-4'>
       <div className='flex'>
         <div className='border-2 border-red-500 flex-[2]'>
-          <MoviePlayer url={`http://localhost:3000/film/${film?.id}`} />
+          <MoviePlayer
+            url={`http://localhost:3000/film/${film?.id}`}
+            ref={MoviePlayerRef}
+            onDismount={onDismount}
+          />
         </div>
         <div className='border-2 border-red-500 flex-1 p-2'>
           <Card>

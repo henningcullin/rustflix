@@ -16,6 +16,7 @@ import { cn, setFullscreen } from '@/lib/utils';
 
 type MoviePlayerProps = {
   url: string;
+  onDismount?: (arg0: MoviePlayerState) => void;
 };
 
 type MoviePlayerState = {
@@ -122,6 +123,16 @@ export default class MoviePlayer extends Component<
       }
     }
   };
+
+  seekTo = (amount: number, type: 'seconds' | 'fraction' = 'seconds') => {
+    this.innerPlayer.current?.seekTo(amount, type);
+  };
+
+  componentWillUnmount() {
+    if (typeof this.props.onDismount === 'function') {
+      this.props.onDismount(this.state);
+    }
+  }
 
   render() {
     return (
