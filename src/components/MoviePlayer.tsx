@@ -12,7 +12,7 @@ import { Component, createRef } from 'react';
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
 import { Slider } from './ui/slider';
-import { setFullscreen } from '@/lib/utils';
+import { cn, setFullscreen } from '@/lib/utils';
 
 type MoviePlayerProps = {
   url: string;
@@ -51,6 +51,8 @@ export default class MoviePlayer extends Component<
       muted: false,
     };
   }
+
+  // #region Internal handlers
 
   handlePlayPause = () => {
     this.setState((prevState) => ({ playing: !prevState.playing }));
@@ -97,7 +99,7 @@ export default class MoviePlayer extends Component<
     this.setFullscreen(!this.state.fullscreen);
   };
 
-  toggleMute = () => {
+  handleToggleMute = () => {
     this.setState((prevState) => ({ muted: !prevState.muted }));
   };
 
@@ -105,11 +107,12 @@ export default class MoviePlayer extends Component<
     this.setState({ volume: value[0] });
   };
 
+  // #endregion Internal Handlers
+
   setFullscreen = (fullscreenState: boolean) => {
     this.setState({ fullscreen: fullscreenState });
     if (screenfull.isEnabled) {
       if (fullscreenState) {
-        // Enter fullscreen
         setFullscreen(true);
         screenfull.request(this.outerPlayerRef.current as Element);
       } else {
@@ -144,7 +147,12 @@ export default class MoviePlayer extends Component<
         />
 
         {/* Controls Overlay */}
-        <div className='absolute bottom-0 left-0 w-full p-4 flex justify-between items-center z-10 bg-gradient-to-t from-black via-transparent to-transparent'>
+        <div
+          className={cn(
+            'absolute bottom-0 left-0 w-full p-4 flex justify-between items-center z-10 bg-gradient-to-t from-black via-transparent to-transparent',
+            'opacity-0 hover:opacity-100 transition-opacity duration-200' // handles control hiding/showing
+          )}
+        >
           {/* Play/Pause button */}
           <button onClick={this.handlePlayPause} className='text-white'>
             {this.state.playing ? (
@@ -168,7 +176,10 @@ export default class MoviePlayer extends Component<
 
           {/* Volume Toggle Button */}
           <div className='flex items-center space-x-2 group relative'>
-            <button onClick={this.toggleMute} className='text-white flex-1'>
+            <button
+              onClick={this.handleToggleMute}
+              className='text-white flex-1'
+            >
               {this.state.muted || this.state.volume === 0 ? (
                 <SpeakerOffIcon className={ICON_STYLE} />
               ) : this.state.volume < 0.33 ? (
