@@ -32,6 +32,30 @@ type MoviePlayerState = {
 
 const ICON_STYLE = 'w-7 h-7';
 
+// Helper function to format time (seconds) into hh:mm:ss
+function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+
+  let formattedTime = '';
+
+  // Always show hours, minutes, and seconds
+  if (hours > 0) {
+    formattedTime += `${hours}:`;
+    formattedTime += `${minutes.toString().padStart(2, '0')}:${remainingSeconds
+      .toString()
+      .padStart(2, '0')}`;
+  } else if (minutes > 0) {
+    formattedTime += `${minutes}:${remainingSeconds
+      .toString()
+      .padStart(2, '0')}`;
+  } else {
+    formattedTime += `0:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  return formattedTime;
+}
 export default class MoviePlayer extends Component<
   MoviePlayerProps,
   MoviePlayerState
@@ -135,6 +159,10 @@ export default class MoviePlayer extends Component<
   }
 
   render() {
+    const { played, duration } = this.state;
+    const elapsed = formatTime(played * duration); // Calculate elapsed based on progress
+    const formattedDuration = formatTime(duration); // Format total duration
+
     return (
       <div
         className='relative w-full h-full bg-black'
@@ -172,6 +200,13 @@ export default class MoviePlayer extends Component<
               <PlayIcon className={ICON_STYLE} />
             )}
           </button>
+
+          <div
+            className='select-none font-extralight'
+            style={{ fontSize: '1.02rem' }}
+          >
+            {elapsed} / {formattedDuration}
+          </div>
 
           {/* Seek Slider */}
           <Slider
