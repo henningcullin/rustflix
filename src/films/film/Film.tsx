@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import { forwardRef, memo, useMemo, useRef } from 'react';
@@ -34,6 +34,8 @@ export default function FilmPage() {
   const { filmId } = useParams();
 
   const MoviePlayerRef = useRef<null | MoviePlayer>(null);
+
+  const queryClient = useQueryClient();
 
   const {
     data: film,
@@ -88,9 +90,15 @@ export default function FilmPage() {
       film.id < 0
     )
       return;
+
     //No need to store watching first 15 seconds
     invoke('set_left_off_point', { filmId: film?.id, played: left_off_point })
-      .then(console.log)
+      .then(() => {
+        queryClient.invalidateQueries({
+          queryKey: ['film', film?.id?.toString()],
+        });
+        queryClient.invalidateQueries({ queryKey: ['films'] });
+      })
       .catch(console.error);
   }
 
