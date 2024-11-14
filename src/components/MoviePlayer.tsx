@@ -28,6 +28,8 @@ type MoviePlayerState = {
   fullscreen: boolean;
   volume: number;
   muted: boolean;
+  controlsVisible: boolean; // Track visibility of controls
+  mouseInactive: boolean; // Track if mouse is inactive
 };
 
 const ICON_STYLE = 'w-7 h-7';
@@ -56,12 +58,14 @@ function formatTime(seconds: number): string {
 
   return formattedTime;
 }
+
 export default class MoviePlayer extends Component<
   MoviePlayerProps,
   MoviePlayerState
 > {
   innerPlayer = createRef<ReactPlayer>();
   outerPlayerRef = createRef<HTMLDivElement>();
+  inactivityTimer: NodeJS.Timeout | null = null;
 
   constructor(props: MoviePlayerProps) {
     super(props);
@@ -74,10 +78,25 @@ export default class MoviePlayer extends Component<
       fullscreen: false,
       volume: 0.5, // Default volume
       muted: false,
+      controlsVisible: true, // Start with controls visible
+      mouseInactive: false, // Mouse is not inactive initially
     };
   }
 
   // #region Internal handlers
+  handleMouseMove = () => {
+    // Reset inactivity timer on mouse movement
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+
+    this.setState({ controlsVisible: true, mouseInactive: false });
+
+    // Set a new timer to hide the controls after 1.5 seconds
+    this.inactivityTimer = setTimeout(() => {
+      this.setState({ controlsVisible: false, mouseInactive: true });
+    }, 1500);
+  };
 
   handlePlayPause = () => {
     this.setState((prevState) => ({ playing: !prevState.playing }));
@@ -156,17 +175,25 @@ export default class MoviePlayer extends Component<
     if (typeof this.props.onDismount === 'function') {
       this.props.onDismount(this.state);
     }
+
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
   }
 
   render() {
-    const { played, duration } = this.state;
+    const { played, duration, controlsVisible, mouseInactive } = this.state;
     const elapsed = formatTime(played * duration); // Calculate elapsed based on progress
     const formattedDuration = formatTime(duration); // Format total duration
 
     return (
       <div
-        className='relative w-full h-full bg-black'
+        className={cn(
+          'relative w-full h-full bg-black',
+          mouseInactive ? 'cursor-none' : '' // Apply cursor: none when inactive
+        )}
         ref={this.outerPlayerRef}
+        onMouseMove={this.handleMouseMove}
       >
         <ReactPlayer
           ref={this.innerPlayer}
@@ -189,7 +216,9 @@ export default class MoviePlayer extends Component<
         <div
           className={cn(
             'absolute bottom-0 left-0 w-full p-4 flex justify-between items-center z-10 bg-gradient-to-t from-black via-transparent to-transparent',
-            'opacity-0 hover:opacity-100 transition-opacity duration-200' // handles control hiding/showing
+            `opacity-${
+              controlsVisible ? 100 : 0
+            } transition-opacity duration-200` // Control visibility
           )}
         >
           {/* Play/Pause button */}
@@ -248,7 +277,7 @@ export default class MoviePlayer extends Component<
             />
           </div>
 
-          {/* Fullscreen Toggle */}
+          {/* Fullscreen Button */}
           <button onClick={this.handleToggleFullscreen} className='text-white'>
             {this.state.fullscreen ? (
               <ExitFullScreenIcon className={ICON_STYLE} />
