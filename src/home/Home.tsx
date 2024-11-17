@@ -30,30 +30,67 @@ function Home() {
   }
 
   return (
-    <>
-      <Accordion type='single' collapsible className='w-full'>
-        <AccordionItem value='filters'>
-          <AccordionTrigger>Filters</AccordionTrigger>
-          <AccordionContent>Add Filters</AccordionContent>
-        </AccordionItem>
-      </Accordion>
-      <div className='grid gap-6 p-6 gird-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
-        {isLoading ? (
-          Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton
-              key={index}
-              className='aspect-[187,5/262,5] w-full rounded-lg'
-            />
-          ))
-        ) : !films ? (
-          <b>No films found</b>
-        ) : (
-          films
-            .filter((film) => film.registered)
-            .map((film) => <FilmItem key={film.id} film={film} />)
-        )}
-      </div>
-    </>
+    <div>
+      {isLoading ? (
+        <div className='px-5 w-full'>
+          <Alert className='w-full'>
+            <UpdateIcon className='h-4 w-4 animate-spin' />
+            <AlertTitle>One second</AlertTitle>
+            <AlertDescription>Retriving the films for you...</AlertDescription>
+          </Alert>
+        </div>
+      ) : isError ? (
+        <div className='px-5 w-full'>
+          <Alert variant='destructive'>
+            <ExclamationTriangleIcon className='h-4 w-4' />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              An error occured while retrieving the films
+            </AlertDescription>
+          </Alert>
+        </div>
+      ) : !films || films?.length <= 0 ? (
+        <div className='px-5 w-full'>
+          <Alert variant='warning' className='px-5'>
+            <ExclamationTriangleIcon className='h-4 w-4' />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>No films found</AlertDescription>
+          </Alert>
+        </div>
+      ) : (
+        <>
+          <Accordion type='single' collapsible className='px-5 w-full'>
+            <AccordionItem value='filters'>
+              <AccordionTrigger>Filters</AccordionTrigger>
+              <AccordionContent>
+                <ToggleGroup type='multiple'>
+                  <ToggleGroupItem
+                    value='watched'
+                    aria-label='Toggle show watched films'
+                  >
+                    <EyeOpenIcon />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value='unwatched'
+                    aria-label='Toggle show unwatched films'
+                  >
+                    <EyeNoneIcon />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <div className='grid gap-6 p-6 gird-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
+            {films
+              .filter((film) => film.registered)
+              .slice(0, 15)
+              .map((film) => (
+                <FilmItem key={film.id} film={film} />
+              ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
