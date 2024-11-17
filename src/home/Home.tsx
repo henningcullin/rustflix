@@ -2,7 +2,6 @@ import Cover from '@/components/Cover';
 import { Film } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import {
   Accordion,
@@ -10,11 +9,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  ExclamationTriangleIcon,
+  EyeNoneIcon,
+  EyeOpenIcon,
+  UpdateIcon,
+} from '@radix-ui/react-icons';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 function Home() {
   const {
     data: films,
-    error,
     isError,
     isLoading,
   } = useQuery<Film[], Error>({
@@ -24,10 +30,6 @@ function Home() {
       return data || [];
     },
   });
-
-  if (isError) {
-    return <div>Error fetching films: {error.message}</div>;
-  }
 
   return (
     <div>
