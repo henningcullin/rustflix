@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
-import { forwardRef, memo, useMemo, useRef } from 'react';
+import { forwardRef, memo, useEffect, useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -53,6 +53,10 @@ export default function FilmPage() {
     },
     enabled: !!filmId,
   });
+
+  useEffect(() => {
+    document.title = `${film?.title}`;
+  }, [film?.title]);
 
   const resumeDisabled = useMemo(
     () => typeof film?.left_off_point !== 'number' || film.left_off_point <= 0,
