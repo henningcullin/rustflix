@@ -207,6 +207,7 @@ export default class MoviePlayer extends Component<
           onProgress={this.handleProgress}
           onDuration={this.handleDuration}
           controls={false}
+          onClick={this.handlePlayPause}
           className='z-0'
           height='100%'
           width='100%'
