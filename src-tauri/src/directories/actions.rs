@@ -27,7 +27,7 @@ pub fn add_directory(path: &str) -> Result<Directory, rusqlite::Error> {
     Ok(directory)
 }
 
-pub fn delete_directory(id: u32) -> Result<(), rusqlite::Error> {
+pub fn remove_directory(id: u32) -> Result<(), rusqlite::Error> {
     let conn = create_connection()?;
 
     conn.execute("DELETE FROM directories WHERE id = ?1", params![id])?;

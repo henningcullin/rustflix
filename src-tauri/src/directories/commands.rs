@@ -11,8 +11,8 @@ pub fn add_directory(path: &str) -> Option<Directory> {
 }
 
 #[command]
-pub fn delete_directory(id: u32) -> bool {
-    match super::actions::delete_directory(id) {
+pub fn remove_directory(id: u32) -> bool {
+    match super::actions::remove_directory(id) {
         Ok(_) => true,
         Err(_) => false,
     }
