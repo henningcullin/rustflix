@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ImageSize {
     Small,
     Medium,
@@ -7,15 +7,6 @@ pub enum ImageSize {
 }
 
 impl ImageSize {
-    pub fn dimensions(&self) -> Option<(u32, u32)> {
-        match self {
-            ImageSize::Small => Some((400, 400)),
-            ImageSize::Medium => Some((800, 800)),
-            ImageSize::Large => Some((1400, 1400)),
-            ImageSize::Full => None, // Full size does not require resizing
-        }
-    }
-
     pub fn as_str(&self) -> &'static str {
         match self {
             ImageSize::Small => "small",
