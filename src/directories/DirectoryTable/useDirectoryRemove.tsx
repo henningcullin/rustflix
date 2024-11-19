@@ -72,14 +72,14 @@ function useDirectoryRemove() {
               <br />
               <p className='text-lg'>"{selectedDirectory?.path}"</p>
               <br />
-              <p>
-                <b>All films and data linked to those films will get removed</b>
+              <p className='text-destructive'>
+                <b>All films from this directory will be permanently removed</b>
               </p>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose>
-              <Button type='button' variant='secondary'>
+              <Button type='button' variant='outline'>
                 <Cross2Icon className='w-5 h-5 mr-2' />
                 Cancel
               </Button>

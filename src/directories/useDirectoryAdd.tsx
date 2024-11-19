@@ -116,7 +116,11 @@ function useDirectoryAdd() {
                       <FormControl>
                         <div className='inline-flex gap-3 w-full'>
                           <Input {...field} />
-                          <Button type='button' onClick={selectDirectory}>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            onClick={selectDirectory}
+                          >
                             Select Directory
                           </Button>
                         </div>
@@ -130,13 +134,14 @@ function useDirectoryAdd() {
                 />
                 <DialogFooter>
                   <DialogClose>
-                    <Button variant='secondary'>
+                    <Button variant='outline'>
                       <Cross2Icon className='w-5 h-5 mr-2' />
                       Cancel
                     </Button>
                   </DialogClose>
                   <Button
                     type='submit'
+                    variant='success'
                     disabled={addDirectoryMutation.isPending}
                   >
                     <PlusIcon className='w-5 h-5 mr-2' />
