@@ -24,19 +24,18 @@ import {
   TrashIcon,
   UpdateIcon,
 } from '@radix-ui/react-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Directory } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import useDirectoryRemove from './useDirectoryRemove';
 
 const ALERT_STYLE = 'max-w-[600px] w-full mx-auto';
 const ICON_STYLE = 'h-5 w-5';
 
 export function DirectoryTable() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { directoryRemove, RemoveDialog } = useDirectoryRemove();
 
   // Fetch directories using useQuery
   const {
@@ -50,29 +49,6 @@ export function DirectoryTable() {
       return data || [];
     },
     queryKey: ['directories'],
-  });
-
-  // Mutation to delete a directory
-  const deleteDirectoryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const wasDeleted = await invoke<boolean>('delete_directory', { id });
-      return wasDeleted;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['directories'] });
-      toast({
-        title: 'Character deleted',
-        description: `Directory was successfully removed`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to delete the directory',
-        description: error.message,
-      });
-      console.error('Failed to delete directory', error);
-    },
   });
 
   return isLoading ? (
@@ -100,6 +76,7 @@ export function DirectoryTable() {
     </Alert>
   ) : (
     <>
+      <RemoveDialog />
       <Table>
         <TableHeader>
           <TableRow>
@@ -129,13 +106,10 @@ export function DirectoryTable() {
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => {} /* directoryDelete(directory) */}
-                        disabled={deleteDirectoryMutation.isPending}
+                        onClick={() => directoryRemove(directory)}
                       >
                         <TrashIcon className='w-5 h-5 mr-2' />
-                        {deleteDirectoryMutation.isPending
-                          ? 'Deleting...'
-                          : 'Delete'}
+                        Remove
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
                   </DropdownMenuContent>
