@@ -12,19 +12,19 @@ use crate::{
 use super::Directory;
 
 pub fn add_directory(path: &str) -> Result<i32, AppError> {
-    sql(
+    insert(
         &create_connection()?,
         "INSERT INTO directories (path) VALUES (?1) RETURNING id",
         params![path],
     )
 }
 
-pub fn remove_directory(id: u32) -> Result<(), rusqlite::Error> {
-    let conn = create_connection()?;
-
-    conn.execute("DELETE FROM directories WHERE id = ?1", params![id])?;
-
-    Ok(())
+pub fn remove_directory(id: i32) -> Result<usize, AppError> {
+    delete(
+        &create_connection()?,
+        "DELETE FROM directories WHERE id = ?1",
+        params![id],
+    )
 }
 
 pub fn get_all_directories() -> Result<Vec<Directory>, rusqlite::Error> {
