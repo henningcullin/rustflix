@@ -65,7 +65,8 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
     conn.execute(
         r#"--sql
         CREATE TABLE IF NOT EXISTS directories (
-            id   INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY,
+            recursive INTEGER NOT NULL DEFAULT 0,
             path TEXT NOT NULL UNIQUE
         )"#,
         [],
