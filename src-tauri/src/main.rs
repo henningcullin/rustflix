@@ -17,7 +17,7 @@ mod server;
 
 use characters::{create_character, delete_character, update_character};
 use directories::{
-    add_directory, edit_directory, get_all_directories, remove_directory, select_directory,
+    create_directory, delete_directory, get_all_directories, select_directory, update_directory,
 };
 use directors::{create_director, delete_director};
 use films::{get_all_films, get_film, set_left_off_point, sync_new_films};
@@ -50,9 +50,9 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             // DIRECTORIES
-            add_directory,
-            edit_directory,
-            remove_directory,
+            create_directory,
+            update_directory,
+            delete_directory,
             select_directory,
             get_all_directories,
             // FILMS

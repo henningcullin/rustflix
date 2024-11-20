@@ -3,8 +3,8 @@ use tauri::command;
 use super::{actions, Directory};
 
 #[command]
-pub fn add_directory(path: &str) -> Result<(), String> {
-    match actions::add_directory(path) {
+pub fn create_directory(path: &str) -> Result<(), String> {
+    match actions::create_directory(path) {
         Ok(id) => {
             println!("Directory added successfully with id: {id}");
             Ok(())
@@ -17,8 +17,8 @@ pub fn add_directory(path: &str) -> Result<(), String> {
 }
 
 #[command]
-pub fn remove_directory(id: i32) -> Result<(), String> {
-    match actions::remove_directory(id) {
+pub fn delete_directory(id: i32) -> Result<(), String> {
+    match actions::delete_directory(id) {
         Ok(rows_affected) => match rows_affected {
             0 => {
                 eprintln!("Directory was not deleted: id: {id}");
@@ -37,21 +37,21 @@ pub fn remove_directory(id: i32) -> Result<(), String> {
 }
 
 #[command]
-pub fn edit_directory(id: i32, path: &str) -> Result<(), String> {
-    match actions::edit_directory(id, path) {
+pub fn update_directory(id: i32, path: &str) -> Result<(), String> {
+    match actions::update_directory(id, path) {
         Ok(rows_affected) => match rows_affected {
             0 => {
                 eprintln!("Directory was not updated: id: {id}, path: {path}");
                 Err("Directory was not updated".into())
             }
             _ => {
-                println!("Directory edited successfully with id: {id}, path: {path}");
+                println!("Directory updated successfully with id: {id}, path: {path}");
                 Ok(())
             }
         },
         Err(error) => {
-            eprintln!("Error when editing directory: {error}, id: {id}, path: {path}");
-            Err("Failed to edit directory".into())
+            eprintln!("Error when updating directory: {error}, id: {id}, path: {path}");
+            Err("Failed to update directory".into())
         }
     }
 }

@@ -3,6 +3,6 @@ pub mod commands;
 pub mod models;
 
 pub use commands::{
-    add_directory, edit_directory, get_all_directories, remove_directory, select_directory,
+    create_directory, delete_directory, get_all_directories, select_directory, update_directory,
 };
 pub use models::Directory;

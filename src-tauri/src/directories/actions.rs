@@ -11,7 +11,7 @@ use crate::{
 
 use super::Directory;
 
-pub fn add_directory(path: &str) -> Result<i32, AppError> {
+pub fn create_directory(path: &str) -> Result<i32, AppError> {
     insert(
         &create_connection()?,
         "INSERT INTO directories (path) VALUES (?1) RETURNING id",
@@ -19,7 +19,7 @@ pub fn add_directory(path: &str) -> Result<i32, AppError> {
     )
 }
 
-pub fn remove_directory(id: i32) -> Result<usize, AppError> {
+pub fn delete_directory(id: i32) -> Result<usize, AppError> {
     delete(
         &create_connection()?,
         "DELETE FROM directories WHERE id = ?1",
@@ -27,7 +27,7 @@ pub fn remove_directory(id: i32) -> Result<usize, AppError> {
     )
 }
 
-pub fn edit_directory(id: i32, path: &str) -> Result<usize, AppError> {
+pub fn update_directory(id: i32, path: &str) -> Result<usize, AppError> {
     update(
         &create_connection()?,
         "UPDATE directories SET path = ?1 WHERE id = ?2",
