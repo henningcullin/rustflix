@@ -20,7 +20,6 @@ import {
   DotsHorizontalIcon,
   ExclamationTriangleIcon,
   InfoCircledIcon,
-  Pencil2Icon,
   TrashIcon,
   UpdateIcon,
 } from '@radix-ui/react-icons';
@@ -81,14 +80,14 @@ export function DirectoryTable() {
         <TableHeader>
           <TableRow>
             <TableHead>Path</TableHead>
-            <TableHead className='w-12'>Actions</TableHead>
+            <TableHead className='w-16'>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {directories.map((directory) => (
             <TableRow key={directory.id}>
               <TableCell>{directory.path}</TableCell>
-              <TableCell>
+              <TableCell className='inline-flex place-content-center w-16'>
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <Button variant='outline' className='w-10 h-10 p-0'>
@@ -99,12 +98,6 @@ export function DirectoryTable() {
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                      <DropdownMenuItem
-                        onClick={() => {} /* directoryEdit(directory) */}
-                      >
-                        <Pencil2Icon className='w-5 h-5 mr-2' />
-                        Edit
-                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => directoryRemove(directory)}
                       >
