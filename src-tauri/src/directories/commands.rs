@@ -37,6 +37,26 @@ pub fn remove_directory(id: i32) -> Result<(), String> {
 }
 
 #[command]
+pub fn edit_directory(id: i32, path: &str) -> Result<(), String> {
+    match actions::edit_directory(id, path) {
+        Ok(rows_affected) => match rows_affected {
+            0 => {
+                eprintln!("Directory was not updated: id: {id}, path: {path}");
+                Err("Directory was not updated".into())
+            }
+            _ => {
+                println!("Directory edited successfully with id: {id}, path: {path}");
+                Ok(())
+            }
+        },
+        Err(error) => {
+            eprintln!("Error when editing directory: {error}, id: {id}, path: {path}");
+            Err("Failed to edit directory".into())
+        }
+    }
+}
+
+#[command]
 pub async fn select_directory() -> Option<String> {
     match actions::select_directory().await {
         Some(path) => Some(path.display().to_string()),
