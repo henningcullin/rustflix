@@ -1,18 +1,24 @@
 use tauri::command;
 
-use super::Directory;
+use super::{actions, Directory};
 
 #[command]
-pub fn add_directory(path: &str) -> Option<Directory> {
-    match super::actions::add_directory(path) {
-        Ok(directory) => Some(directory),
-        Err(_) => None,
+pub fn add_directory(path: &str) -> Result<(), String> {
+    match actions::add_directory(path) {
+        Ok(id) => {
+            println!("Directory added successfully with ID: {id}");
+            Ok(())
+        }
+        Err(error) => {
+            eprintln!("Error when inserting directory: {error}, path: {path}");
+            Err("Failed to add directory".into())
+        }
     }
 }
 
 #[command]
 pub fn remove_directory(id: u32) -> bool {
-    match super::actions::remove_directory(id) {
+    match actions::remove_directory(id) {
         Ok(_) => true,
         Err(_) => false,
     }
@@ -20,7 +26,7 @@ pub fn remove_directory(id: u32) -> bool {
 
 #[command]
 pub async fn select_directory() -> Option<String> {
-    match super::actions::select_directory().await {
+    match actions::select_directory().await {
         Some(path) => Some(path.display().to_string()),
         None => None,
     }
@@ -28,7 +34,7 @@ pub async fn select_directory() -> Option<String> {
 
 #[command]
 pub fn get_all_directories() -> Option<Vec<Directory>> {
-    match super::actions::get_all_directories() {
+    match actions::get_all_directories() {
         Ok(directories) => Some(directories),
         Err(_) => None,
     }
