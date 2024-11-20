@@ -196,7 +196,7 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
     Ok(())
 }
 
-pub fn sql(
+pub fn insert(
     conn: &rusqlite::Connection,
     sql: &str,
     params: &[&(dyn rusqlite::ToSql)],
@@ -204,4 +204,26 @@ pub fn sql(
     let mut stmt = conn.prepare(sql)?;
     let id: i32 = stmt.query_row(params, |row| row.get(0))?;
     Ok(id)
+}
+
+pub fn delete(
+    conn: &rusqlite::Connection,
+    sql: &str,
+    params: &[&(dyn rusqlite::ToSql)],
+) -> Result<usize, AppError> {
+    let mut stmt = conn.prepare(sql)?;
+
+    let rows_affected = stmt.execute(params)?;
+    Ok(rows_affected)
+}
+
+pub fn update(
+    conn: &rusqlite::Connection,
+    sql: &str,
+    params: &[&(dyn rusqlite::ToSql)],
+) -> Result<usize, AppError> {
+    let mut stmt = conn.prepare(sql)?;
+
+    let rows_affected = stmt.execute(params)?;
+    Ok(rows_affected)
 }
