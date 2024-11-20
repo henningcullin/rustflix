@@ -3,17 +3,20 @@ use std::path::PathBuf;
 use rusqlite::params;
 use tauri::api::dialog::blocking::FileDialogBuilder;
 
-use crate::{database::create_connection, error::AppError, FromRow};
+use crate::{
+    database::{create_connection, sql},
+    error::AppError,
+    FromRow,
+};
 
 use super::Directory;
 
 pub fn add_directory(path: &str) -> Result<i32, AppError> {
-    let conn = create_connection()?;
-
-    let mut stmt = conn.prepare("INSERT INTO directories (path) VALUES (?1) RETURNING id")?;
-    let id: i32 = stmt.query_row(params![path], |row| row.get(0))?;
-
-    Ok(id)
+    sql(
+        &create_connection()?,
+        "INSERT INTO directories (path) VALUES (?1) RETURNING id",
+        params![path],
+    )
 }
 
 pub fn remove_directory(id: u32) -> Result<(), rusqlite::Error> {
