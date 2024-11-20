@@ -6,7 +6,7 @@ use super::{actions, Directory};
 pub fn add_directory(path: &str) -> Result<(), String> {
     match actions::add_directory(path) {
         Ok(id) => {
-            println!("Directory added successfully with ID: {id}");
+            println!("Directory added successfully with id: {id}");
             Ok(())
         }
         Err(error) => {
@@ -17,10 +17,22 @@ pub fn add_directory(path: &str) -> Result<(), String> {
 }
 
 #[command]
-pub fn remove_directory(id: u32) -> bool {
+pub fn remove_directory(id: i32) -> Result<(), String> {
     match actions::remove_directory(id) {
-        Ok(_) => true,
-        Err(_) => false,
+        Ok(rows_affected) => match rows_affected {
+            0 => {
+                eprintln!("Directory was not deleted: id: {id}");
+                Err("Directory was not deleted".into())
+            }
+            _ => {
+                println!("Directory deleted successfully with id: {id}");
+                Ok(())
+            }
+        },
+        Err(error) => {
+            eprintln!("Error when deleting directory: {error}, id: {id}");
+            Err("Failed to remove directory".into())
+        }
     }
 }
 
