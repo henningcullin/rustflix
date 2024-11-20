@@ -1,59 +1,39 @@
 use tauri::command;
 
+use crate::{create_command, delete_command, update_command};
+
 use super::{actions, Directory};
 
 #[command]
 pub fn create_directory(path: &str) -> Result<(), String> {
-    match actions::create_directory(path) {
-        Ok(id) => {
-            println!("Directory added successfully with id: {id}");
-            Ok(())
-        }
-        Err(error) => {
-            eprintln!("Error when inserting directory: {error}, path: {path}");
-            Err("Failed to add directory".into())
-        }
-    }
+    create_command!(
+        actions::create_directory(path),
+        "Directory added successfully with id: {id}",
+        "Error when inserting directory: {error}, path: {path}",
+        "Failed to add directory"
+    )
 }
 
 #[command]
 pub fn delete_directory(id: i32) -> Result<(), String> {
-    match actions::delete_directory(id) {
-        Ok(rows_affected) => match rows_affected {
-            0 => {
-                eprintln!("Directory was not deleted: id: {id}");
-                Err("Directory was not deleted".into())
-            }
-            _ => {
-                println!("Directory deleted successfully with id: {id}");
-                Ok(())
-            }
-        },
-        Err(error) => {
-            eprintln!("Error when deleting directory: {error}, id: {id}");
-            Err("Failed to remove directory".into())
-        }
-    }
+    delete_command!(
+        actions::delete_directory(id),
+        "Directory deleted successfully with id: {id}",
+        "Error when deleting directory: {error}, id: {id}",
+        "Directory was not deleted: id: {id}",
+        "Failed to remove directory"
+    )
 }
 
 #[command]
 pub fn update_directory(id: i32, path: &str) -> Result<(), String> {
-    match actions::update_directory(id, path) {
-        Ok(rows_affected) => match rows_affected {
-            0 => {
-                eprintln!("Directory was not updated: id: {id}, path: {path}");
-                Err("Directory was not updated".into())
-            }
-            _ => {
-                println!("Directory updated successfully with id: {id}, path: {path}");
-                Ok(())
-            }
-        },
-        Err(error) => {
-            eprintln!("Error when updating directory: {error}, id: {id}, path: {path}");
-            Err("Failed to update directory".into())
-        }
-    }
+    update_command!(
+        actions::update_directory(id, path),
+        "Directory updated successfully with id: {id}, path: {path}",
+        "Error when updating directory: {error}, id: {id}, path: {path}",
+        "Directory was not updated: id: {id}, path: {path}",
+        "Failed to update directory"
+    )
 }
 
 #[command]
