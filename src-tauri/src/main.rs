@@ -14,8 +14,6 @@ mod languages;
 mod persons;
 mod scrapers;
 mod server;
-#[macro_use]
-mod macros;
 
 use characters::{create_character, delete_character, update_character};
 use directories::{add_directory, get_all_directories, remove_directory, select_directory};
