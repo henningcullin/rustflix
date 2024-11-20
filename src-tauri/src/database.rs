@@ -3,6 +3,8 @@ use std::{fs, path::PathBuf};
 use dirs::data_local_dir;
 use rusqlite::Connection;
 
+use crate::error::AppError;
+
 fn get_local_path() -> PathBuf {
     let mut path = data_local_dir().unwrap_or_else(|| PathBuf::from("."));
     path.push("Rustflix");
@@ -192,4 +194,14 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
     )?;
 
     Ok(())
+}
+
+pub fn sql(
+    conn: &rusqlite::Connection,
+    sql: &str,
+    params: &[&(dyn rusqlite::ToSql)],
+) -> Result<i32, AppError> {
+    let mut stmt = conn.prepare(sql)?;
+    let id: i32 = stmt.query_row(params, |row| row.get(0))?;
+    Ok(id)
 }
