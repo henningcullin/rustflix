@@ -46,7 +46,7 @@ function useDirectoryAdd() {
 
   const addDirectoryMutation = useMutation({
     mutationFn: async (formValues: FormSchema) => {
-      await invoke('add_directory', {
+      await invoke('create_directory', {
         path: formValues.path,
       });
     },

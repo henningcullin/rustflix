@@ -27,7 +27,7 @@ function useDirectoryRemove() {
 
   const removeDirectoryMutation = useMutation({
     mutationFn: async (directory: Directory) => {
-      await invoke('remove_directory', {
+      await invoke('delete_directory', {
         id: directory.id,
       });
     },
