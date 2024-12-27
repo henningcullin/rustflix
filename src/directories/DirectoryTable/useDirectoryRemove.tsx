@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/hooks/use-toast';
 import {
   Dialog,
   DialogClose,
@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Directory } from '@/lib/types';
+import { Directory } from '@/components/lib/types';
 import { Button } from '@/components/ui/button';
 import { Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
 

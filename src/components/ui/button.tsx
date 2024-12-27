@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/components/lib/utils';
 
 const greenStyle =
   'bg-green-500 text-white shadow-sm hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 dark:text-green-100';

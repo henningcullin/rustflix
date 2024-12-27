@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Film } from '@/lib/types';
+import { Film } from '@/components/lib/types';
 import { DotsHorizontalIcon, PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import useDirectorDelete from './useDirectorDelete';
 import useDirectorCreate from './useDirectorCreate';

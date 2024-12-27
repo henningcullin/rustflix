@@ -2,7 +2,7 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { cn } from '@/lib/utils';
+import { cn } from '@/components/lib/utils';
 
 type CoverProps = {
   id: number;

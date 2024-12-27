@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Film } from '@/lib/types';
+import { Film } from '@/components/lib/types';
 
 function Films() {
   const queryClient = useQueryClient();

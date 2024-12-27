@@ -21,7 +21,7 @@ import { shell } from '@tauri-apps/api';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { getFilmName } from '@/lib/utils';
+import { getFilmName } from '@/components/lib/utils';
 import FilmList from './FilmList';
 
 type Arguments = {

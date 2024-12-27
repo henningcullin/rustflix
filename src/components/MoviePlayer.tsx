@@ -12,7 +12,7 @@ import { Component, createRef } from 'react';
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
 import { Slider } from './ui/slider';
-import { cn, setFullscreen } from '@/lib/utils';
+import { cn, setFullscreen } from '@/components/lib/utils';
 
 type MoviePlayerProps = {
   url: string;

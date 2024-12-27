@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { getFilmName } from '@/lib/utils';
+import { getFilmName } from '@/components/lib/utils';
 import {
   FileIcon,
   IdCardIcon,
@@ -9,7 +9,7 @@ import {
 } from '@radix-ui/react-icons';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { Film } from '@/lib/types';
+import { Film } from '@/components/lib/types';
 import { Separator } from '@/components/ui/separator';
 import DirectoryIcon from '@/components/icons/DirectoryIcon';
 import ValueDisplay from './ValueDisplay';
