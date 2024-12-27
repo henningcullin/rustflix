@@ -1,14 +1,16 @@
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import AppSidebar from './AppSidebar';
 import { Toaster } from './components/ui/toaster';
+import { SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
 
 function Layout() {
   return (
-    <>
-      <Sidebar />
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarTrigger />
       <Outlet />
       <Toaster />
-    </>
+    </SidebarProvider>
   );
 }
 
