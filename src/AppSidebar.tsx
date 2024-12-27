@@ -9,14 +9,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { ModeToggle } from '@/components/ModeToggle';
+import { useNavigate } from 'react-router-dom';
 
 // Menu items.
 const items = [
   {
     title: 'Home',
-    url: '#',
+    url: '/',
     icon: Home,
   },
   {
@@ -42,6 +44,14 @@ const items = [
 ];
 
 export default function AppSidebar() {
+  const { setOpen } = useSidebar();
+  const navigate = useNavigate();
+
+  function openPage(url: string) {
+    setOpen(false);
+    navigate(url);
+  }
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -50,9 +60,9 @@ export default function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className='cursor-pointer'>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <a onClick={() => openPage(item.url)}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>
