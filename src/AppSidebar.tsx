@@ -13,6 +13,12 @@ import {
 } from '@/components/ui/sidebar';
 import { ModeToggle } from '@/components/ModeToggle';
 import { useNavigate } from 'react-router-dom';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { ChevronDownIcon, PlusIcon } from '@radix-ui/react-icons';
 
 // Menu items.
 const items = [
@@ -55,6 +61,31 @@ export default function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
+        <Collapsible className='group/collapsible'>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger>
+                People
+                <ChevronDownIcon className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180' />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem className='cursor-pointer'>
+                    <SidebarMenuButton asChild>
+                      <a>
+                        <PlusIcon />
+                        <span>New Person</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+
         <SidebarGroup>
           <SidebarGroupLabel>Views</SidebarGroupLabel>
           <SidebarGroupContent>
