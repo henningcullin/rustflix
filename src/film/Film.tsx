@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Film, Genre, Language } from '@/components/lib/types';
+import { Film, Genre, Language } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import { forwardRef, memo, useEffect, useMemo, useRef } from 'react';
 import {
@@ -22,7 +22,7 @@ import {
   StarIcon,
 } from '@radix-ui/react-icons';
 import { Badge } from '@/components/ui/badge';
-import { cn, isValidDate } from '@/components/lib/utils';
+import { cn, isValidDate } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';

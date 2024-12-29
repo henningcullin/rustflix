@@ -24,9 +24,9 @@ import {
   UpdateIcon,
 } from '@radix-ui/react-icons';
 import { useQuery } from '@tanstack/react-query';
-import { Directory } from '@/components/lib/types';
+import { Directory } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { cn } from '@/components/lib/utils';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import useDirectoryRemove from './useDirectoryRemove';
 

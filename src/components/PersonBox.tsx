@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { cn } from '@/components/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   Command,
   CommandEmpty,
@@ -12,7 +12,7 @@ import {
   CommandList,
 } from './ui/command';
 import { invoke } from '@tauri-apps/api/tauri';
-import { Person } from '@/components/lib/types';
+import { Person } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useMemo, useState } from 'react';
 import { ScrollArea } from './ui/scroll-area';

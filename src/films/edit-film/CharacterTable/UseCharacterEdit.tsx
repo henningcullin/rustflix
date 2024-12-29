@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { z } from 'zod';
-import { i32 } from '@/components/lib/utils';
+import { i32 } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import PersonBox from '@/components/PersonBox';
-import { Character, Film } from '@/components/lib/types';
+import { Character, Film } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
 

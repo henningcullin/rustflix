@@ -1,4 +1,4 @@
-import { toggleFullscreen } from '@/components/lib/utils';
+import { toggleFullscreen } from '@/lib/utils';
 import { useEffect } from 'react';
 
 export default function useFullscreen(): void {

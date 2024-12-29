@@ -1,5 +1,5 @@
 import Cover from '@/components/Cover';
-import { Film } from '@/components/lib/types';
+import { Film } from '@/lib/types';
 import { invoke } from '@tauri-apps/api/tauri';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
