@@ -1,11 +1,10 @@
-import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react';
-
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -13,39 +12,25 @@ import {
 } from '@/components/ui/sidebar';
 import { ModeToggle } from '@/components/ModeToggle';
 import { useNavigate } from 'react-router-dom';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { ChevronDownIcon, PlusIcon } from '@radix-ui/react-icons';
+
+import { HouseIcon, UserIcon, VideoIcon } from 'lucide-react';
 
 // Menu items.
 const items = [
   {
     title: 'Home',
     url: '/',
-    icon: Home,
+    icon: <HouseIcon />,
   },
   {
-    title: 'Inbox',
-    url: '#',
-    icon: Inbox,
+    title: 'Films',
+    url: '/films',
+    icon: <VideoIcon />,
   },
   {
-    title: 'Calendar',
-    url: '#',
-    icon: Calendar,
-  },
-  {
-    title: 'Search',
-    url: '#',
-    icon: Search,
-  },
-  {
-    title: 'Settings',
-    url: '#',
-    icon: Settings,
+    title: 'Persons',
+    url: '/persons',
+    icon: <UserIcon />,
   },
 ];
 
@@ -60,42 +45,20 @@ export default function AppSidebar() {
 
   return (
     <Sidebar>
+      <SidebarHeader>
+        <h1>Rustflix</h1>
+      </SidebarHeader>
       <SidebarContent>
-        <Collapsible className='group/collapsible'>
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                People
-                <ChevronDownIcon className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180' />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem className='cursor-pointer'>
-                    <SidebarMenuButton asChild>
-                      <a>
-                        <PlusIcon />
-                        <span>New Person</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-
         <SidebarGroup>
           <SidebarGroupLabel>Views</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title} className='cursor-pointer'>
+              {items.map(({ title, url, icon }) => (
+                <SidebarMenuItem key={title} className='cursor-pointer'>
                   <SidebarMenuButton asChild>
-                    <a onClick={() => openPage(item.url)}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <a onClick={() => openPage(url)}>
+                      {icon}
+                      <span>{title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -103,6 +66,7 @@ export default function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>

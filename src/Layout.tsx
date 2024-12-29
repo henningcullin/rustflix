@@ -15,7 +15,7 @@ import {
 
 export default function Layout() {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <CustomSidebarTrigger />
       <Outlet />
