@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 import { useCallback } from 'react';
 
 type ValueDisplayProps = {

@@ -1,12 +1,12 @@
 import { createMemoryRouter } from 'react-router-dom';
 
-import Films from './films/Films';
+import Films from './film/table/filmtable';
 
 import Layout from './Layout';
-import Directories from './directories/Directories';
+import Directories from './directory/table/Directories';
 import Home from './home/Home';
-import EditFilm from './films/edit-film/EditFilm';
-import FilmPage from './films/film/Film';
+import EditFilm from './film/card/+page';
+import FilmPage from './film/display/+page';
 
 const router = createMemoryRouter([
   {

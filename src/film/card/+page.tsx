@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Film } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-import DirectoryIcon from '@/components/icons/DirectoryIcon';
+import DirectoryIcon from '@/lib/icons/DirectoryIcon';
 import ValueDisplay from './ValueDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {

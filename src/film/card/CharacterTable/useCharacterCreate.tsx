@@ -1,17 +1,20 @@
 import { useState, useCallback } from 'react';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
-import { toast } from '@/components/hooks/use-toast';
+import { toast } from '@/lib/hooks/use-toast';
 import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogOverlay,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { z } from 'zod';
+import { i32 } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -24,15 +27,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import PersonBox from '@/components/PersonBox';
+import { Film } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Cross2Icon, PlusIcon } from '@radix-ui/react-icons';
 
-function useDirectoryAdd() {
+function useCharacterCreate(film: Film | undefined) {
   const [open, setOpen] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const formSchema = z.object({
-    path: z.string().min(1, 'A directory requires a path'),
+    description: z.string().min(1, 'A character requires a description'),
+    actor: i32('A character requires an actor'),
   });
 
   type FormSchema = z.infer<typeof formSchema>;
@@ -40,31 +46,35 @@ function useDirectoryAdd() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      path: '',
+      description: '',
+      actor: undefined,
     },
   });
 
-  const addDirectoryMutation = useMutation({
+  const createCharacterMutation = useMutation({
     mutationFn: async (formValues: FormSchema) => {
-      await invoke('create_directory', {
-        path: formValues.path,
+      await invoke('create_character', {
+        filmId: film?.id,
+        actorId: formValues.actor,
+        description: formValues.description,
       });
     },
     onSuccess: () => {
       setOpen(false);
       toast({
-        title: 'Directory added',
-        description: `Directory was successfully added`,
+        title: 'Character created',
+        description: `Character was successfully created`,
       });
       queryClient.invalidateQueries({
-        queryKey: ['directories'],
+        queryKey: ['film', film?.id?.toString()],
       });
+      queryClient.invalidateQueries({ queryKey: ['films'] });
     },
     onError: (error) => {
       console.error(error);
       toast({
         variant: 'destructive',
-        title: 'Failed to add the directory',
+        title: 'Failed to create the character',
         description: error.message,
       });
     },
@@ -73,57 +83,36 @@ function useDirectoryAdd() {
   const { reset } = form;
 
   const onSuccess = useCallback((values: FormSchema) => {
-    addDirectoryMutation.mutate(values);
+    createCharacterMutation.mutate(values);
   }, []);
 
-  async function selectDirectory() {
-    try {
-      const path: string | null = await invoke('select_directory');
-      if (typeof path === 'string' && path) form.setValue('path', path);
-    } catch (error) {
-      console.error('Failed to select directory', error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to add the directory',
-        description: 'An error occured while selecting directory',
-      });
-    }
-  }
-
-  const directoryAdd = useCallback(() => {
+  const characterCreate = useCallback(() => {
     reset({
-      path: '',
+      description: '',
+      actor: undefined,
     });
     setOpen(true);
   }, []);
 
-  const AddDialog = useCallback(() => {
+  const CreateDialog = useCallback(() => {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogOverlay>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add directory</DialogTitle>
+              <DialogTitle>Create character</DialogTitle>
+              <DialogDescription>Creating character</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSuccess)}>
                 <FormField
                   control={form.control}
-                  name='path'
+                  name='description'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Path</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <div className='inline-flex gap-3 w-full'>
-                          <Input {...field} />
-                          <Button
-                            type='button'
-                            variant='outline'
-                            onClick={selectDirectory}
-                          >
-                            Select Directory
-                          </Button>
-                        </div>
+                        <Input {...field} />
                       </FormControl>
                       <FormDescription>
                         The description of the character
@@ -132,20 +121,35 @@ function useDirectoryAdd() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name='actor'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Actor</FormLabel>
+                      <FormControl>
+                        <PersonBox {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        The actor playing the character
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
                   <DialogClose>
-                    <Button variant='outline'>
+                    <Button variant='secondary'>
                       <Cross2Icon className='w-5 h-5 mr-2' />
                       Cancel
                     </Button>
                   </DialogClose>
                   <Button
                     type='submit'
-                    variant='success'
-                    disabled={addDirectoryMutation.isPending}
+                    disabled={createCharacterMutation.isPending}
                   >
                     <PlusIcon className='w-5 h-5 mr-2' />
-                    {addDirectoryMutation.isPending ? 'Adding...' : 'Add'}
+                    Create
                   </Button>
                 </DialogFooter>
               </form>
@@ -156,7 +160,7 @@ function useDirectoryAdd() {
     );
   }, [open]);
 
-  return { directoryAdd, AddDialog };
+  return { characterCreate, CreateDialog };
 }
 
-export default useDirectoryAdd;
+export default useCharacterCreate;

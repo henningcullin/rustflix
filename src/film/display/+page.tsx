@@ -26,7 +26,7 @@ import { cn, isValidDate } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import MoviePlayer from '@/components/MoviePlayer';
+import MoviePlayer from '@/film/display/MoviePlayer';
 
 const ICON_STYLE = 'h-5 w-5 mt-0.5 mr-1';
 

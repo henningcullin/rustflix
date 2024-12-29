@@ -1,10 +1,10 @@
 import '../app/globals.css';
 import '../app/custom.css';
 
-import { ThemeProvider } from './components/ThemeProvider';
+import { ThemeProvider } from './lib/ThemeProvider';
 import { RouterProvider } from 'react-router-dom';
 import router from './Router';
-import useFullscreen from './components/hooks/use-fullscreen';
+import useFullscreen from './lib/hooks/use-fullscreen';
 
 function App() {
   useFullscreen();

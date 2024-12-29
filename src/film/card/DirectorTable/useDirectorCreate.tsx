@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
-import { toast } from '@/components/hooks/use-toast';
+import { toast } from '@/lib/hooks/use-toast';
 import {
   Dialog,
   DialogClose,

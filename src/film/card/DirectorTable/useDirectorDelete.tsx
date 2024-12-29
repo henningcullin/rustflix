@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api';
-import { useToast } from '@/components/hooks/use-toast';
+import { useToast } from '@/lib/hooks/use-toast';
 import {
   Dialog,
   DialogClose,
@@ -12,29 +12,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Character, Film } from '@/lib/types';
+import { Film, Person } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
 
-function useCharacterDelete(film: Film | undefined) {
+function useDirectorDelete(film: Film | undefined) {
   const [open, setOpen] = useState<boolean>(false);
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
-    null
-  );
+  const [selectedDirector, setSelectedDirector] = useState<Person | null>(null);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const deleteCharacterMutation = useMutation({
-    mutationFn: async (character: Character) => {
-      await invoke('delete_character', {
-        filmId: character.film_id,
-        actor: character.actor.id,
+  const deleteDirectorMutation = useMutation({
+    mutationFn: async (director: Person) => {
+      await invoke('delete_director', {
+        filmId: film?.id,
+        personId: director.id,
       });
     },
     onSuccess: () => {
       toast({
-        title: 'Character deleted',
-        description: `${selectedCharacter?.description} was successfully removed from ${film?.title}`,
+        title: 'Director deleted',
+        description: `${selectedDirector?.name} was successfully removed from ${film?.title}`,
       });
       queryClient.invalidateQueries({
         queryKey: ['film', film?.id?.toString()],
@@ -45,21 +44,21 @@ function useCharacterDelete(film: Film | undefined) {
       console.error(error);
       toast({
         variant: 'destructive',
-        title: 'Failed to delete the character',
+        title: 'Failed to delete the director',
         description: error.message,
       });
     },
   });
 
   const handleDelete = useCallback(() => {
-    if (selectedCharacter) {
-      deleteCharacterMutation.mutate(selectedCharacter);
+    if (selectedDirector) {
+      deleteDirectorMutation.mutate(selectedDirector);
       setOpen(false);
     }
-  }, [selectedCharacter, deleteCharacterMutation]);
+  }, [selectedDirector, deleteDirectorMutation]);
 
-  const characterDelete = useCallback((character: Character) => {
-    setSelectedCharacter(character);
+  const directorDelete = useCallback((director: Person) => {
+    setSelectedDirector(director);
     setOpen(true);
   }, []);
 
@@ -70,8 +69,8 @@ function useCharacterDelete(film: Film | undefined) {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {selectedCharacter?.description}?
-              This action cannot be undone.
+              Are you sure you want to delete {selectedDirector?.name}? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -94,9 +93,9 @@ function useCharacterDelete(film: Film | undefined) {
         </DialogContent>
       </Dialog>
     );
-  }, [open, selectedCharacter, handleDelete]);
+  }, [open, selectedDirector, handleDelete]);
 
-  return { characterDelete, DeleteDialog };
+  return { directorDelete, DeleteDialog };
 }
 
-export default useCharacterDelete;
+export default useDirectorDelete;

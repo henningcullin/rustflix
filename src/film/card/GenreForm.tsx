@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Film, Genre } from '@/lib/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import { toast } from '@/components/hooks/use-toast';
+import { toast } from '@/lib/hooks/use-toast';
 
 // Extend the database genre with component specific props
 type SelectableGenre = Genre & { isSelected: boolean };

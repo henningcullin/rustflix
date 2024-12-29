@@ -11,7 +11,7 @@ import {
 import { Component, createRef } from 'react';
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
-import { Slider } from './ui/slider';
+import { Slider } from '../../components/ui/slider';
 import { cn, setFullscreen } from '@/lib/utils';
 
 type MoviePlayerProps = {
