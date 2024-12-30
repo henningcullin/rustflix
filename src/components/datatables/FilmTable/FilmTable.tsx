@@ -9,6 +9,10 @@ const columns: ColumnDef<Film>[] = [
     accessorKey: 'id',
     header: 'ID',
   },
+  {
+    accessorKey: 'title',
+    header: 'Title',
+  },
 ];
 
 export default function FilmTable() {
