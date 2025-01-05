@@ -55,6 +55,13 @@ const columns: ColumnDef<Film>[] = [
       );
     },
   },
+  {
+    accessorKey: 'rating',
+    header: 'Rating',
+    cell: ({ row }) => {
+      return <p>{row.getValue('rating')}</p>;
+    },
+  },
 ];
 
 export default function FilmTable() {
