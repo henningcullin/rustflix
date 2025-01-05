@@ -24,16 +24,16 @@ pub fn get_film(id: u32) -> Result<Film, String> {
     }
 }
 
-#[command]
-pub fn sync_new_films() -> Result<(), String> {
-    match super::actions::sync_new_films() {
-        Ok(_) => Ok(()),
-        Err(error) => {
-            eprintln!("{}", error);
-            Err(error.to_string()) // Return the error as a String
-        }
-    }
-}
+// #[command]
+// pub fn sync_new_films() -> Result<(), String> {
+//     match super::actions::sync_new_films() {
+//         Ok(_) => Ok(()),
+//         Err(error) => {
+//             eprintln!("{}", error);
+//             Err(error.to_string()) // Return the error as a String
+//         }
+//     }
+// }
 
 #[command]
 pub fn set_left_off_point(film_id: i32, played: i32) -> Result<(), String> {

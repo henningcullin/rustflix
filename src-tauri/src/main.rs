@@ -22,7 +22,7 @@ use directories::{
     create_directory, delete_directory, get_all_directories, select_directory, update_directory,
 };
 use directors::{create_director, delete_director};
-use films::{get_all_films, get_film, set_left_off_point, sync_new_films};
+use films::{get_all_films, get_film, set_left_off_point};
 use genres::{add_genre_to_film, get_all_genres, remove_genre_from_film};
 use images::{get_avatar, get_cover};
 use keywords::{
@@ -60,7 +60,6 @@ fn main() {
             // FILMS
             get_all_films,
             get_film,
-            sync_new_films,
             set_left_off_point,
             // MISC
             fetch_data,

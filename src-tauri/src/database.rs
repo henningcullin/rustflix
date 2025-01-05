@@ -130,7 +130,6 @@ pub fn initialize_database() -> Result<(), rusqlite::Error> {
         CREATE TABLE IF NOT EXISTS films (
             id              INTEGER PRIMARY KEY,
             file            TEXT NOT NULL,
-            directory       INTEGER NOT NULL,
             imdb_id         TEXT,
             title           TEXT,
             release_date    TEXT,
