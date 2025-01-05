@@ -7,7 +7,7 @@ function Directories() {
   const { directoryAdd, AddDialog } = useDirectoryAdd();
 
   return (
-    <div className='px-4 pt-5'>
+    <div className='px-4 pt-5 w-full'>
       <AddDialog />
       <div className='w-full pb-16 text-center text-4xl font-bold'>
         <h2>Directories</h2>

@@ -82,9 +82,5 @@ export default function FilmTable() {
 
   if (!data) return <div>no films</div>;
 
-  return (
-    <div className='container mx-auto py-10'>
-      <DataTable columns={columns} data={data} />
-    </div>
-  );
+  return <DataTable columns={columns} data={data} />;
 }

@@ -31,10 +31,12 @@ function Home() {
     },
   });
 
+  const AlertWrapperStyle = 'px-5 mt-10 w-full';
+
   return (
-    <div>
+    <div className='w-full'>
       {isLoading ? (
-        <div className='px-5 w-full'>
+        <div className={AlertWrapperStyle}>
           <Alert className='w-full'>
             <UpdateIcon className='h-4 w-4 animate-spin' />
             <AlertTitle>One second</AlertTitle>
@@ -42,7 +44,7 @@ function Home() {
           </Alert>
         </div>
       ) : isError ? (
-        <div className='px-5 w-full'>
+        <div className={AlertWrapperStyle}>
           <Alert variant='destructive'>
             <ExclamationTriangleIcon className='h-4 w-4' />
             <AlertTitle>Error</AlertTitle>
@@ -52,7 +54,7 @@ function Home() {
           </Alert>
         </div>
       ) : !films || films?.length <= 0 ? (
-        <div className='px-5 w-full'>
+        <div className={AlertWrapperStyle}>
           <Alert variant='warning' className='px-5'>
             <ExclamationTriangleIcon className='h-4 w-4' />
             <AlertTitle>Error</AlertTitle>
