@@ -14,6 +14,7 @@ import { ModeToggle } from '@/components/ModeToggle';
 import { useNavigate } from 'react-router-dom';
 
 import { HouseIcon, UserIcon, VideoIcon } from 'lucide-react';
+import DirectoryIcon from './lib/icons/DirectoryIcon';
 
 // Menu items.
 const items = [
@@ -31,6 +32,11 @@ const items = [
     title: 'Persons',
     url: '/persons',
     icon: <UserIcon />,
+  },
+  {
+    title: 'Directories',
+    url: '/directories',
+    icon: <DirectoryIcon />,
   },
 ];
 
