@@ -84,15 +84,12 @@ export default function InfoTab({ film }: { film: Film }) {
       {
         accessorKey: 'has_watched',
         caption: 'Watched',
-        cell: ({ item }) => (
-          <div>
-            {item.has_watched ? (
-              <CheckIcon className='h-6 w-6 text-green-500' />
-            ) : (
-              <Cross2Icon className='h-6 w-6 text-red-500' />
-            )}
-          </div>
-        ),
+        cell: ({ item }) => <CheckboxCell checked={item.has_watched} />,
+      },
+      {
+        accessorKey: 'has_color',
+        caption: 'Color',
+        cell: ({ item }) => <CheckboxCell checked={!!item.has_color} />,
       },
     ],
   };
