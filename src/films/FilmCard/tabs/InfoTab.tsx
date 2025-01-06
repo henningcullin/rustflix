@@ -3,10 +3,13 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { toast } from '@/lib/hooks/use-toast';
 import { Film } from '@/lib/types';
-import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
+import { CheckIcon, Cross2Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { shell } from '@tauri-apps/api';
 
 function RuntimeCell({ runTime }: { runTime?: number }) {
   if (typeof runTime !== 'number') return '-';
@@ -42,6 +45,41 @@ function RatingCell({ rating }: { rating?: number }) {
   return <div>{rating}</div>;
 }
 
+function handleIDMBLink(id: string) {
+  shell.open(`https://www.imdb.com/title/${id}/`).catch((error) => {
+    toast({
+      variant: 'destructive',
+      title: 'Failed to open the link',
+      description: error.message,
+    });
+    console.error('Failed to open IMDB link from film', error);
+  });
+}
+
+function IMDBIDCell({ imdb_id }: { imdb_id?: string }) {
+  if (typeof imdb_id !== 'string' || !imdb_id) return <p>-</p>;
+
+  return (
+    <div className='flex items-center justify-between w-full'>
+      <p>{imdb_id}</p>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className='p-2'
+              variant='external-link'
+              onClick={() => handleIDMBLink(imdb_id)}
+            >
+              <ExternalLinkIcon className='h-5 w-5' />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Open in IMDB</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+}
+
 function CheckboxCell({ checked }: { checked: boolean }) {
   return (
     <div>
@@ -60,12 +98,12 @@ export default function InfoTab({ film }: { film: Film }) {
       {
         accessorKey: 'id',
         caption: 'Database ID',
-        cell: ({ item }) => <b>{item.id}</b>,
+        cell: ({ item }) => <p>{item.id}</p>,
       },
       {
         accessorKey: 'imdb_id',
         caption: 'IMDB ID',
-        cell: ({ item }) => <b>{item.imdb_id}</b>,
+        cell: ({ item }) => <IMDBIDCell imdb_id={item.imdb_id} />,
       },
       {
         accessorKey: 'title',
@@ -73,7 +111,7 @@ export default function InfoTab({ film }: { film: Film }) {
         cell: ({ item }) => <p>{item.title}</p>,
       },
       {
-        accessorKey: 'release_date',
+        accessorKey: 'run_time',
         caption: 'Runtime',
         cell: ({ item }) => <RuntimeCell runTime={item.run_time} />,
       },
@@ -83,7 +121,7 @@ export default function InfoTab({ film }: { film: Film }) {
         cell: ({ item }) => <RatingCell rating={item.rating} />,
       },
       {
-        accessorKey: 'release_data',
+        accessorKey: 'release_date',
         caption: 'Release date',
         cell: ({ item }) => <div>{item.release_date}</div>,
       },
@@ -114,7 +152,7 @@ export default function InfoTab({ film }: { film: Film }) {
           <Button>Edit</Button>
         </div>
       </div>
-      <InfoTable item={film} config={tableConfig}></InfoTable>
+      <InfoTable<Film> item={film} config={tableConfig}></InfoTable>
     </div>
   );
 }
