@@ -58,12 +58,22 @@ export default function InfoTab({ film }: { film: Film }) {
   const tableConfig: InfoTableConfig<Film> = {
     infoRows: [
       {
+        accessorKey: 'id',
+        caption: 'Database ID',
+        cell: ({ item }) => <b>{item.id}</b>,
+      },
+      {
+        accessorKey: 'imdb_id',
+        caption: 'IMDB ID',
+        cell: ({ item }) => <b>{item.imdb_id}</b>,
+      },
+      {
         accessorKey: 'title',
         caption: 'Title',
         cell: ({ item }) => <p>{item.title}</p>,
       },
       {
-        accessorKey: 'run_time',
+        accessorKey: 'release_date',
         caption: 'Runtime',
         cell: ({ item }) => <RuntimeCell runTime={item.run_time} />,
       },
