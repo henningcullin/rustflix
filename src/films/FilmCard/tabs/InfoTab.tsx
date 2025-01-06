@@ -41,6 +41,18 @@ function RatingCell({ rating }: { rating?: number }) {
   return <div>{rating}</div>;
 }
 
+function CheckboxCell({ checked }: { checked: boolean }) {
+  return (
+    <div>
+      {checked ? (
+        <CheckIcon className='h-6 w-6 text-green-500' />
+      ) : (
+        <Cross2Icon className='h-6 w-6 text-red-500' />
+      )}
+    </div>
+  );
+}
+
 export default function InfoTab({ film }: { film: Film }) {
   const tableConfig: InfoTableConfig<Film> = {
     infoRows: [
