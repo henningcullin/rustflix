@@ -40,8 +40,14 @@ export default function FilmCard() {
         <div className='w-full inline-flex place-content-center mb-10'>
           <div className='inline-flex gap-8 place-content-center py-4 px-12'>
             <TabsList>
-              <TabsTrigger value='info'>Filminfo</TabsTrigger>
+              <TabsTrigger value='info'>Info</TabsTrigger>
+              <TabsTrigger value='documents'>Documents</TabsTrigger>
               <TabsTrigger value='genres'>Genres</TabsTrigger>
+              <TabsTrigger value='languages'>Languages</TabsTrigger>
+              <TabsTrigger value='keywords'>Keywords</TabsTrigger>
+              <TabsTrigger value='characters'>Characters</TabsTrigger>
+              <TabsTrigger value='directors'>Directors</TabsTrigger>
+              <TabsTrigger value='writers'>Writers</TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -49,6 +55,12 @@ export default function FilmCard() {
           <InfoTab film={film} />
         </TabsContent>
         <TabsContent value='genres'></TabsContent>
+        <TabsContent value='documents'></TabsContent>
+        <TabsContent value='languages'></TabsContent>
+        <TabsContent value='keywords'></TabsContent>
+        <TabsContent value='characters'></TabsContent>
+        <TabsContent value='directors'></TabsContent>
+        <TabsContent value='writers'></TabsContent>
       </Tabs>
     </div>
   );
