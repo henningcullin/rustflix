@@ -9,7 +9,7 @@ import { ReactNode } from 'react';
 
 export type InfoRow<T> = {
   caption: string;
-  accessorKey: string;
+  accessorKey: keyof T;
   cell: ({ item }: { item: T }) => ReactNode;
 };
 
@@ -23,9 +23,9 @@ type InfoRowProps<T> = {
   index: number;
 };
 
-function InfoTableRow<T>({ item, infoRow }: InfoRowProps<T>) {
+function InfoTableRow<T>({ item, infoRow, index }: InfoRowProps<T>) {
   return (
-    <TableRow key={infoRow.accessorKey}>
+    <TableRow key={index}>
       <TableHead>{infoRow.caption}</TableHead>
       <TableCell>{infoRow.cell({ item })}</TableCell>
     </TableRow>
