@@ -23,7 +23,6 @@ function KeywordForm({ film }: { film: Film | undefined }) {
   const { data: keywords = [] } = useQuery({
     queryKey: ['keywords'],
     queryFn: async () => invoke<Keyword[]>('get_all_keywords'),
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Add keyword mutation

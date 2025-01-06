@@ -7,12 +7,13 @@ use super::Film;
 pub fn get_all_films() -> Result<Vec<Film>, AppError> {
     let conn = create_connection()?;
 
+    conn.execute(r#"INSERT INTO films (title) VALUES ("Alien")"#, params![])?;
+
     let mut stmt = conn.prepare(r#"--sql
         SELECT 
             f.id as film_id, f.file, f.imdb_id, f.title, 
             f.release_date, f.plot, f.run_time, f.has_color, f.rating, 
             f.has_watched, f.left_off_point, f.registered,
-            (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
             GROUP_CONCAT(DISTINCT k.id || ':' || k.name) as keywords,
@@ -26,7 +27,6 @@ pub fn get_all_films() -> Result<Vec<Film>, AppError> {
                 COALESCE(ap.gender, '') || ':' || COALESCE(ap.birthplace, '')
             ) as stars
         FROM films f
-        LEFT JOIN directories d ON f.directory = d.id
         LEFT JOIN film_genres fg ON f.id = fg.film_id
         LEFT JOIN genres g ON fg.genre_id = g.id
         LEFT JOIN film_languages fl ON f.id = fl.film_id
@@ -55,7 +55,6 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
             f.id as film_id, f.file, f.imdb_id, f.title, 
             f.release_date, f.plot, f.run_time, f.has_color, f.rating, 
             f.has_watched, f.left_off_point, f.registered,
-            (d.id || ':' || d.path) as directory,
             GROUP_CONCAT(DISTINCT g.id || ':' || g.name) as genres,
             GROUP_CONCAT(DISTINCT l.id || ':' || l.name) as languages,
             GROUP_CONCAT(DISTINCT k.id || ':' || k.name) as keywords,
@@ -69,7 +68,6 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
                 COALESCE(ap.gender, '') || ':' || COALESCE(ap.birthplace, '')
             ) as stars
         FROM films f
-        LEFT JOIN directories d ON f.directory = d.id
         LEFT JOIN film_genres fg ON f.id = fg.film_id
         LEFT JOIN genres g ON fg.genre_id = g.id
         LEFT JOIN film_languages fl ON f.id = fl.film_id

@@ -2,15 +2,14 @@ use chrono::NaiveDate;
 use serde::Serialize;
 
 use crate::{
-    characters::Character, directories::Directory, genres::Genre, keywords::Keyword,
-    languages::Language, persons::Person, FromRow,
+    characters::Character, genres::Genre, keywords::Keyword, languages::Language, persons::Person,
+    FromRow,
 };
 
 #[derive(Debug, Serialize)]
 pub struct Film {
     pub id: u32,
-    pub file: String,
-    pub directory: Directory,
+    pub file: Option<String>,
     pub imdb_id: Option<String>,
     pub title: Option<String>,
     pub genres: Vec<Genre>,
@@ -31,21 +30,7 @@ pub struct Film {
 impl FromRow for Film {
     fn from_row(row: &rusqlite::Row) -> Result<Film, rusqlite::Error> {
         let id: u32 = row.get("film_id")?;
-        let file: String = row.get("file")?;
-
-        let directory: Directory = row
-            .get::<_, String>("directory")?
-            .split_once(':')
-            .ok_or_else(|| rusqlite::Error::InvalidQuery) // Error if split fails
-            .and_then(|(id_str, path)| {
-                id_str
-                    .parse::<u32>() // Parse the id
-                    .map(|id| Directory {
-                        id,
-                        path: path.to_string(),
-                    })
-                    .map_err(|_| rusqlite::Error::InvalidQuery) // Error if parsing id fails
-            })?;
+        let file: Option<String> = row.get("file")?;
 
         let imdb_id: Option<String> = row.get("imdb_id")?;
         let title: Option<String> = row.get("title")?;
@@ -128,7 +113,6 @@ impl FromRow for Film {
         Ok(Film {
             id,
             file,
-            directory,
             imdb_id,
             title,
             genres,

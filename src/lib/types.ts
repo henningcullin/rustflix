@@ -1,7 +1,6 @@
 export type Film = {
   id: number;
-  file: string;
-  directory: Directory;
+  file?: string;
   imdb_id?: string;
   title?: string;
   genres: Genre[];

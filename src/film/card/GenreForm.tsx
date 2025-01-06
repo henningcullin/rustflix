@@ -23,7 +23,6 @@ function GenreForm({ film }: { film: Film | undefined }) {
   const { data: genres = [] } = useQuery({
     queryKey: ['genres'],
     queryFn: async () => invoke<Genre[]>('get_all_genres'),
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Add genre mutation

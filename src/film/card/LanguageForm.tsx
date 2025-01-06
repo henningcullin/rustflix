@@ -23,7 +23,6 @@ function LanguageForm({ film }: { film: Film | undefined }) {
   const { data: languages = [] } = useQuery({
     queryKey: ['languages'],
     queryFn: async () => invoke<Language[]>('get_all_languages'),
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Add language mutation
