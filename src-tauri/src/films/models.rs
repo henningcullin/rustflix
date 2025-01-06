@@ -24,7 +24,6 @@ pub struct Film {
     pub stars: Vec<Character>,
     pub has_watched: bool,
     pub left_off_point: Option<u32>,
-    pub registered: bool,
 }
 
 impl FromRow for Film {
@@ -40,7 +39,6 @@ impl FromRow for Film {
         let rating: Option<f64> = row.get("rating")?;
         let has_watched: bool = row.get("has_watched")?;
         let left_off_point: Option<u32> = row.get("left_off_point")?;
-        let registered: bool = row.get("registered")?;
 
         let release_date: Option<NaiveDate> = row
             .get::<_, Option<String>>("release_date")?
@@ -127,7 +125,6 @@ impl FromRow for Film {
             stars,
             has_watched,
             left_off_point,
-            registered,
         })
     }
 }

@@ -15,7 +15,6 @@ export type Film = {
   stars: Character[];
   has_watched: boolean;
   left_off_point?: number;
-  registered: boolean;
 };
 
 export type Directory = {
