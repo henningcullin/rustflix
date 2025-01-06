@@ -10,7 +10,7 @@ import { ReactNode } from 'react';
 export type InfoRow<T> = {
   caption: string;
   accessorKey: string;
-  cell?: ({ item }: { item: T }) => ReactNode;
+  cell: ({ item }: { item: T }) => ReactNode;
 };
 
 export type InfoTableConfig<T> = {
@@ -27,13 +27,7 @@ function InfoTableRow<T>({ item, infoRow }: InfoRowProps<T>) {
   return (
     <TableRow key={infoRow.accessorKey}>
       <TableHead>{infoRow.caption}</TableHead>
-      <TableCell>
-        {typeof infoRow.cell === 'function' ? (
-          infoRow.cell({ item })
-        ) : (
-          <p>Blank</p>
-        )}
-      </TableCell>
+      <TableCell>{infoRow.cell({ item })}</TableCell>
     </TableRow>
   );
 }
