@@ -1,4 +1,5 @@
 import InfoTable, { InfoTableConfig } from '@/components/cards/InfoTable';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -95,7 +96,14 @@ export default function InfoTab({ film }: { film: Film }) {
   };
 
   return (
-    <div className='w-full'>
+    <div className='w-full border-ws rounded-sm'>
+      <div className='flex place-content-center w-full mb-4'>
+        <div className='inline-flex gap-3'>
+          <Button>New</Button>
+          <Button variant='destructive'>Delete</Button>
+          <Button>Edit</Button>
+        </div>
+      </div>
       <InfoTable item={film} config={tableConfig}></InfoTable>
     </div>
   );
