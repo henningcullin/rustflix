@@ -39,7 +39,7 @@ type InfoTableProps<T> = {
 
 export default function InfoTable<T>({ item, config }: InfoTableProps<T>) {
   return (
-    <Table>
+    <Table className='text-base'>
       <TableBody>
         {config.infoRows.map((infoRow, index) =>
           InfoTableRow({ item, infoRow, index })
