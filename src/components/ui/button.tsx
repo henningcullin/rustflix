@@ -25,6 +25,8 @@ const buttonVariants = cva(
           'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
+        'external-link':
+          'bg-sky-600 text-primary-foreground shadow-sm hover:bg-sky-600/80',
         positive: greenStyle,
         success: greenStyle,
       },
