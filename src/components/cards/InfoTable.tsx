@@ -25,7 +25,7 @@ type InfoRowProps<T> = {
 
 function InfoTableRow<T>({ item, infoRow, index }: InfoRowProps<T>) {
   return (
-    <TableRow key={index}>
+    <TableRow key={index} className='w-full'>
       <TableHead>{infoRow.caption}</TableHead>
       <TableCell>{infoRow.cell({ item })}</TableCell>
     </TableRow>
@@ -41,9 +41,9 @@ export default function InfoTable<T>({ item, config }: InfoTableProps<T>) {
   return (
     <Table className='text-base'>
       <TableBody>
-        {config.infoRows.map((infoRow, index) =>
-          InfoTableRow({ item, infoRow, index })
-        )}
+        {config.infoRows.map((infoRow, index) => (
+          <InfoTableRow item={item} infoRow={infoRow} index={index} />
+        ))}
       </TableBody>
     </Table>
   );
