@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Film } from '@/lib/types';
+import { CheckIcon, Cross2Icon } from '@radix-ui/react-icons';
 
 function RuntimeCell({ runTime }: { runTime?: number }) {
   if (typeof runTime !== 'number') return '-';
@@ -57,6 +58,29 @@ export default function InfoTab({ film }: { film: Film }) {
         accessorKey: 'rating',
         caption: 'Rating',
         cell: ({ item }) => <RatingCell rating={item.rating} />,
+      },
+      {
+        accessorKey: 'release_data',
+        caption: 'Release date',
+        cell: ({ item }) => <div>{item.release_date}</div>,
+      },
+      {
+        accessorKey: 'plot',
+        caption: 'Plot',
+        cell: ({ item }) => <span>{item.plot}</span>,
+      },
+      {
+        accessorKey: 'has_watched',
+        caption: 'Watched',
+        cell: ({ item }) => (
+          <div>
+            {item.has_watched ? (
+              <CheckIcon className='h-6 w-6 text-green-500' />
+            ) : (
+              <Cross2Icon className='h-6 w-6 text-red-500' />
+            )}
+          </div>
+        ),
       },
     ],
   };
