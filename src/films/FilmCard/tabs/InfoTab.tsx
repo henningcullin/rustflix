@@ -34,9 +34,14 @@ function RuntimeCell({ runTime }: { runTime?: number }) {
   );
 }
 
+function RatingCell({ rating }: { rating?: number }) {
+  if (typeof rating !== 'number') return '-';
+
+  return <div>{rating}</div>;
+}
+
 export default function InfoTab({ film }: { film: Film }) {
   const tableConfig: InfoTableConfig<Film> = {
-    item: film,
     infoRows: [
       {
         accessorKey: 'title',
@@ -48,12 +53,17 @@ export default function InfoTab({ film }: { film: Film }) {
         caption: 'Runtime',
         cell: ({ item }) => <RuntimeCell runTime={item.run_time} />,
       },
+      {
+        accessorKey: 'rating',
+        caption: 'Rating',
+        cell: ({ item }) => <RatingCell rating={item.rating} />,
+      },
     ],
   };
 
   return (
     <div className='w-full'>
-      <InfoTable config={tableConfig}></InfoTable>
+      <InfoTable item={film} config={tableConfig}></InfoTable>
     </div>
   );
 }

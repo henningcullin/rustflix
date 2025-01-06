@@ -14,11 +14,16 @@ export type InfoRow<T> = {
 };
 
 export type InfoTableConfig<T> = {
-  item: T;
   infoRows: InfoRow<T>[];
 };
 
-function InfoTableCell<T>({ item, infoRow }: { item: T; infoRow: InfoRow<T> }) {
+type InfoRowProps<T> = {
+  item: T;
+  infoRow: InfoRow<T>;
+  index: number;
+};
+
+function InfoTableRow<T>({ item, infoRow }: InfoRowProps<T>) {
   return (
     <TableRow key={infoRow.accessorKey}>
       <TableHead>{infoRow.caption}</TableHead>
@@ -33,16 +38,17 @@ function InfoTableCell<T>({ item, infoRow }: { item: T; infoRow: InfoRow<T> }) {
   );
 }
 
-export default function InfoTable<T>({
-  config,
-}: {
+type InfoTableProps<T> = {
+  item: T;
   config: InfoTableConfig<T>;
-}) {
+};
+
+export default function InfoTable<T>({ item, config }: InfoTableProps<T>) {
   return (
     <Table>
       <TableBody>
-        {config.infoRows.map((infoRow) =>
-          InfoTableCell({ item: config.item, infoRow })
+        {config.infoRows.map((infoRow, index) =>
+          InfoTableRow({ item, infoRow, index })
         )}
       </TableBody>
     </Table>
