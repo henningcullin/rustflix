@@ -1,6 +1,10 @@
 use rusqlite::params;
 
-use crate::{database::create_connection, error::AppError, FromRow};
+use crate::{
+    database::{create_connection, delete},
+    error::AppError,
+    FromRow,
+};
 
 use super::Film;
 
@@ -93,6 +97,14 @@ pub fn set_left_off_point(film_id: i32, played: i32) -> Result<usize, AppError> 
     )?;
 
     Ok(rows_affected)
+}
+
+pub fn delete_film(id: i32) -> Result<usize, AppError> {
+    delete(
+        &create_connection()?,
+        "DELETE FROM films WHERE id = ?1",
+        params![id],
+    )
 }
 
 // pub fn get_files(directory: &Directory) -> Result<Vec<String>, AppError> {
