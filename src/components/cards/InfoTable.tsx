@@ -37,7 +37,7 @@ type InfoTableProps<T> = {
   config: InfoTableConfig<T>;
 };
 
-export default function InfoTable<T>({ item, config }: InfoTableProps<T>) {
+export function InfoTable<T>({ item, config }: InfoTableProps<T>) {
   return (
     <Table className='text-base'>
       <TableBody>

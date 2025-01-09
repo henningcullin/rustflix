@@ -1,4 +1,4 @@
-import InfoTable, { InfoTableConfig } from '@/components/cards/InfoTable';
+import { InfoTable, InfoTableConfig } from '@/components/cards/InfoTable';
 import { Button } from '@/components/ui/button';
 import { Film } from '@/lib/types';
 import { CheckboxCell, IMDBIDCell, RatingCell, RuntimeCell } from './cells';
