@@ -84,9 +84,9 @@ export function CheckboxCell({ checked }: { checked: boolean }) {
   return (
     <div>
       {checked ? (
-        <CheckIcon className='h-6 w-6 text-green-500' />
+        <CheckIcon className='h-6 w-6' />
       ) : (
-        <Cross2Icon className='h-6 w-6 text-red-500' />
+        <Cross2Icon className='h-6 w-6' />
       )}
     </div>
   );
