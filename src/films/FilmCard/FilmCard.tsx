@@ -4,6 +4,7 @@ import InfoTab from './tabs/InfoTab/InfoTab';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Film } from '@/lib/types';
 import { useQuery } from '@tanstack/react-query';
+import GenreTab from './tabs/GenreTab';
 
 export default function FilmCard() {
   const { filmId } = useParams();
@@ -54,7 +55,9 @@ export default function FilmCard() {
         <TabsContent value='info'>
           <InfoTab film={film} />
         </TabsContent>
-        <TabsContent value='genres'></TabsContent>
+        <TabsContent value='genres'>
+          <GenreTab film={film} />
+        </TabsContent>
         <TabsContent value='documents'></TabsContent>
         <TabsContent value='languages'></TabsContent>
         <TabsContent value='keywords'></TabsContent>
