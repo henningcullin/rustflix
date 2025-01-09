@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams } from 'react-router-dom';
-import InfoTab from './tabs/InfoTab';
+import InfoTab from './tabs/InfoTab/InfoTab';
 import { invoke } from '@tauri-apps/api/tauri';
 import { Film } from '@/lib/types';
 import { useQuery } from '@tanstack/react-query';
