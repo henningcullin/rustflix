@@ -1,5 +1,7 @@
 use tauri::command;
 
+use crate::{create_command, delete_command};
+
 use super::{actions, Genre};
 
 #[command]
@@ -12,30 +14,21 @@ pub fn get_all_genres() -> Result<Vec<Genre>, String> {
 
 #[command]
 pub fn add_genre_to_film(film_id: i32, genre_id: i32) -> Result<(), String> {
-    match actions::add_genre_to_film(film_id, &genre_id) {
-        Ok(rows_affected) => match rows_affected {
-            0 => Err("Genre was not added".into()),
-            _ => Ok(()),
-        },
-        Err(error) => {
-            eprintln!(
-                "Error when adding genre to film {error}, film_id: {film_id}, genre: {genre_id}"
-            );
-            Err("Failed to add genre".into())
-        }
-    }
+    create_command!(
+        actions::add_genre_to_film(film_id, &genre_id),
+        "Genre ({genre_id}) added successfully to film ({film_id}), film_genres id ({id})",
+        "Error when adding genre ({genre_id}) to film ({film_id}), error: ({error})",
+        "Failed to add genre to film"
+    )
 }
 
 #[command]
 pub fn remove_genre_from_film(film_id: i32, genre_id: i32) -> Result<(), String> {
-    match actions::remove_genre_from_film(film_id, &genre_id) {
-        Ok(rows_affected) => match rows_affected {
-            0 => Err("Genre was not removed".into()),
-            _ => Ok(()),
-        },
-        Err(error) => {
-            eprintln!("Error when removing genre from film {error}, film_id: {film_id}, genre: {genre_id}");
-            Err("Failed to remove genre".into())
-        }
-    }
+    delete_command!(
+        actions::remove_genre_from_film(film_id, &genre_id),
+        "Genre ({genre_id}) successfully removed from film ({film_id})",
+        "Error when removing genre ({genre_id}) from film ({film_id}), error: {error}",
+        "Genre ({genre_id}) was not removed from film ({film_id})",
+        "Failed to remove genre from film"
+    )
 }
