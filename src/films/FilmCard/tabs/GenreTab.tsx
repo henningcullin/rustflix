@@ -8,7 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { WithTooltip } from '@/components/WithTooltip';
 import { Film, Genre } from '@/lib/types';
+import { TrashIcon } from '@radix-ui/react-icons';
 import React from 'react';
 
 type GenreTabProps = {
@@ -63,7 +65,13 @@ export default function GenreTab({ film }: GenreTabProps) {
               </TableCell>
               <TableCell>{genre.id}</TableCell>
               <TableCell>{genre.name}</TableCell>
-              <TableCell></TableCell>
+              <TableCell>
+                <WithTooltip message='Remove genre from film'>
+                  <Button variant='destructive' className='p-2'>
+                    <TrashIcon className='w-5 h-5' />
+                  </Button>
+                </WithTooltip>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
