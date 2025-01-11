@@ -1,11 +1,37 @@
 import { Button } from '@/components/ui/button';
-import { Film } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Film, Genre } from '@/lib/types';
+import React from 'react';
 
 type GenreTabProps = {
   film: Film;
 };
 
+type ExtendedGenre = Genre & {
+  selected: boolean;
+};
+
 export default function GenreTab({ film }: GenreTabProps) {
+  const [genres, setGenres] = React.useState<ExtendedGenre[]>(
+    film.genres.map((genre) => ({ ...genre, selected: false }))
+  );
+
+  function setSelected(id: number, selected: boolean) {
+    const newGenres = genres.map<ExtendedGenre>((genre) =>
+      genre.id === id ? { ...genre, selected } : genre
+    );
+
+    setGenres(newGenres);
+  }
+
   return (
     <div className='w-full border-ws rounded-sm'>
       <div className='flex place-content-center w-full mb-4'>
@@ -13,6 +39,35 @@ export default function GenreTab({ film }: GenreTabProps) {
           <Button>New</Button>
         </div>
       </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <Checkbox />
+            </TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {genres.map((genre) => (
+            <TableRow>
+              <TableCell>
+                <Checkbox
+                  checked={genre.selected}
+                  onCheckedChange={(checked) =>
+                    setSelected(genre.id, !!checked)
+                  }
+                />
+              </TableCell>
+              <TableCell>{genre.id}</TableCell>
+              <TableCell>{genre.name}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
