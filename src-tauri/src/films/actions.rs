@@ -11,8 +11,6 @@ use super::Film;
 pub fn get_all_films() -> Result<Vec<Film>, AppError> {
     let conn = create_connection()?;
 
-    conn.execute(r#"INSERT INTO films (title) VALUES ("Alien")"#, params![])?;
-
     let mut stmt = conn.prepare(r#"--sql
         SELECT 
             f.id as film_id, f.file, f.imdb_id, f.title, 
