@@ -1,7 +1,7 @@
 use rusqlite::params;
 
 use crate::{
-    database::{create_connection, delete},
+    database::{create_connection, delete, update},
     error::AppError,
     FromRow,
 };
@@ -87,14 +87,11 @@ pub fn get_film(id: u32) -> Result<Film, AppError> {
 }
 
 pub fn set_left_off_point(film_id: i32, played: i32) -> Result<usize, AppError> {
-    let conn = create_connection()?;
-
-    let rows_affected = conn.execute(
+    update(
+        &create_connection()?,
         "UPDATE films SET left_off_point = ?1 WHERE id = ?2",
         params![played, film_id],
-    )?;
-
-    Ok(rows_affected)
+    )
 }
 
 pub fn delete_film(id: i32) -> Result<usize, AppError> {
