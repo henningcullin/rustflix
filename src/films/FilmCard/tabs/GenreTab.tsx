@@ -26,10 +26,24 @@ export default function GenreTab({ film }: GenreTabProps) {
     film.genres.map((genre) => ({ ...genre, selected: false }))
   );
 
+  const allSelected = React.useMemo(
+    () => genres.every((genre) => genre.selected),
+    [genres]
+  );
+
   function setSelected(id: number, selected: boolean) {
     const newGenres = genres.map<ExtendedGenre>((genre) =>
       genre.id === id ? { ...genre, selected } : genre
     );
+
+    setGenres(newGenres);
+  }
+
+  function setSelectedAll(selected: boolean) {
+    const newGenres = genres.map<ExtendedGenre>((genre) => ({
+      ...genre,
+      selected,
+    }));
 
     setGenres(newGenres);
   }
@@ -45,7 +59,10 @@ export default function GenreTab({ film }: GenreTabProps) {
         <TableHeader>
           <TableRow>
             <TableHead>
-              <Checkbox />
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(checked) => setSelectedAll(!!checked)}
+              />
             </TableHead>
             <TableHead>ID</TableHead>
             <TableHead>Name</TableHead>
