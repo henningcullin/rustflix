@@ -1,6 +1,6 @@
 import { Film } from '@/lib/types';
 import { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '../core';
+import { DataTable } from '../core/core';
 import { useQuery } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
 import {
@@ -8,22 +8,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  DotsHorizontalIcon,
-  Pencil2Icon,
-  TrashIcon,
-} from '@radix-ui/react-icons';
-import { Button } from '@/components/ui/button';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Pencil2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
+import { ActionCell } from '../core/cells/actions';
 
 export default function FilmTable() {
   const navigate = useNavigate();
@@ -84,29 +72,18 @@ export default function FilmTable() {
     {
       header: 'Actions',
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button variant='outline' className='w-10 h-10 p-0'>
-              <DotsHorizontalIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => navigate(`/film/card/${row.getValue('id')}`)}
-              >
-                <Pencil2Icon className='w-5 h-5 mr-2' />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <TrashIcon className='w-5 h-5 mr-2' />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ActionCell>
+          <DropdownMenuItem
+            onClick={() => navigate(`/film/card/${row.getValue('id')}`)}
+          >
+            <Pencil2Icon className='w-5 h-5 mr-2' />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <TrashIcon className='w-5 h-5 mr-2' />
+            Delete
+          </DropdownMenuItem>
+        </ActionCell>
       ),
     },
   ];
