@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -13,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type DataTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
@@ -23,9 +25,16 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  // State for row selection
+  const [rowSelection, setRowSelection] = React.useState({});
+
   const table = useReactTable({
     data,
     columns,
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -35,6 +44,16 @@ export function DataTable<TData, TValue>({
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
+              {/* Select All Checkbox */}
+              <TableHead>
+                <Checkbox
+                  checked={table.getIsAllRowsSelected()}
+                  onCheckedChange={(value) =>
+                    table.toggleAllRowsSelected(!!value)
+                  }
+                  aria-label='Select all rows'
+                />
+              </TableHead>
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead key={header.id}>
@@ -57,6 +76,14 @@ export function DataTable<TData, TValue>({
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
               >
+                {/* Row Selection Checkbox */}
+                <TableCell>
+                  <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label={`Select row ${row.id}`}
+                  />
+                </TableCell>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -66,7 +93,10 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className='h-24 text-center'>
+              <TableCell
+                colSpan={columns.length + 1}
+                className='h-24 text-center'
+              >
                 No results.
               </TableCell>
             </TableRow>
