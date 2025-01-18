@@ -1,4 +1,4 @@
 pub mod actions;
 pub mod commands;
 
-pub use commands::{create_director, delete_director};
+pub use commands::{add_director_to_film, remove_director_from_film};

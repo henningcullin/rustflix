@@ -21,7 +21,7 @@ use characters::{create_character, delete_character, update_character};
 use directories::{
     create_directory, delete_directory, get_all_directories, select_directory, update_directory,
 };
-use directors::{create_director, delete_director};
+use directors::{add_director_to_film, remove_director_from_film};
 use films::{delete_film, get_all_films, get_film, set_left_off_point};
 use genres::{add_genre_to_film, get_all_genres, remove_genre_from_film};
 use images::{get_avatar, get_cover};
@@ -90,8 +90,8 @@ fn main() {
             // PERSONS
             get_all_persons,
             // DIRECTORS
-            delete_director,
-            create_director,
+            add_director_to_film,
+            remove_director_from_film,
         ])
         .setup(|_app| {
             match database::initialize_database() {
