@@ -2,10 +2,10 @@ import { InfoTable, InfoTableConfig } from '@/components/cards/InfoTable';
 import { Button } from '@/components/ui/button';
 import { Film } from '@/lib/types';
 import { CheckboxCell, IMDBIDCell, RatingCell, RuntimeCell } from './cells';
-import { useDeleteFilm } from './actions/useDeleteFilm';
+import { useDeleteFilmDialog } from './actions/useDeleteFilm';
 
 export default function InfoTab({ film }: { film: Film }) {
-  const { DeleteFilmDialog, deleteFilm } = useDeleteFilm();
+  const { deleteFilm } = useDeleteFilmDialog();
 
   const tableConfig: InfoTableConfig<Film> = {
     infoRows: [
@@ -59,7 +59,6 @@ export default function InfoTab({ film }: { film: Film }) {
 
   return (
     <div className='w-full border-ws rounded-sm'>
-      <DeleteFilmDialog />
       <div className='flex place-content-center w-full mb-4'>
         <div className='inline-flex gap-3'>
           <Button>New</Button>

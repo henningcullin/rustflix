@@ -12,9 +12,11 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Pencil2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
 import { ActionCell } from '../core/cells/actions';
+import { useDeleteFilmDialog } from '@/films/FilmCard/tabs/InfoTab/actions/useDeleteFilm';
 
 export default function FilmTable() {
   const navigate = useNavigate();
+  const { deleteFilm } = useDeleteFilmDialog();
 
   const columns: ColumnDef<Film>[] = [
     {
@@ -79,7 +81,7 @@ export default function FilmTable() {
             <Pencil2Icon className='w-5 h-5 mr-2' />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => deleteFilm(row.original)}>
             <TrashIcon className='w-5 h-5 mr-2' />
             Delete
           </DropdownMenuItem>
