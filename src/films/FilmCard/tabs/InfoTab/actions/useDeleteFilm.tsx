@@ -1,3 +1,5 @@
+// DeleteFilmContext.tsx
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,19 +15,27 @@ import { Film } from '@/lib/types';
 import { Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/tauri';
-import React from 'react';
 
-export function useDeleteFilm() {
-  const [open, setOpen] = React.useState<boolean>(false);
-  const [selectedFilm, setSelectedFilm] = React.useState<Film | undefined>();
+// Context Types
+type DeleteFilmContextProps = {
+  deleteFilm: (film: Film) => void;
+};
+
+const DeleteFilmContext = createContext<DeleteFilmContextProps | undefined>(
+  undefined
+);
+
+export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [open, setOpen] = useState<boolean>(false);
+  const [selectedFilm, setSelectedFilm] = useState<Film | undefined>();
 
   const queryClient = useQueryClient();
 
   const deleteFilmMutation = useMutation({
     mutationFn: async (film: Film) => {
-      await invoke('delete_film', {
-        id: film.id,
-      });
+      await invoke('delete_film', { id: film.id });
     },
     onSuccess: () => {
       toast({
@@ -45,20 +55,28 @@ export function useDeleteFilm() {
 
       toast({
         variant: 'destructive',
-        title: 'Failed to delete the director',
-        description: error.message,
+        title: 'Failed to delete the film',
+        description: (error as Error).message,
       });
     },
   });
 
-  const handleDelete = React.useCallback(async () => {
+  const handleDelete = useCallback(async () => {
     if (selectedFilm && !deleteFilmMutation.isPending) {
       deleteFilmMutation.mutate(selectedFilm);
     }
   }, [selectedFilm, deleteFilmMutation]);
 
-  const DeleteFilmDialog = React.useCallback(
-    () => (
+  const deleteFilm = (film: Film) => {
+    if (!deleteFilmMutation.isPending) {
+      setSelectedFilm(film);
+      setOpen(true);
+    }
+  };
+
+  return (
+    <DeleteFilmContext.Provider value={{ deleteFilm }}>
+      {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -69,7 +87,7 @@ export function useDeleteFilm() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose>
+            <DialogClose asChild>
               <Button type='button' variant='outline'>
                 <Cross2Icon className='w-5 h-5 mr-2' />
                 Cancel
@@ -82,17 +100,17 @@ export function useDeleteFilm() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    ),
-    [selectedFilm, handleDelete]
+    </DeleteFilmContext.Provider>
   );
+};
 
-  function deleteFilm(film: Film) {
-    if (!deleteFilmMutation.isPending) {
-      setSelectedFilm(film);
-
-      setOpen(true);
-    }
+// Custom Hook for Consuming Context
+export const useDeleteFilmDialog = (): DeleteFilmContextProps => {
+  const context = useContext(DeleteFilmContext);
+  if (!context) {
+    throw new Error(
+      'useDeleteFilmDialog must be used within a DeleteFilmProvider'
+    );
   }
-
-  return { DeleteFilmDialog, deleteFilm };
-}
+  return context;
+};
