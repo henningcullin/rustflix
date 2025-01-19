@@ -12,14 +12,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { DeleteFilmProvider } from './films/FilmCard/tabs/InfoTab/actions/useDeleteFilm';
 
 export default function Layout() {
   return (
     <SidebarProvider defaultOpen={false}>
-      <AppSidebar />
-      <CustomSidebarTrigger />
-      <Outlet />
-      <Toaster />
+      <DeleteFilmProvider>
+        <AppSidebar />
+        <CustomSidebarTrigger />
+        <Outlet />
+        <Toaster />
+      </DeleteFilmProvider>
     </SidebarProvider>
   );
 }
