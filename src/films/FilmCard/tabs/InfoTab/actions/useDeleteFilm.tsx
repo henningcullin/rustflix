@@ -1,5 +1,5 @@
 // DeleteFilmContext.tsx
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,15 +21,15 @@ type DeleteFilmContextProps = {
   deleteFilm: (film: Film) => void;
 };
 
-const DeleteFilmContext = createContext<DeleteFilmContextProps | undefined>(
-  undefined
-);
+const DeleteFilmContext = React.createContext<
+  DeleteFilmContextProps | undefined
+>(undefined);
 
 export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [open, setOpen] = useState<boolean>(false);
-  const [selectedFilm, setSelectedFilm] = useState<Film | undefined>();
+  const [open, setOpen] = React.useState<boolean>(false);
+  const [selectedFilm, setSelectedFilm] = React.useState<Film | undefined>();
 
   const queryClient = useQueryClient();
 
@@ -56,23 +56,26 @@ export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         variant: 'destructive',
         title: 'Failed to delete the film',
-        description: (error as Error).message,
+        description: error.message,
       });
     },
   });
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = React.useCallback(async () => {
     if (selectedFilm && !deleteFilmMutation.isPending) {
       deleteFilmMutation.mutate(selectedFilm);
     }
   }, [selectedFilm, deleteFilmMutation]);
 
-  const deleteFilm = (film: Film) => {
-    if (!deleteFilmMutation.isPending) {
-      setSelectedFilm(film);
-      setOpen(true);
-    }
-  };
+  const deleteFilm = React.useCallback(
+    (film: Film) => {
+      if (!deleteFilmMutation.isPending) {
+        setSelectedFilm(film);
+        setOpen(true);
+      }
+    },
+    [deleteFilmMutation]
+  );
 
   return (
     <DeleteFilmContext.Provider value={{ deleteFilm }}>
@@ -106,7 +109,7 @@ export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
 
 // Custom Hook for Consuming Context
 export const useDeleteFilmDialog = (): DeleteFilmContextProps => {
-  const context = useContext(DeleteFilmContext);
+  const context = React.useContext(DeleteFilmContext);
   if (!context) {
     throw new Error(
       'useDeleteFilmDialog must be used within a DeleteFilmProvider'
