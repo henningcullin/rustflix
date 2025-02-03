@@ -61,8 +61,10 @@ export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
     },
   });
 
+  const isDeleteAllowed = selectedFilm && !deleteFilmMutation.isPending;
+
   const handleDelete = React.useCallback(async () => {
-    if (selectedFilm && !deleteFilmMutation.isPending) {
+    if (isDeleteAllowed) {
       deleteFilmMutation.mutate(selectedFilm);
     }
   }, [selectedFilm, deleteFilmMutation]);
@@ -96,7 +98,11 @@ export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
                 Cancel
               </Button>
             </DialogClose>
-            <Button variant='destructive' onClick={handleDelete}>
+            <Button
+              variant='destructive'
+              onClick={handleDelete}
+              disabled={!isDeleteAllowed}
+            >
               <TrashIcon className='w-5 h-5 mr-2' />
               Delete
             </Button>
