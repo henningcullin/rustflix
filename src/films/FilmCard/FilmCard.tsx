@@ -13,6 +13,7 @@ export default function FilmCard() {
     data: film,
     isFetching: isFetchingFilm,
     isError: isFilmError,
+    error: filmError,
   } = useQuery<Film, Error>({
     queryKey: ['film', filmId],
     queryFn: async () => {
@@ -28,7 +29,7 @@ export default function FilmCard() {
 
   if (isFetchingFilm) return <p>Fetching...</p>;
 
-  if (isFilmError) return <p>Error</p>;
+  if (isFilmError) return <p>{filmError.message}</p>;
 
   if (!film) return <p>No film found</p>;
 
