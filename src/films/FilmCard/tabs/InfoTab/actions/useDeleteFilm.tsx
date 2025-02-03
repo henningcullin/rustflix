@@ -29,7 +29,7 @@ export const DeleteFilmProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [open, setOpen] = React.useState<boolean>(false);
-  const [selectedFilm, setSelectedFilm] = React.useState<Film | undefined>();
+  const [selectedFilm, setSelectedFilm] = React.useState<Film | null>(null);
 
   const queryClient = useQueryClient();
 
