@@ -13,6 +13,7 @@ import { Pencil2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { useNavigate } from 'react-router-dom';
 import { ActionCell } from '../core/cells/actions';
 import { useDeleteFilmDialog } from '@/films/FilmCard/tabs/InfoTab/actions/useDeleteFilm';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function FilmTable() {
   const navigate = useNavigate();
@@ -98,14 +99,31 @@ export default function FilmTable() {
     },
   });
 
-  if (isLoading) return <div>loading</div>;
+  if (isLoading)
+    return (
+      <Alert className='px-5'>
+        <AlertTitle>Loading</AlertTitle>
+        <AlertDescription>Loading your films</AlertDescription>
+      </Alert>
+    );
 
   if (isError) {
     console.error(error);
-    return <div>error</div>;
+    return (
+      <Alert variant='destructive' className='px-5'>
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Failed to load films</AlertDescription>
+      </Alert>
+    );
   }
 
-  if (!data) return <div>no films</div>;
+  if (!data || !data.length)
+    return (
+      <Alert className='px-5'>
+        <AlertTitle>No films</AlertTitle>
+        <AlertDescription>You have not added any films yet</AlertDescription>
+      </Alert>
+    );
 
   return <DataTable columns={columns} data={data} />;
 }
