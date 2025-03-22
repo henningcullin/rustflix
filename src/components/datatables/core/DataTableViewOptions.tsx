@@ -2,7 +2,6 @@
 
 import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { Table } from '@tanstack/react-table';
-import { Settings2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { MixerHorizontalIcon } from '@radix-ui/react-icons';
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
@@ -28,7 +28,7 @@ export function DataTableViewOptions<TData>({
           size='sm'
           className='ml-auto hidden h-8 mb-3 lg:flex'
         >
-          <Settings2 />
+          <MixerHorizontalIcon className='h-5 w-5 pr-1'></MixerHorizontalIcon>
           View
         </Button>
       </DropdownMenuTrigger>
