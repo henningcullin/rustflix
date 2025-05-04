@@ -7,7 +7,7 @@
   let { children } = $props();
 </script>
 
-<Sidebar.Provider>
+<Sidebar.Provider open={false}>
   <AppSidebar />
   <main>
     <Sidebar.Trigger />
