@@ -1,9 +1,8 @@
 <script lang="ts">
-  import * as Sidebar from "$lib/components/ui/sidebar/index";
+  import * as Sidebar from '$lib/components/ui/sidebar/index';
+  import { Clapperboard, House, Tv, User } from '$lib/lucide';
 
-  import House from "@lucide/svelte/icons/house";
-  import User from "@lucide/svelte/icons/user";
-  import type { Component } from "svelte";
+  import type { Component } from 'svelte';
 
   type SidebarItem = {
     title: string;
@@ -13,14 +12,24 @@
 
   const items: SidebarItem[] = [
     {
-      title: "Home",
-      url: "/",
+      title: 'Home',
+      url: '/',
       icon: House,
     },
     {
-      title: "Persons",
-      url: "/persons",
+      title: 'Persons',
+      url: '/persons',
       icon: User,
+    },
+    {
+      title: 'Films',
+      url: '/films',
+      icon: Clapperboard,
+    },
+    {
+      title: 'Series',
+      url: '/series',
+      icon: Tv,
     },
   ];
 </script>
