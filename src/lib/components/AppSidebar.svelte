@@ -4,6 +4,12 @@
 
   import type { Component } from 'svelte';
 
+  const sidebar = Sidebar.useSidebar();
+
+  function closeSidebar() {
+    sidebar.setOpen(false);
+  }
+
   type SidebarItem = {
     title: string;
     url: string;
@@ -45,7 +51,7 @@
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
                 {#snippet child({ props })}
-                  <a href={item.url} {...props}>
+                  <a href={item.url} {...props} onclick={closeSidebar}>
                     <item.icon />
                     <span>{item.title}</span>
                   </a>
