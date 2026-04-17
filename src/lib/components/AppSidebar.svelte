@@ -2,11 +2,9 @@
   import * as Sidebar from '$lib/components/ui/sidebar/index';
   import {
     Clapperboard,
-    Folder,
     House,
+    Library,
     Settings,
-    Tv,
-    User,
   } from '$lib/lucide';
   import type { Component } from 'svelte';
 
@@ -25,9 +23,7 @@
   const items: SidebarItem[] = [
     { title: 'Home', url: '/', icon: House },
     { title: 'Films', url: '/films', icon: Clapperboard },
-    { title: 'Persons', url: '/persons', icon: User },
-    { title: 'Series', url: '/series', icon: Tv },
-    { title: 'Directories', url: '/directories', icon: Folder },
+    { title: 'Library', url: '/library', icon: Library },
     { title: 'Settings', url: '/settings', icon: Settings },
   ];
 </script>

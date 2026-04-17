@@ -3,6 +3,12 @@ import type { FilmDetail, FilmListItem } from "$lib/types";
 
 export const listFilms = () => invoke<FilmListItem[]>("list_films");
 
+export const listContinueWatching = (limit = 10) =>
+  invoke<FilmListItem[]>("list_continue_watching", { limit });
+
+export const listRecentlyAdded = (limit = 10) =>
+  invoke<FilmListItem[]>("list_recently_added", { limit });
+
 export const getFilm = (id: number) => invoke<FilmDetail>("get_film", { id });
 
 export const deleteFilm = (id: number) => invoke<void>("delete_film", { id });

@@ -9,6 +9,12 @@ use crate::state::AppState;
 pub struct Settings {
     #[serde(default)]
     pub tmdb_api_key: Option<String>,
+    #[serde(default)]
+    pub alias: Option<String>,
+    #[serde(default)]
+    pub theme: Option<String>,
+    #[serde(default)]
+    pub first_run_completed: bool,
 }
 
 pub struct SettingsStore {
@@ -47,6 +53,17 @@ impl SettingsStore {
     }
 }
 
+async fn patch<F: FnOnce(&mut Settings)>(
+    state: &tauri::State<'_, AppState>,
+    f: F,
+) -> AppResult<Settings> {
+    let mut store = state.settings.write().await;
+    let mut current = store.get();
+    f(&mut current);
+    store.update(current.clone())?;
+    Ok(current)
+}
+
 #[tauri::command]
 pub async fn get_settings(state: tauri::State<'_, AppState>) -> AppResult<Settings> {
     Ok(state.settings.read().await.get())
@@ -60,13 +77,39 @@ pub async fn set_tmdb_api_key(
     let trimmed = key.trim().to_string();
     let key = if trimmed.is_empty() { None } else { Some(trimmed) };
 
-    let mut store = state.settings.write().await;
-    let mut current = store.get();
-    current.tmdb_api_key = key.clone();
-    store.update(current.clone())?;
-    drop(store);
-
+    let next = patch(&state, |s| s.tmdb_api_key = key.clone()).await?;
     state.tmdb.set_api_key(key).await;
-    Ok(current)
+    Ok(next)
 }
 
+#[tauri::command]
+pub async fn set_alias(
+    state: tauri::State<'_, AppState>,
+    alias: String,
+) -> AppResult<Settings> {
+    let trimmed = alias.trim().to_string();
+    let value = if trimmed.is_empty() { None } else { Some(trimmed) };
+    patch(&state, |s| s.alias = value).await
+}
+
+#[tauri::command]
+pub async fn set_theme(
+    state: tauri::State<'_, AppState>,
+    theme: String,
+) -> AppResult<Settings> {
+    let normalized = match theme.as_str() {
+        "light" | "dark" | "system" => Some(theme),
+        _ => Some("system".to_string()),
+    };
+    patch(&state, |s| s.theme = normalized).await
+}
+
+#[tauri::command]
+pub async fn complete_first_run(state: tauri::State<'_, AppState>) -> AppResult<Settings> {
+    patch(&state, |s| s.first_run_completed = true).await
+}
+
+#[tauri::command]
+pub async fn reset_first_run(state: tauri::State<'_, AppState>) -> AppResult<Settings> {
+    patch(&state, |s| s.first_run_completed = false).await
+}

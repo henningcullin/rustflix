@@ -93,6 +93,22 @@ pub async fn delete_directory(
     state: tauri::State<'_, AppState>,
     id: i64,
 ) -> AppResult<()> {
+    let dir: Option<Directory> = sqlx::query_as(
+        "SELECT id, path, recursive, created_at FROM directories WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(dir) = dir {
+        let prefix = format!("{}/%", dir.path.trim_end_matches('/'));
+        sqlx::query("UPDATE films SET orphaned = 1 WHERE file_path LIKE ? OR file_path = ?")
+            .bind(&prefix)
+            .bind(&dir.path)
+            .execute(&state.db)
+            .await?;
+    }
+
     sqlx::query("DELETE FROM directories WHERE id = ?")
         .bind(id)
         .execute(&state.db)
@@ -131,9 +147,11 @@ pub async fn scan_directory(
 
     let mut matched = Vec::new();
     let mut unmatched = Vec::new();
+    let mut found_paths: Vec<String> = Vec::with_capacity(files.len());
 
     for path in files {
         let path_str = path.to_string_lossy().into_owned();
+        found_paths.push(path_str.clone());
         let existing: Option<(i64, String)> = sqlx::query_as(
             "SELECT id, title FROM films WHERE file_path = ?",
         )
@@ -142,6 +160,10 @@ pub async fn scan_directory(
         .await?;
 
         if let Some((film_id, title)) = existing {
+            sqlx::query("UPDATE films SET orphaned = 0 WHERE id = ?")
+                .bind(film_id)
+                .execute(&state.db)
+                .await?;
             matched.push(MatchedFile {
                 film_id,
                 file_path: path_str,
@@ -153,6 +175,24 @@ pub async fn scan_directory(
                 file_path: path_str,
                 display_name: name,
             });
+        }
+    }
+
+    let prefix = format!("{}/%", dir.path.trim_end_matches('/'));
+    let under_dir: Vec<(i64, String)> = sqlx::query_as(
+        "SELECT id, file_path FROM films WHERE file_path LIKE ? OR file_path = ?",
+    )
+    .bind(&prefix)
+    .bind(&dir.path)
+    .fetch_all(&state.db)
+    .await?;
+
+    for (film_id, file_path) in under_dir {
+        if !found_paths.iter().any(|p| p == &file_path) {
+            sqlx::query("UPDATE films SET orphaned = 1 WHERE id = ?")
+                .bind(film_id)
+                .execute(&state.db)
+                .await?;
         }
     }
 

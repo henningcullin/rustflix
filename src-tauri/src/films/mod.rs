@@ -19,6 +19,7 @@ pub struct Film {
     pub backdrop_path: Option<String>,
     pub left_off_point: i64,
     pub watched: i64,
+    pub orphaned: i64,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -33,6 +34,7 @@ pub struct FilmListItem {
     pub poster_path: Option<String>,
     pub watched: i64,
     pub left_off_point: i64,
+    pub orphaned: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -62,9 +64,47 @@ pub struct CastMember {
 #[tauri::command]
 pub async fn list_films(state: tauri::State<'_, AppState>) -> AppResult<Vec<FilmListItem>> {
     let rows = sqlx::query_as::<_, FilmListItem>(
-        "SELECT id, title, release_date, runtime, rating, poster_path, watched, left_off_point \
-         FROM films ORDER BY title COLLATE NOCASE ASC",
+        "SELECT id, title, release_date, runtime, rating, poster_path, watched, left_off_point, orphaned \
+         FROM films ORDER BY orphaned ASC, title COLLATE NOCASE ASC",
     )
+    .fetch_all(&state.db)
+    .await?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub async fn list_continue_watching(
+    state: tauri::State<'_, AppState>,
+    limit: Option<i64>,
+) -> AppResult<Vec<FilmListItem>> {
+    let limit = limit.unwrap_or(10).clamp(1, 50);
+    let rows = sqlx::query_as::<_, FilmListItem>(
+        "SELECT id, title, release_date, runtime, rating, poster_path, watched, left_off_point, orphaned \
+         FROM films \
+         WHERE orphaned = 0 AND left_off_point > 15 AND watched = 0 \
+         ORDER BY updated_at DESC \
+         LIMIT ?",
+    )
+    .bind(limit)
+    .fetch_all(&state.db)
+    .await?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub async fn list_recently_added(
+    state: tauri::State<'_, AppState>,
+    limit: Option<i64>,
+) -> AppResult<Vec<FilmListItem>> {
+    let limit = limit.unwrap_or(10).clamp(1, 50);
+    let rows = sqlx::query_as::<_, FilmListItem>(
+        "SELECT id, title, release_date, runtime, rating, poster_path, watched, left_off_point, orphaned \
+         FROM films \
+         WHERE orphaned = 0 \
+         ORDER BY created_at DESC \
+         LIMIT ?",
+    )
+    .bind(limit)
     .fetch_all(&state.db)
     .await?;
     Ok(rows)
@@ -74,7 +114,8 @@ pub async fn list_films(state: tauri::State<'_, AppState>) -> AppResult<Vec<Film
 pub async fn get_film(state: tauri::State<'_, AppState>, id: i64) -> AppResult<FilmDetail> {
     let film = sqlx::query_as::<_, Film>(
         "SELECT id, file_path, tmdb_id, imdb_id, title, original_title, overview, release_date, \
-                runtime, rating, poster_path, backdrop_path, left_off_point, watched, created_at, updated_at \
+                runtime, rating, poster_path, backdrop_path, left_off_point, watched, orphaned, \
+                created_at, updated_at \
          FROM films WHERE id = ?",
     )
     .bind(id)

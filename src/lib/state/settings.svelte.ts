@@ -30,3 +30,15 @@ export function isLoading() {
 export function hasTmdbKey() {
   return !!settings?.tmdb_api_key;
 }
+
+export function alias() {
+  return settings?.alias ?? null;
+}
+
+export function theme() {
+  return settings?.theme ?? 'system';
+}
+
+export function firstRunCompleted() {
+  return settings?.first_run_completed ?? false;
+}

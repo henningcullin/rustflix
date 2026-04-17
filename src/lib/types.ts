@@ -36,6 +36,7 @@ export type Film = {
   backdrop_path: string | null;
   left_off_point: number;
   watched: number;
+  orphaned: number;
   created_at: string;
   updated_at: string;
 };
@@ -49,6 +50,7 @@ export type FilmListItem = {
   poster_path: string | null;
   watched: number;
   left_off_point: number;
+  orphaned: number;
 };
 
 export type Genre = { id: number; name: string };
@@ -78,6 +80,11 @@ export type TmdbSearchResult = {
   vote_average: number | null;
 };
 
+export type Theme = 'system' | 'light' | 'dark';
+
 export type Settings = {
   tmdb_api_key: string | null;
+  alias: string | null;
+  theme: Theme | null;
+  first_run_completed: boolean;
 };
