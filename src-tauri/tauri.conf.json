@@ -13,12 +13,14 @@
     "windows": [
       {
         "title": "rustflix",
-        "width": 800,
-        "height": 600
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' data: asset: http://asset.localhost https://image.tmdb.org; media-src 'self' stream: blob: data: http://stream.localhost; connect-src 'self' ipc: http://ipc.localhost https://api.themoviedb.org https://image.tmdb.org; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:"
     }
   },
   "bundle": {

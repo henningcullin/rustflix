@@ -1,4 +1,16 @@
-export {default as Clapperboard } from '@lucide/svelte/icons/clapperboard';
+export { default as Clapperboard } from '@lucide/svelte/icons/clapperboard';
 export { default as House } from '@lucide/svelte/icons/house';
 export { default as User } from '@lucide/svelte/icons/user';
 export { default as Tv } from '@lucide/svelte/icons/tv';
+export { default as Folder } from '@lucide/svelte/icons/folder';
+export { default as Settings } from '@lucide/svelte/icons/settings';
+export { default as Play } from '@lucide/svelte/icons/play';
+export { default as Pause } from '@lucide/svelte/icons/pause';
+export { default as Volume2 } from '@lucide/svelte/icons/volume-2';
+export { default as VolumeX } from '@lucide/svelte/icons/volume-x';
+export { default as Maximize } from '@lucide/svelte/icons/maximize';
+export { default as Minimize } from '@lucide/svelte/icons/minimize';
+export { default as Search } from '@lucide/svelte/icons/search';
+export { default as Trash2 } from '@lucide/svelte/icons/trash-2';
+export { default as RefreshCw } from '@lucide/svelte/icons/refresh-cw';
+export { default as Plus } from '@lucide/svelte/icons/plus';

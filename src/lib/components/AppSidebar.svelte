@@ -1,7 +1,13 @@
 <script lang="ts">
   import * as Sidebar from '$lib/components/ui/sidebar/index';
-  import { Clapperboard, House, Tv, User } from '$lib/lucide';
-
+  import {
+    Clapperboard,
+    Folder,
+    House,
+    Settings,
+    Tv,
+    User,
+  } from '$lib/lucide';
   import type { Component } from 'svelte';
 
   const sidebar = Sidebar.useSidebar();
@@ -17,26 +23,12 @@
   };
 
   const items: SidebarItem[] = [
-    {
-      title: 'Home',
-      url: '/',
-      icon: House,
-    },
-    {
-      title: 'Persons',
-      url: '/persons',
-      icon: User,
-    },
-    {
-      title: 'Films',
-      url: '/films',
-      icon: Clapperboard,
-    },
-    {
-      title: 'Series',
-      url: '/series',
-      icon: Tv,
-    },
+    { title: 'Home', url: '/', icon: House },
+    { title: 'Films', url: '/films', icon: Clapperboard },
+    { title: 'Persons', url: '/persons', icon: User },
+    { title: 'Series', url: '/series', icon: Tv },
+    { title: 'Directories', url: '/directories', icon: Folder },
+    { title: 'Settings', url: '/settings', icon: Settings },
   ];
 </script>
 
@@ -50,7 +42,7 @@
           {#each items as item (item.title)}
             <Sidebar.MenuItem>
               <Sidebar.MenuButton>
-                {#snippet child({ props })}
+                {#snippet child({ props }: { props: Record<string, unknown> })}
                   <a href={item.url} {...props} onclick={closeSidebar}>
                     <item.icon />
                     <span>{item.title}</span>
