@@ -1,6 +1,12 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { api, formatRuntime, progressPct, type Movie } from '$lib/api';
+  import {
+    api,
+    formatRuntime,
+    pickImageFile,
+    progressPct,
+    type Movie,
+  } from '$lib/api';
   import HeroBanner from '$lib/components/HeroBanner.svelte';
   import { Play, Check, Circle } from '$lib/lucide';
 
@@ -42,12 +48,63 @@
   }
 
   async function toggleWatched() {
-    if (!movie) return;
+    if (!movie) {
+      return;
+    }
+    const next = !movie.watched;
     try {
-      await api.setWatched('movie', movie.id, !movie.watched);
-      await load(movie.id);
-    } catch (e) {
-      error = String(e);
+      await api.setWatched('movie', movie.id, next);
+      movie = { ...movie, watched: next };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
+  async function saveTitle(next: string) {
+    if (!movie) {
+      return;
+    }
+    try {
+      const updated = await api.updateMovieMetadata(movie.id, { title: next });
+      movie = { ...movie, title: updated.title };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
+  async function changePoster() {
+    if (!movie) {
+      return;
+    }
+    try {
+      const source = await pickImageFile();
+      if (!source) {
+        return;
+      }
+      const updated = await api.setMoviePosterFromFile(movie.id, source);
+      movie = {
+        ...movie,
+        poster_path: updated.poster_path,
+        poster_origin: updated.poster_origin,
+      };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
+  async function resetPoster() {
+    if (!movie) {
+      return;
+    }
+    try {
+      const updated = await api.resetMoviePoster(movie.id);
+      movie = {
+        ...movie,
+        poster_path: updated.poster_path,
+        poster_origin: updated.poster_origin,
+      };
+    } catch (caught) {
+      error = String(caught);
     }
   }
 </script>
@@ -65,6 +122,10 @@
     year={movie.year}
     runtime={movie.duration_seconds}
     backdrop={movie.poster_path ?? null}
+    posterIsManual={movie.poster_origin === 'manual'}
+    onTitleSave={saveTitle}
+    onPosterChange={changePoster}
+    onPosterReset={resetPoster}
   />
 
   <div class="px-6 py-8 lg:px-12">
