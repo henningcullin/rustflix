@@ -9,13 +9,15 @@
     type Show,
   } from '$lib/api';
   import HeroBanner from '$lib/components/HeroBanner.svelte';
-  import { Check, Circle, Pencil, Play } from '$lib/lucide';
+  import MergeShowSheet from '$lib/components/MergeShowSheet.svelte';
+  import { Check, Circle, GitMerge, Pencil, Play } from '$lib/lucide';
 
   let show: Show | null = $state(null);
   let seasons: Season[] = $state([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let selectedSeason = $state<number | null>(null);
+  let mergeOpen = $state(false);
 
   const id = $derived(Number($page.params.id));
 
@@ -163,13 +165,23 @@
         </button>
         <span class="text-sm text-muted-foreground">{nextUp.title}</span>
       {/if}
-      <a
-        href={`/series/${show.id}/edit`}
-        class="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
-      >
-        <Pencil class="size-3.5" />
-        Edit details
-      </a>
+      <div class="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onclick={() => (mergeOpen = true)}
+          class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        >
+          <GitMerge class="size-3.5" />
+          Merge…
+        </button>
+        <a
+          href={`/series/${show.id}/edit`}
+          class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        >
+          <Pencil class="size-3.5" />
+          Edit details
+        </a>
+      </div>
     </div>
 
 
@@ -189,6 +201,13 @@
         {/each}
       </div>
     {/if}
+
+    <MergeShowSheet
+      bind:open={mergeOpen}
+      {show}
+      onClose={() => (mergeOpen = false)}
+      onMerged={() => show && load(show.id)}
+    />
 
     {#if activeSeason}
       <ul class="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">

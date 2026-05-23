@@ -18,3 +18,6 @@ export { default as Film } from '@lucide/svelte/icons/film';
 export { default as Image } from '@lucide/svelte/icons/image';
 export { default as Pencil } from '@lucide/svelte/icons/pencil';
 export { default as RotateCcw } from '@lucide/svelte/icons/rotate-ccw';
+export { default as AlertTriangle } from '@lucide/svelte/icons/alert-triangle';
+export { default as GitMerge } from '@lucide/svelte/icons/git-merge';
+export { default as MoreHorizontal } from '@lucide/svelte/icons/more-horizontal';
