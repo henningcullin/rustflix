@@ -9,7 +9,7 @@
     type Show,
   } from '$lib/api';
   import HeroBanner from '$lib/components/HeroBanner.svelte';
-  import { Check, Circle, Play } from '$lib/lucide';
+  import { Check, Circle, Pencil, Play } from '$lib/lucide';
 
   let show: Show | null = $state(null);
   let seasons: Season[] = $state([]);
@@ -151,8 +151,8 @@
   />
 
   <div class="px-6 py-8 lg:px-12">
-    {#if nextUp}
-      <div class="mb-8 flex flex-wrap items-center gap-3">
+    <div class="mb-8 flex flex-wrap items-center gap-3">
+      {#if nextUp}
         <button
           type="button"
           onclick={() => playEpisode(nextUp.id, nextUp.progress_seconds < 30)}
@@ -162,8 +162,16 @@
           {nextUp.progress_seconds > 30 ? 'Resume' : 'Play'} S{String(nextUp.season).padStart(2, '0')}E{String(nextUp.episode).padStart(2, '0')}
         </button>
         <span class="text-sm text-muted-foreground">{nextUp.title}</span>
-      </div>
-    {/if}
+      {/if}
+      <a
+        href={`/series/${show.id}/edit`}
+        class="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+      >
+        <Pencil class="size-3.5" />
+        Edit details
+      </a>
+    </div>
+
 
     {#if seasons.length > 1}
       <div class="mb-4 flex flex-wrap gap-2">
