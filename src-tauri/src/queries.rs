@@ -42,7 +42,7 @@ pub async fn remove_library(pool: &SqlitePool, id: i64) -> AppResult<()> {
 }
 
 const MOVIE_SELECT: &str = "
-    SELECT m.id, m.title, m.year, m.path, m.poster_path, m.overview,
+    SELECT m.id, m.title, m.year, m.path, m.poster_path, m.poster_origin, m.overview,
            m.duration_seconds,
            COALESCE(w.progress_seconds, 0) AS progress_seconds,
            COALESCE(w.watched, 0) AS watched,
@@ -68,7 +68,8 @@ pub async fn get_movie(pool: &SqlitePool, id: i64) -> AppResult<Movie> {
 }
 
 const SHOW_SELECT: &str = "
-    SELECT s.id, s.title, s.year, s.folder_path, s.poster_path, s.overview,
+    SELECT s.id, s.title, s.year, s.folder_path, s.fingerprint,
+           s.poster_path, s.poster_origin, s.overview,
            (SELECT COUNT(*) FROM episodes e WHERE e.show_id = s.id) AS episode_count,
            (SELECT COUNT(*) FROM episodes e
               LEFT JOIN watch_history w

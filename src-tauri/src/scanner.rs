@@ -29,6 +29,34 @@ static TAGS_RE: Lazy<Regex> = Lazy::new(|| {
 static SEASON_FOLDER_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)^season[\s._-]*\d+$|^s\d+$").unwrap());
 
+// Trailing season tokens we want to drop from a show name so that
+// "Breaking Bad S01" / "Breaking Bad Season 02" / "Breaking Bad Series 3" all
+// collapse to "Breaking Bad" for fingerprinting and display.
+static STRIP_SEASON_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)[\s._-]+(?:s\d{1,2}|season[\s._-]*\d{1,3}|series[\s._-]*\d{1,3})\s*$").unwrap()
+});
+
+/// Strip a trailing `S01` / `Season 2` / `Series 3` suffix from a show name.
+pub fn strip_season_suffix(name: &str) -> String {
+    STRIP_SEASON_RE.replace(name.trim(), "").trim().to_string()
+}
+
+/// Stable dedup key for a show. Derived from its (already cleaned) display
+/// name: any trailing season token is removed, the result is ascii-lowercased,
+/// whitespace collapsed, and non-alphanumeric/whitespace characters dropped.
+/// Pure function — same input always produces the same output.
+pub fn fingerprint(name: &str) -> String {
+    let stripped = strip_season_suffix(name);
+
+    let lower = stripped.to_lowercase();
+    let filtered: String = lower
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { ' ' })
+        .collect();
+
+    filtered.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 fn is_video_file(path: &Path) -> bool {
     path.extension()
         .and_then(|e| e.to_str())
@@ -109,7 +137,7 @@ fn detect(path: &Path, hint: LibraryKind) -> Option<Detected> {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_else(|| parent_name.clone());
 
-        let show_title = clean_title(&show_raw);
+        let show_title = strip_season_suffix(&clean_title(&show_raw));
         let show_year = extract_year(&show_raw);
 
         let stem = path
@@ -207,17 +235,23 @@ pub async fn scan_library(
             } => {
                 let show_folder = find_show_folder(&path).unwrap_or_else(|| root.to_path_buf());
                 let show_folder_str = show_folder.to_string_lossy().to_string();
+                let show_fingerprint = fingerprint(&show_title);
 
-                // Upsert show; ON CONFLICT keeps existing fields, returns id either way.
+                // Upsert by (library_id, fingerprint) so per-season folders
+                // ("Breaking Bad S01", "Breaking Bad S02") converge to a single
+                // show row. On conflict we only refresh folder_path — the
+                // user-editable fields (title, year, overview) are left alone.
                 let show_id: i64 = sqlx::query_scalar(
-                    "INSERT INTO shows (library_id, title, year, folder_path) VALUES (?1, ?2, ?3, ?4)
-                     ON CONFLICT(folder_path) DO UPDATE SET folder_path = excluded.folder_path
+                    "INSERT INTO shows (library_id, title, year, folder_path, fingerprint)
+                     VALUES (?1, ?2, ?3, ?4, ?5)
+                     ON CONFLICT(library_id, fingerprint) DO UPDATE SET folder_path = excluded.folder_path
                      RETURNING id",
                 )
                 .bind(library_id)
                 .bind(&show_title)
                 .bind(show_year)
                 .bind(&show_folder_str)
+                .bind(&show_fingerprint)
                 .fetch_one(pool)
                 .await?;
 

@@ -9,12 +9,15 @@ export interface Library {
   kind: LibraryKind;
 }
 
+export type PosterOrigin = 'auto' | 'manual';
+
 export interface Movie {
   id: number;
   title: string;
   year: number | null;
   path: string;
   poster_path: string | null;
+  poster_origin: PosterOrigin | null;
   overview: string | null;
   duration_seconds: number | null;
   progress_seconds: number;
@@ -27,7 +30,9 @@ export interface Show {
   title: string;
   year: number | null;
   folder_path: string;
+  fingerprint: string;
   poster_path: string | null;
+  poster_origin: PosterOrigin | null;
   overview: string | null;
   episode_count: number;
   watched_count: number;
