@@ -1,0 +1,2 @@
+# mpv sidecar binaries are vendored locally — fetch via scripts/fetch-mpv.ps1
+mpv-*
