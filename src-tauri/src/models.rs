@@ -79,3 +79,18 @@ pub struct ScanReport {
     pub episodes_added: usize,
     pub shows_added: usize,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EpisodeRef {
+    pub season: i32,
+    pub episode: i32,
+}
+
+/// Result of a merge attempt. If `conflicts` is empty, the merge succeeded.
+/// Otherwise the source show still exists and the listed episodes are the
+/// (season, episode) pairs that exist in both target and source — the user
+/// has to resolve them before the merge can complete.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MergeOutcome {
+    pub conflicts: Vec<EpisodeRef>,
+}

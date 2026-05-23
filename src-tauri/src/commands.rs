@@ -1,13 +1,16 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 use crate::db::Db;
 use crate::error::{AppError, AppResult};
 use crate::models::{
-    ContinueWatchingItem, Episode, Library, LibraryKind, Movie, ScanReport, Season, Show,
+    ContinueWatchingItem, Episode, Library, LibraryKind, MergeOutcome, Movie, ScanReport, Season,
+    Show,
 };
 use crate::{player, queries, scanner};
+
+const ALLOWED_POSTER_EXTS: &[&str] = &["jpg", "jpeg", "png", "webp"];
 
 #[tauri::command]
 pub async fn list_libraries(db: State<'_, Db>) -> AppResult<Vec<Library>> {
@@ -132,4 +135,114 @@ pub async fn play_episode(
     let ep = queries::get_episode(&db, id).await?;
     let start = resume.unwrap_or(ep.progress_seconds);
     player::play(&db, "episode", id, &ep.path, start).await
+}
+
+#[tauri::command]
+pub async fn update_show_metadata(
+    db: State<'_, Db>,
+    id: i64,
+    title: Option<String>,
+    year: Option<i32>,
+    overview: Option<String>,
+) -> AppResult<Show> {
+    queries::update_show_metadata(&db, id, title.as_deref(), year, overview.as_deref()).await?;
+    queries::get_show(&db, id).await
+}
+
+#[tauri::command]
+pub async fn update_movie_metadata(
+    db: State<'_, Db>,
+    id: i64,
+    title: Option<String>,
+    year: Option<i32>,
+    overview: Option<String>,
+) -> AppResult<Movie> {
+    queries::update_movie_metadata(&db, id, title.as_deref(), year, overview.as_deref()).await?;
+    queries::get_movie(&db, id).await
+}
+
+#[tauri::command]
+pub async fn merge_shows(
+    db: State<'_, Db>,
+    target_id: i64,
+    source_id: i64,
+) -> AppResult<MergeOutcome> {
+    queries::merge_shows(&db, target_id, source_id).await
+}
+
+#[tauri::command]
+pub async fn set_show_poster_from_file(
+    app: AppHandle,
+    db: State<'_, Db>,
+    id: i64,
+    source_path: String,
+) -> AppResult<Show> {
+    let destination = copy_poster(&app, "show", id, &source_path).await?;
+    queries::set_show_poster(&db, id, &destination, "manual").await?;
+    queries::get_show(&db, id).await
+}
+
+#[tauri::command]
+pub async fn set_movie_poster_from_file(
+    app: AppHandle,
+    db: State<'_, Db>,
+    id: i64,
+    source_path: String,
+) -> AppResult<Movie> {
+    let destination = copy_poster(&app, "movie", id, &source_path).await?;
+    queries::set_movie_poster(&db, id, &destination, "manual").await?;
+    queries::get_movie(&db, id).await
+}
+
+#[tauri::command]
+pub async fn reset_show_poster(db: State<'_, Db>, id: i64) -> AppResult<Show> {
+    queries::reset_show_poster(&db, id).await?;
+    queries::get_show(&db, id).await
+}
+
+#[tauri::command]
+pub async fn reset_movie_poster(db: State<'_, Db>, id: i64) -> AppResult<Movie> {
+    queries::reset_movie_poster(&db, id).await?;
+    queries::get_movie(&db, id).await
+}
+
+/// Copy `source_path` into `<app_data>/posters/{kind}-{id}.{ext}` and return
+/// the destination path as a string. Rejects sources whose extension isn't
+/// in [`ALLOWED_POSTER_EXTS`] so we don't accidentally accept arbitrary
+/// files.
+async fn copy_poster(
+    app: &AppHandle,
+    kind: &str,
+    id: i64,
+    source_path: &str,
+) -> AppResult<String> {
+    let source = Path::new(source_path);
+    if !source.exists() {
+        return Err(AppError::Other(format!(
+            "source file does not exist: {source_path}"
+        )));
+    }
+
+    let extension = source
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase())
+        .ok_or_else(|| AppError::Other("source file has no extension".to_string()))?;
+    if !ALLOWED_POSTER_EXTS.iter().any(|allowed| *allowed == extension) {
+        return Err(AppError::Other(format!(
+            "unsupported image type: .{extension}"
+        )));
+    }
+
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| AppError::Other(format!("app_data_dir: {error}")))?;
+    let poster_dir = app_data_dir.join("posters");
+    tokio::fs::create_dir_all(&poster_dir).await?;
+
+    let destination = poster_dir.join(format!("{kind}-{id}.{extension}"));
+    tokio::fs::copy(source, &destination).await?;
+
+    Ok(destination.to_string_lossy().to_string())
 }
