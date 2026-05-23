@@ -67,6 +67,30 @@ export interface ScanReport {
   shows_added: number;
 }
 
+export interface EpisodeRef {
+  season: number;
+  episode: number;
+}
+
+export interface MergeOutcome {
+  conflicts: EpisodeRef[];
+}
+
+export interface MetadataPatch {
+  title?: string;
+  year?: number;
+  overview?: string;
+}
+
+export function pickImageFile(): Promise<string | null> {
+  return open({
+    directory: false,
+    multiple: false,
+    title: 'Select a poster image',
+    filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+  }) as Promise<string | null>;
+}
+
 export const api = {
   listLibraries: () => invoke<Library[]>('list_libraries'),
   addLibrary: (path: string, kind: LibraryKind = 'mixed') =>
@@ -91,6 +115,19 @@ export const api = {
     invoke<{ session_id: number }>('play_movie', { id, resume }),
   playEpisode: (id: number, resume?: number) =>
     invoke<{ session_id: number }>('play_episode', { id, resume }),
+
+  updateShowMetadata: (id: number, patch: MetadataPatch) =>
+    invoke<Show>('update_show_metadata', { id, ...patch }),
+  updateMovieMetadata: (id: number, patch: MetadataPatch) =>
+    invoke<Movie>('update_movie_metadata', { id, ...patch }),
+  mergeShows: (targetId: number, sourceId: number) =>
+    invoke<MergeOutcome>('merge_shows', { targetId, sourceId }),
+  setShowPosterFromFile: (id: number, sourcePath: string) =>
+    invoke<Show>('set_show_poster_from_file', { id, sourcePath }),
+  setMoviePosterFromFile: (id: number, sourcePath: string) =>
+    invoke<Movie>('set_movie_poster_from_file', { id, sourcePath }),
+  resetShowPoster: (id: number) => invoke<Show>('reset_show_poster', { id }),
+  resetMoviePoster: (id: number) => invoke<Movie>('reset_movie_poster', { id }),
 
   pickFolder: () =>
     open({

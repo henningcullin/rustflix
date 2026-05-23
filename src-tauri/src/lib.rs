@@ -40,6 +40,13 @@ pub fn run() {
             commands::check_mpv,
             commands::play_movie,
             commands::play_episode,
+            commands::update_show_metadata,
+            commands::update_movie_metadata,
+            commands::merge_shows,
+            commands::set_show_poster_from_file,
+            commands::set_movie_poster_from_file,
+            commands::reset_show_poster,
+            commands::reset_movie_poster,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

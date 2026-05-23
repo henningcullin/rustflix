@@ -2,7 +2,8 @@ use sqlx::SqlitePool;
 
 use crate::error::{AppError, AppResult};
 use crate::models::{
-    ContinueWatchingItem, Episode, Library, LibraryKind, Movie, Season, Show,
+    ContinueWatchingItem, Episode, EpisodeRef, Library, LibraryKind, MergeOutcome, Movie, Season,
+    Show,
 };
 
 pub async fn list_libraries(pool: &SqlitePool) -> AppResult<Vec<Library>> {
@@ -161,6 +162,192 @@ pub async fn upsert_progress(
     .execute(pool)
     .await?;
     Ok(())
+}
+
+pub async fn update_show_metadata(
+    pool: &SqlitePool,
+    id: i64,
+    title: Option<&str>,
+    year: Option<i32>,
+    overview: Option<&str>,
+) -> AppResult<()> {
+    update_metadata_row(pool, "shows", id, title, year, overview).await
+}
+
+pub async fn update_movie_metadata(
+    pool: &SqlitePool,
+    id: i64,
+    title: Option<&str>,
+    year: Option<i32>,
+    overview: Option<&str>,
+) -> AppResult<()> {
+    update_metadata_row(pool, "movies", id, title, year, overview).await
+}
+
+/// Shared body for `update_show_metadata` and `update_movie_metadata`. Only
+/// fields passed as `Some` are touched. There's no v1 way to *clear* a field
+/// to NULL through this API; that needs an explicit "reset" command if it
+/// turns out users want it.
+async fn update_metadata_row(
+    pool: &SqlitePool,
+    table: &str,
+    id: i64,
+    title: Option<&str>,
+    year: Option<i32>,
+    overview: Option<&str>,
+) -> AppResult<()> {
+    let mut assignments: Vec<&str> = Vec::new();
+    if title.is_some() {
+        assignments.push("title = ?");
+    }
+    if year.is_some() {
+        assignments.push("year = ?");
+    }
+    if overview.is_some() {
+        assignments.push("overview = ?");
+    }
+    if assignments.is_empty() {
+        return Ok(());
+    }
+
+    let sql = format!("UPDATE {table} SET {} WHERE id = ?", assignments.join(", "));
+
+    let mut query = sqlx::query(&sql);
+    if let Some(value) = title {
+        query = query.bind(value);
+    }
+    if let Some(value) = year {
+        query = query.bind(value);
+    }
+    if let Some(value) = overview {
+        query = query.bind(value);
+    }
+    let result = query.bind(id).execute(pool).await?;
+    if result.rows_affected() == 0 {
+        return Err(AppError::MediaNotFound(id));
+    }
+    Ok(())
+}
+
+pub async fn set_show_poster(
+    pool: &SqlitePool,
+    id: i64,
+    path: &str,
+    origin: &str,
+) -> AppResult<()> {
+    set_poster_row(pool, "shows", id, path, origin).await
+}
+
+pub async fn set_movie_poster(
+    pool: &SqlitePool,
+    id: i64,
+    path: &str,
+    origin: &str,
+) -> AppResult<()> {
+    set_poster_row(pool, "movies", id, path, origin).await
+}
+
+pub async fn reset_show_poster(pool: &SqlitePool, id: i64) -> AppResult<()> {
+    reset_poster_row(pool, "shows", id).await
+}
+
+pub async fn reset_movie_poster(pool: &SqlitePool, id: i64) -> AppResult<()> {
+    reset_poster_row(pool, "movies", id).await
+}
+
+async fn set_poster_row(
+    pool: &SqlitePool,
+    table: &str,
+    id: i64,
+    path: &str,
+    origin: &str,
+) -> AppResult<()> {
+    let sql = format!("UPDATE {table} SET poster_path = ?1, poster_origin = ?2 WHERE id = ?3");
+    let result = sqlx::query(&sql)
+        .bind(path)
+        .bind(origin)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    if result.rows_affected() == 0 {
+        return Err(AppError::MediaNotFound(id));
+    }
+    Ok(())
+}
+
+async fn reset_poster_row(pool: &SqlitePool, table: &str, id: i64) -> AppResult<()> {
+    let sql = format!("UPDATE {table} SET poster_path = NULL, poster_origin = NULL WHERE id = ?1");
+    let result = sqlx::query(&sql).bind(id).execute(pool).await?;
+    if result.rows_affected() == 0 {
+        return Err(AppError::MediaNotFound(id));
+    }
+    Ok(())
+}
+
+/// Reassigns every episode of `source_id` to `target_id` and deletes
+/// `source_id`. If both shows have an episode with the same
+/// `(season, episode)` the merge is rejected — the conflicting pairs are
+/// returned in `MergeOutcome.conflicts` and nothing is changed. Caller can
+/// surface the conflicts to the user and try again after they're resolved.
+pub async fn merge_shows(
+    pool: &SqlitePool,
+    target_id: i64,
+    source_id: i64,
+) -> AppResult<MergeOutcome> {
+    if target_id == source_id {
+        return Err(AppError::Other(
+            "cannot merge a show into itself".to_string(),
+        ));
+    }
+
+    let conflicts: Vec<EpisodeRef> = sqlx::query_as(
+        "SELECT source.season, source.episode
+         FROM episodes source
+         WHERE source.show_id = ?1
+           AND EXISTS (
+               SELECT 1 FROM episodes target
+               WHERE target.show_id = ?2
+                 AND target.season = source.season
+                 AND target.episode = source.episode
+           )
+         ORDER BY source.season, source.episode",
+    )
+    .bind(source_id)
+    .bind(target_id)
+    .fetch_all(pool)
+    .await?;
+
+    if !conflicts.is_empty() {
+        return Ok(MergeOutcome { conflicts });
+    }
+
+    let mut tx = pool.begin().await?;
+    sqlx::query("UPDATE episodes SET show_id = ?1 WHERE show_id = ?2")
+        .bind(target_id)
+        .bind(source_id)
+        .execute(&mut *tx)
+        .await?;
+    let deleted = sqlx::query("DELETE FROM shows WHERE id = ?1")
+        .bind(source_id)
+        .execute(&mut *tx)
+        .await?;
+    if deleted.rows_affected() == 0 {
+        tx.rollback().await?;
+        return Err(AppError::MediaNotFound(source_id));
+    }
+    tx.commit().await?;
+
+    Ok(MergeOutcome { conflicts: vec![] })
+}
+
+impl<'r> sqlx::FromRow<'r, sqlx::sqlite::SqliteRow> for EpisodeRef {
+    fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
+        use sqlx::Row;
+        Ok(EpisodeRef {
+            season: row.try_get("season")?,
+            episode: row.try_get("episode")?,
+        })
+    }
 }
 
 pub async fn continue_watching(pool: &SqlitePool, limit: i64) -> AppResult<Vec<ContinueWatchingItem>> {
