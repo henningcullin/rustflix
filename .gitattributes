@@ -1,0 +1,41 @@
+# Why this file exists: contributors work across Windows + WSL + macOS,
+# and tools like `cargo update` on Windows rewrite Cargo.lock with native
+# CRLF endings, which then shows up as a full-file diff against a repo
+# that's otherwise LF. Locking text files to LF (with the right Windows-
+# native exceptions) keeps the diff signal honest and the release script
+# reproducible.
+
+# Default: detect text, normalize to LF in the repo + working tree.
+* text=auto eol=lf
+
+# Windows-native script formats keep CRLF; running them under cmd.exe /
+# PowerShell with bare LF endings is unreliable.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Tell git these are binary so it doesn't try to diff or normalize.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.icns  binary
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+*.jar   binary
+*.zip   binary
+*.gz    binary
+*.tar   binary
+*.exe   binary
+*.msi   binary
+*.dll   binary
+*.so    binary
+*.dylib binary
+*.dmg   binary
+*.appimage binary
+*.deb   binary
+*.db    binary
+*.sqlite binary

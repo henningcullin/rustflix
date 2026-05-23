@@ -1,0 +1,234 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux + macOS matrix entries are commented out for now to keep
+        # CI minutes spent on the OS that actually has users. Re-enable
+        # by uncommenting the relevant `include` block; the publish job
+        # below picks up whichever per-platform fragments land and
+        # combines them into latest.json automatically.
+        include:
+          - os: windows-latest
+            platform: windows-x86_64
+            # NSIS installer EXE produces a `-setup.exe` plus a sibling
+            # `-setup.exe.sig`. createUpdaterArtifacts: true on Tauri v2 signs
+            # the installer EXE directly (no .nsis.zip pair).
+            bundle_glob: '*-setup.exe'
+          # - os: ubuntu-latest
+          #   platform: linux-x86_64
+          #   bundle_glob: '*.AppImage'
+          #   apt_packages: >-
+          #     libwebkit2gtk-4.1-dev
+          #     libgtk-3-dev
+          #     libayatana-appindicator3-dev
+          #     librsvg2-dev
+          #     build-essential
+          #     pkg-config
+          # - os: macos-latest
+          #   platform: darwin-aarch64
+          #   bundle_glob: '*.app.tar.gz'
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry + target
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux build deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.apt_packages }}
+
+      - name: Fetch mpv sidecar (Windows)
+        if: matrix.platform == 'windows-x86_64'
+        shell: pwsh
+        env:
+          # Pin to a known-good upstream release. Bump deliberately.
+          MPV_VERSION: '0.41.0'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = "https://github.com/mpv-player/mpv/releases/download/v$env:MPV_VERSION/mpv-v$env:MPV_VERSION-x86_64-pc-windows-msvc.zip"
+          $work = Join-Path $env:RUNNER_TEMP 'mpv'
+          New-Item -ItemType Directory -Force -Path $work | Out-Null
+          $zip = Join-Path $work 'mpv.zip'
+          Write-Host "Downloading $url"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $work -Force
+          $mpvExe = Get-ChildItem -Path $work -Filter 'mpv.exe' -Recurse | Select-Object -First 1
+          if (-not $mpvExe) { throw "mpv.exe not found in zip" }
+          New-Item -ItemType Directory -Force -Path 'src-tauri/binaries' | Out-Null
+          Copy-Item $mpvExe.FullName 'src-tauri/binaries/mpv-x86_64-pc-windows-msvc.exe' -Force
+          Write-Host "Sidecar placed:"
+          Get-Item 'src-tauri/binaries/mpv-x86_64-pc-windows-msvc.exe' | Select-Object FullName, Length
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build + sign Tauri bundles
+        uses: tauri-apps/tauri-action@v0
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          args: ''
+
+      - name: Locate updater artifact + emit platform fragment
+        id: find
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BUNDLE_GLOB: ${{ matrix.bundle_glob }}
+          RELEASES_REPO: henningcullin/rustflix-releases
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          bundle_root="src-tauri/target/release/bundle"
+
+          echo "::group::Diagnostics"
+          echo "PWD: $(pwd)"
+          echo "bundle_root: $bundle_root"
+          if [ -d "$bundle_root" ]; then
+            find "$bundle_root" -maxdepth 6 -mindepth 1 -printf "%y  %p\n" || true
+          else
+            echo "bundle_root missing"
+          fi
+          echo "::endgroup::"
+
+          if [ ! -d "$bundle_root" ]; then
+            echo "Bundle root '$bundle_root' missing after build" >&2
+            exit 1
+          fi
+
+          mapfile -t bundles < <(find "$bundle_root" -type f -name "$BUNDLE_GLOB")
+          if [ ${#bundles[@]} -eq 0 ]; then
+            echo "No bundle matching '$BUNDLE_GLOB' under $bundle_root" >&2
+            exit 1
+          fi
+          bundle_path="${bundles[0]}"
+          sig_path="${bundle_path}.sig"
+          if [ ! -f "$sig_path" ]; then
+            echo "Missing signature file: $sig_path" >&2
+            exit 1
+          fi
+
+          bundle_name="$(basename "$bundle_path")"
+          # GitHub normalises release asset filenames by replacing spaces with
+          # periods at upload time.
+          asset_name="${bundle_name// /.}"
+          url="https://github.com/${RELEASES_REPO}/releases/download/${TAG}/${asset_name}"
+          signature="$(tr -d '\r\n' < "$sig_path")"
+
+          mkdir -p artifacts
+          staged_bundle="artifacts/${asset_name}"
+          staged_sig="artifacts/${asset_name}.sig"
+          cp "$bundle_path" "$staged_bundle"
+          cp "$sig_path" "$staged_sig"
+
+          fragment="artifacts/${PLATFORM}.json"
+          jq -n \
+            --arg platform "${PLATFORM}" \
+            --arg signature "${signature}" \
+            --arg url "${url}" \
+            --arg bundle_asset "${asset_name}" \
+            --arg sig_asset "${asset_name}.sig" \
+            '{platform: $platform, signature: $signature, url: $url, bundle_asset: $bundle_asset, sig_asset: $sig_asset}' \
+            > "$fragment"
+
+          echo "Staged:"
+          ls -la artifacts
+
+      - name: Upload platform artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustflix-${{ matrix.platform }}
+          path: artifacts/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: staged
+          pattern: rustflix-*
+          merge-multiple: true
+
+      - name: Build unified latest.json
+        id: manifest
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          ls -la staged
+
+          version="${TAG#v}"
+          pub_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          platforms_json="{}"
+          for fragment in staged/*.json; do
+            platform="$(jq -r .platform "$fragment")"
+            signature="$(jq -r .signature "$fragment")"
+            url="$(jq -r .url "$fragment")"
+            entry="$(jq -n --arg sig "$signature" --arg url "$url" \
+              '{signature: $sig, url: $url}')"
+            platforms_json="$(jq --arg key "$platform" --argjson val "$entry" \
+              '. + {($key): $val}' <<< "$platforms_json")"
+          done
+
+          jq -n \
+            --arg version "$version" \
+            --arg pub_date "$pub_date" \
+            --argjson platforms "$platforms_json" \
+            '{version: $version, pub_date: $pub_date, platforms: $platforms}' \
+            > latest.json
+
+          echo "::group::latest.json"
+          cat latest.json
+          echo "::endgroup::"
+
+      - name: Publish release to releases repo
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+          RELEASES_REPO: henningcullin/rustflix-releases
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t assets < <(find staged -maxdepth 1 -type f ! -name '*.json')
+          gh release create "$TAG" \
+            "${assets[@]}" \
+            latest.json \
+            --repo "$RELEASES_REPO" \
+            --title "$TAG" \
+            --notes "Automated release."
