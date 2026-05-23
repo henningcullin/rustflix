@@ -50,12 +50,25 @@
     }
   }
 
-  async function toggleEpisode(epId: number, watched: boolean) {
+  async function toggleEpisode(episodeId: number, watched: boolean) {
+    const next = !watched;
     try {
-      await api.setWatched('episode', epId, !watched);
-      if (show) await load(show.id);
-    } catch (e) {
-      error = String(e);
+      await api.setWatched('episode', episodeId, next);
+
+      for (const season of seasons) {
+        const episode = season.episodes.find((candidate) => candidate.id === episodeId);
+        if (!episode) {
+          continue;
+        }
+
+        episode.watched = next;
+        if (show) {
+          show.watched_count += next ? 1 : -1;
+        }
+        return;
+      }
+    } catch (caught) {
+      error = String(caught);
     }
   }
 
