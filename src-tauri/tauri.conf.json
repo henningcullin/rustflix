@@ -4,17 +4,21 @@
   "version": "0.1.0",
   "identifier": "com.rustflix.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "pnpm build",
     "frontendDist": "../build"
   },
   "app": {
     "windows": [
       {
         "title": "rustflix",
-        "width": 800,
-        "height": 600
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "center": true
       }
     ],
     "security": {
@@ -23,13 +27,33 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "msi"],
+    "createUpdaterArtifacts": true,
+    "externalBin": ["binaries/mpv"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "displayLanguageSelector": false
+      },
+      "allowDowngrades": true
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REPLACE_WITH_OUTPUT_OF_setup-updater",
+      "endpoints": [
+        "https://github.com/henningcullin/rustflix-releases/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
