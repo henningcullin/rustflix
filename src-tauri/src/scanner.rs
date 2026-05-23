@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use once_cell::sync::Lazy;
@@ -11,6 +12,10 @@ use crate::models::{LibraryKind, ScanReport};
 const VIDEO_EXTS: &[&str] = &[
     "mkv", "mp4", "avi", "m4v", "webm", "mov", "ts", "wmv", "flv", "mpg", "mpeg",
 ];
+
+// Files we'll accept as an auto-discovered poster, ordered by preference.
+const POSTER_BASENAMES: &[&str] = &["poster", "cover", "folder"];
+const IMAGE_EXTS: &[&str] = &["jpg", "jpeg", "png", "webp"];
 
 static EPISODE_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?i)(?:s|season[\s._-]*)(\d{1,2})[\s._-]*(?:e|x|episode[\s._-]*)(\d{1,3})").unwrap()
@@ -181,6 +186,145 @@ fn find_show_folder(episode_path: &Path) -> Option<PathBuf> {
     }
 }
 
+/// Look for a `poster.*`, `cover.*`, or `folder.*` image in `dir`. Preference
+/// order is POSTER_BASENAMES first, then IMAGE_EXTS. Returns the first match
+/// or None if the directory is unreadable / contains no candidates.
+async fn find_poster_in(dir: &Path) -> Option<PathBuf> {
+    let mut entries = tokio::fs::read_dir(dir).await.ok()?;
+
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        let path = entry.path();
+        let Ok(metadata) = entry.metadata().await else {
+            continue;
+        };
+        if !metadata.is_file() {
+            continue;
+        }
+
+        let Some(stem) = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| s.to_lowercase())
+        else {
+            continue;
+        };
+        let Some(ext) = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+        else {
+            continue;
+        };
+
+        let is_image = IMAGE_EXTS.iter().any(|candidate| *candidate == ext);
+        let is_poster_name = POSTER_BASENAMES.iter().any(|candidate| *candidate == stem);
+
+        if is_image && is_poster_name {
+            candidates.push(path);
+        }
+    }
+
+    candidates.sort_by_key(|p| {
+        let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
+        let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+        let basename_rank = POSTER_BASENAMES
+            .iter()
+            .position(|candidate| *candidate == stem)
+            .unwrap_or(usize::MAX);
+        let ext_rank = IMAGE_EXTS
+            .iter()
+            .position(|candidate| *candidate == ext)
+            .unwrap_or(usize::MAX);
+        (basename_rank, ext_rank)
+    });
+
+    candidates.into_iter().next()
+}
+
+/// Set `poster_path` + `poster_origin = 'auto'` on a show if and only if the
+/// row doesn't have a manual poster. The search visits the show's stored
+/// `folder_path` first, then every distinct parent directory of its episodes
+/// — so per-season folders ("Breaking Bad S01/poster.jpg",
+/// "Breaking Bad S02/poster.jpg") all get a chance to provide artwork.
+async fn maybe_set_show_poster(pool: &SqlitePool, show_id: i64) -> AppResult<()> {
+    let origin: Option<String> =
+        sqlx::query_scalar("SELECT poster_origin FROM shows WHERE id = ?1")
+            .bind(show_id)
+            .fetch_one(pool)
+            .await?;
+    if origin.as_deref() == Some("manual") {
+        return Ok(());
+    }
+
+    let folder_path: String =
+        sqlx::query_scalar("SELECT folder_path FROM shows WHERE id = ?1")
+            .bind(show_id)
+            .fetch_one(pool)
+            .await?;
+    let episode_paths: Vec<String> =
+        sqlx::query_scalar("SELECT DISTINCT path FROM episodes WHERE show_id = ?1")
+            .bind(show_id)
+            .fetch_all(pool)
+            .await?;
+
+    let mut dirs: Vec<PathBuf> = vec![PathBuf::from(&folder_path)];
+    for episode_path in &episode_paths {
+        if let Some(parent) = Path::new(episode_path).parent() {
+            let parent_buf = parent.to_path_buf();
+            if !dirs.contains(&parent_buf) {
+                dirs.push(parent_buf);
+            }
+        }
+    }
+
+    for dir in dirs {
+        if let Some(poster) = find_poster_in(&dir).await {
+            let poster_str = poster.to_string_lossy().to_string();
+            sqlx::query(
+                "UPDATE shows SET poster_path = ?1, poster_origin = 'auto' WHERE id = ?2",
+            )
+            .bind(&poster_str)
+            .bind(show_id)
+            .execute(pool)
+            .await?;
+            return Ok(());
+        }
+    }
+
+    Ok(())
+}
+
+/// Same as [`maybe_set_show_poster`] but for movies — scoped to the movie
+/// file's parent directory only.
+async fn maybe_set_movie_poster(
+    pool: &SqlitePool,
+    movie_id: i64,
+    movie_dir: &Path,
+) -> AppResult<()> {
+    let origin: Option<String> =
+        sqlx::query_scalar("SELECT poster_origin FROM movies WHERE id = ?1")
+            .bind(movie_id)
+            .fetch_one(pool)
+            .await?;
+    if origin.as_deref() == Some("manual") {
+        return Ok(());
+    }
+
+    if let Some(poster) = find_poster_in(movie_dir).await {
+        let poster_str = poster.to_string_lossy().to_string();
+        sqlx::query(
+            "UPDATE movies SET poster_path = ?1, poster_origin = 'auto' WHERE id = ?2",
+        )
+        .bind(&poster_str)
+        .bind(movie_id)
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
+}
+
 pub async fn scan_library(
     pool: &SqlitePool,
     library_id: i64,
@@ -191,6 +335,10 @@ pub async fn scan_library(
         libraries_scanned: 1,
         ..Default::default()
     };
+
+    // Shows we touched during this scan — used after the main loop to run
+    // poster auto-discovery exactly once per show.
+    let mut touched_shows: HashSet<i64> = HashSet::new();
 
     // Enumerate files off the async runtime to avoid blocking executor threads.
     let root_owned = root.to_path_buf();
@@ -213,17 +361,32 @@ pub async fn scan_library(
 
         match detected {
             Detected::Movie { title, year } => {
-                let res = sqlx::query(
-                    "INSERT OR IGNORE INTO movies (library_id, title, year, path) VALUES (?1, ?2, ?3, ?4)",
+                let inserted_id: Option<i64> = sqlx::query_scalar(
+                    "INSERT INTO movies (library_id, title, year, path) VALUES (?1, ?2, ?3, ?4)
+                     ON CONFLICT(path) DO NOTHING RETURNING id",
                 )
                 .bind(library_id)
                 .bind(&title)
                 .bind(year)
                 .bind(&path_str)
-                .execute(pool)
+                .fetch_optional(pool)
                 .await?;
-                if res.rows_affected() > 0 {
-                    report.movies_added += 1;
+
+                let movie_id = match inserted_id {
+                    Some(id) => {
+                        report.movies_added += 1;
+                        id
+                    }
+                    None => {
+                        sqlx::query_scalar("SELECT id FROM movies WHERE path = ?1")
+                            .bind(&path_str)
+                            .fetch_one(pool)
+                            .await?
+                    }
+                };
+
+                if let Some(parent) = path.parent() {
+                    maybe_set_movie_poster(pool, movie_id, parent).await?;
                 }
             }
             Detected::Episode {
@@ -255,6 +418,8 @@ pub async fn scan_library(
                 .fetch_one(pool)
                 .await?;
 
+                touched_shows.insert(show_id);
+
                 let prior_count: i64 = sqlx::query_scalar(
                     "SELECT COUNT(*) FROM episodes WHERE show_id = ?1",
                 )
@@ -281,6 +446,10 @@ pub async fn scan_library(
                 }
             }
         }
+    }
+
+    for show_id in touched_shows {
+        maybe_set_show_poster(pool, show_id).await?;
     }
 
     Ok(report)
