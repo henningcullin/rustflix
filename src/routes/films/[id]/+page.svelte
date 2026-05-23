@@ -8,7 +8,7 @@
     type Movie,
   } from '$lib/api';
   import HeroBanner from '$lib/components/HeroBanner.svelte';
-  import { Play, Check, Circle } from '$lib/lucide';
+  import { Play, Check, Circle, Pencil } from '$lib/lucide';
 
   let movie: Movie | null = $state(null);
   let loading = $state(true);
@@ -162,6 +162,13 @@
           <Circle class="size-4" /> Mark watched
         {/if}
       </button>
+      <a
+        href={`/films/${movie.id}/edit`}
+        class="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+      >
+        <Pencil class="size-3.5" />
+        Edit details
+      </a>
     </div>
 
     {#if !movie.watched && movie.progress_seconds > 0 && movie.duration_seconds}
