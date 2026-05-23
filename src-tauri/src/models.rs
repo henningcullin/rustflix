@@ -34,6 +34,7 @@ pub struct Movie {
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::FromRow)]
 pub struct Show {
     pub id: i64,
+    pub library_id: i64,
     pub title: String,
     pub year: Option<i32>,
     pub folder_path: String,

@@ -27,6 +27,7 @@ export interface Movie {
 
 export interface Show {
   id: number;
+  library_id: number;
   title: string;
   year: number | null;
   folder_path: string;

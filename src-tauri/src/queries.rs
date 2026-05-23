@@ -69,7 +69,7 @@ pub async fn get_movie(pool: &SqlitePool, id: i64) -> AppResult<Movie> {
 }
 
 const SHOW_SELECT: &str = "
-    SELECT s.id, s.title, s.year, s.folder_path, s.fingerprint,
+    SELECT s.id, s.library_id, s.title, s.year, s.folder_path, s.fingerprint,
            s.poster_path, s.poster_origin, s.overview,
            (SELECT COUNT(*) FROM episodes e WHERE e.show_id = s.id) AS episode_count,
            (SELECT COUNT(*) FROM episodes e
