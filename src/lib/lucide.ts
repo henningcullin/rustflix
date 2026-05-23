@@ -16,3 +16,5 @@ export { default as ChevronRight } from '@lucide/svelte/icons/chevron-right';
 export { default as Search } from '@lucide/svelte/icons/search';
 export { default as Film } from '@lucide/svelte/icons/film';
 export { default as Image } from '@lucide/svelte/icons/image';
+export { default as Pencil } from '@lucide/svelte/icons/pencil';
+export { default as RotateCcw } from '@lucide/svelte/icons/rotate-ccw';

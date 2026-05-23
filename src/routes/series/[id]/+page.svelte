@@ -1,6 +1,13 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { api, formatRuntime, progressPct, type Season, type Show } from '$lib/api';
+  import {
+    api,
+    formatRuntime,
+    pickImageFile,
+    progressPct,
+    type Season,
+    type Show,
+  } from '$lib/api';
   import HeroBanner from '$lib/components/HeroBanner.svelte';
   import { Check, Circle, Play } from '$lib/lucide';
 
@@ -50,6 +57,54 @@
     }
   }
 
+  async function saveTitle(next: string) {
+    if (!show) {
+      return;
+    }
+    try {
+      const updated = await api.updateShowMetadata(show.id, { title: next });
+      show = { ...show, title: updated.title };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
+  async function changePoster() {
+    if (!show) {
+      return;
+    }
+    try {
+      const source = await pickImageFile();
+      if (!source) {
+        return;
+      }
+      const updated = await api.setShowPosterFromFile(show.id, source);
+      show = {
+        ...show,
+        poster_path: updated.poster_path,
+        poster_origin: updated.poster_origin,
+      };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
+  async function resetPoster() {
+    if (!show) {
+      return;
+    }
+    try {
+      const updated = await api.resetShowPoster(show.id);
+      show = {
+        ...show,
+        poster_path: updated.poster_path,
+        poster_origin: updated.poster_origin,
+      };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
   async function toggleEpisode(episodeId: number, watched: boolean) {
     const next = !watched;
     try {
@@ -89,6 +144,10 @@
     href={`/series/${show.id}`}
     year={show.year}
     backdrop={show.poster_path ?? null}
+    posterIsManual={show.poster_origin === 'manual'}
+    onTitleSave={saveTitle}
+    onPosterChange={changePoster}
+    onPosterReset={resetPoster}
   />
 
   <div class="px-6 py-8 lg:px-12">
