@@ -8,7 +8,8 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 const config = {
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter(),
+    // fallback enables dynamic [id] routes via client-side rendering
+    adapter: adapter({ fallback: "index.html" }),
   },
   compilerOptions: {
     runes: true,

@@ -1,16 +1,13 @@
 <script lang="ts">
-  import * as Sidebar from '$lib/components/ui/sidebar/index';
-  import AppSidebar from '$lib/components/AppSidebar.svelte';
-
+  import TopNav from '$lib/components/TopNav.svelte';
   import '../app.css';
 
   let { children } = $props();
 </script>
 
-<Sidebar.Provider open={false}>
-  <AppSidebar />
-  <main>
-    <Sidebar.Trigger />
+<div class="min-h-screen bg-background text-foreground">
+  <TopNav />
+  <main class="mx-auto w-full max-w-[1600px]">
     {@render children()}
   </main>
-</Sidebar.Provider>
+</div>
