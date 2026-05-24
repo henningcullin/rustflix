@@ -1,3 +1,4 @@
+mod admin;
 mod commands;
 mod db;
 mod error;
@@ -71,6 +72,10 @@ pub fn run() {
             commands::metadata_search,
             commands::link_metadata,
             commands::list_needs_review,
+            commands::admin_list_rows,
+            commands::admin_update_row,
+            commands::admin_delete_rows,
+            commands::admin_fk_label,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -349,6 +349,45 @@ pub async fn list_needs_review(
     queries::list_needs_review(&db).await
 }
 
+#[tauri::command]
+pub async fn admin_list_rows(
+    db: State<'_, Db>,
+    table: crate::admin::Table,
+    sort_column: Option<String>,
+    direction: Option<String>,
+) -> AppResult<Vec<serde_json::Map<String, serde_json::Value>>> {
+    crate::admin::list_rows(&db, table, sort_column, direction).await
+}
+
+#[tauri::command]
+pub async fn admin_update_row(
+    db: State<'_, Db>,
+    table: crate::admin::Table,
+    primary_key_values: Vec<serde_json::Value>,
+    patch: std::collections::HashMap<String, serde_json::Value>,
+) -> AppResult<()> {
+    crate::admin::update_row(&db, table, primary_key_values, patch).await
+}
+
+#[tauri::command]
+pub async fn admin_delete_rows(
+    db: State<'_, Db>,
+    table: crate::admin::Table,
+    primary_keys: Vec<Vec<serde_json::Value>>,
+) -> AppResult<()> {
+    crate::admin::delete_rows(&db, table, primary_keys).await
+}
+
+#[tauri::command]
+pub async fn admin_fk_label(
+    db: State<'_, Db>,
+    table: crate::admin::Table,
+    label_column: String,
+    pk_value: serde_json::Value,
+) -> AppResult<Option<String>> {
+    crate::admin::fk_label(&db, table, label_column, pk_value).await
+}
+
 /// Best-effort cleanup of a manual poster file. Only deletes the file when
 /// it sits inside our own `<app_data>/posters/` directory — any other path
 /// is ignored so a malformed `poster_path` can never remove user media.
