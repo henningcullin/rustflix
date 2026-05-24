@@ -222,6 +222,134 @@ pub async fn metadata_status_counts(
     queries::metadata_status_counts(&db).await
 }
 
+#[tauri::command]
+pub async fn fetch_metadata_now(
+    app: AppHandle,
+    db: State<'_, Db>,
+    http: State<'_, reqwest::Client>,
+    kind: String,
+    id: i64,
+) -> AppResult<()> {
+    let api_key = queries::get_app_setting(&db, "tmdb_api_key")
+        .await?
+        .ok_or_else(|| AppError::Other("auth_required: no TMDB key configured".to_string()))?;
+
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| AppError::Other(format!("app_data_dir: {error}")))?;
+    let posters_dir = app_data_dir.join("posters");
+
+    let outcome = match kind.as_str() {
+        "movie" => fetch_one_movie(&db, &http, &api_key, id).await?,
+        "show" => fetch_one_show(&db, &http, &api_key, id).await?,
+        other => {
+            return Err(AppError::Other(format!("unknown kind: {other}")));
+        }
+    };
+
+    if let Some((poster_url, dest_filename)) = outcome {
+        let dest = posters_dir.join(dest_filename);
+        crate::metadata::tmdb::download_poster(&http, &poster_url, &dest).await?;
+    }
+
+    Ok(())
+}
+
+async fn fetch_one_movie(
+    db: &Db,
+    http: &reqwest::Client,
+    api_key: &str,
+    movie_id: i64,
+) -> AppResult<Option<(String, String)>> {
+    let mut tx = db.begin().await?;
+
+    let locked: i64 = sqlx::query_scalar("SELECT metadata_locked FROM movies WHERE id = ?1")
+        .bind(movie_id)
+        .fetch_one(&mut *tx)
+        .await?;
+    if locked != 0 {
+        tx.rollback().await?;
+        return Ok(None);
+    }
+
+    let (title, year): (String, Option<i32>) =
+        sqlx::query_as("SELECT title, year FROM movies WHERE id = ?1")
+            .bind(movie_id)
+            .fetch_one(&mut *tx)
+            .await?;
+    tx.rollback().await?;
+
+    let candidates = crate::metadata::tmdb::search_movie(http, api_key, &title, year).await?;
+    let Some(pick) =
+        crate::metadata::matching::pick_confident_match(&title, year, &candidates)
+    else {
+        return Ok(None);
+    };
+
+    let details =
+        crate::metadata::tmdb::fetch_movie_details(http, api_key, &pick.provider_id).await?;
+
+    let mut tx = db.begin().await?;
+    let download_ext =
+        crate::metadata::apply::apply_movie_details(&mut *tx, movie_id, &details).await?;
+    tx.commit().await?;
+
+    Ok(match (download_ext, details.poster_path) {
+        (Some(extension), Some(poster_path)) => {
+            Some((poster_path, format!("movie-{movie_id}.{extension}")))
+        }
+        _ => None,
+    })
+}
+
+async fn fetch_one_show(
+    db: &Db,
+    http: &reqwest::Client,
+    api_key: &str,
+    show_id: i64,
+) -> AppResult<Option<(String, String)>> {
+    let mut tx = db.begin().await?;
+
+    let locked: i64 = sqlx::query_scalar("SELECT metadata_locked FROM shows WHERE id = ?1")
+        .bind(show_id)
+        .fetch_one(&mut *tx)
+        .await?;
+    if locked != 0 {
+        tx.rollback().await?;
+        return Ok(None);
+    }
+
+    let (title, year): (String, Option<i32>) =
+        sqlx::query_as("SELECT title, year FROM shows WHERE id = ?1")
+            .bind(show_id)
+            .fetch_one(&mut *tx)
+            .await?;
+    tx.rollback().await?;
+
+    let candidates = crate::metadata::tmdb::search_show(http, api_key, &title, year).await?;
+    let Some(pick) =
+        crate::metadata::matching::pick_confident_match(&title, year, &candidates)
+    else {
+        return Ok(None);
+    };
+
+    let details =
+        crate::metadata::tmdb::fetch_show_details(http, api_key, &pick.provider_id).await?;
+
+    let mut tx = db.begin().await?;
+    let download_ext =
+        crate::metadata::apply::apply_show_details(&mut *tx, show_id, &details).await?;
+    tx.commit().await?;
+
+    Ok(match (download_ext, details.poster_path) {
+        (Some(extension), Some(poster_path)) => {
+            Some((poster_path, format!("show-{show_id}.{extension}")))
+        }
+        _ => None,
+    })
+}
+
 /// Best-effort cleanup of a manual poster file. Only deletes the file when
 /// it sits inside our own `<app_data>/posters/` directory — any other path
 /// is ignored so a malformed `poster_path` can never remove user media.

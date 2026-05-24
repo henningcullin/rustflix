@@ -161,6 +161,8 @@ export const api = {
   setTmdbApiKey: (key: string) => invoke<void>('set_tmdb_api_key', { key }),
   metadataStatusCounts: () =>
     invoke<MetadataStatusCounts>('metadata_status_counts'),
+  fetchMetadataNow: (kind: 'show' | 'movie', id: number) =>
+    invoke<void>('fetch_metadata_now', { kind, id }),
 
   pickFolder: () =>
     open({
