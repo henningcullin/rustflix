@@ -176,7 +176,7 @@
           <label class="flex flex-col gap-1.5 text-sm">
             <span class="font-medium">Year</span>
             <Input
-              type="number"
+              type="text"
               bind:value={yearDraft}
               placeholder="e.g. 1999"
               inputmode="numeric"
