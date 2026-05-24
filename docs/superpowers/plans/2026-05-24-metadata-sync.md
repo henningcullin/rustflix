@@ -4,17 +4,17 @@
 
 **Goal:** Add an automatic metadata sync subsystem that enriches scanned shows and movies with poster, overview, year, genres, rating, and top cast pulled from TMDB v3.
 
-**Architecture:** Three sequential PRs. PR A (fix/22) lays schema + settings UI + the `metadata_locked` toggle but no network code. PR B (fix/23) adds the concrete TMDB client and a pure matcher plus a synchronous `fetch_metadata_now` command for one-item verification. PR C (fix/24) wraps the async worker around the queue, hooks the scanner up, and adds the user-facing "Refresh / Unlink / Needs review" surfaces. Each PR compiles and ships independently.
+**Architecture:** Three sequential PRs. PR A (fix/23) lays schema + settings UI + the `metadata_locked` toggle but no network code. PR B (fix/24) adds the concrete TMDB client and a pure matcher plus a synchronous `fetch_metadata_now` command for one-item verification. PR C (fix/25) wraps the async worker around the queue, hooks the scanner up, and adds the user-facing "Refresh / Unlink / Needs review" surfaces. Each PR compiles and ships independently.
 
 **Tech Stack:** Rust (Tauri 2, sqlx 0.8 with bundled SQLite, reqwest 0.12 with rustls-tls, unicode-normalization 0.1). SvelteKit 5 (Svelte 5 runes) + shadcn-svelte (bits-ui). All work follows the project's `fix/N-slug` branch convention (one branch = one PR = one logical change); spec at `docs/superpowers/specs/2026-05-24-metadata-sync-design.md`.
 
-> Branch numbering note: the spec text mentions fix/21–23 for the three PRs, but fix/21 was used for the spec doc itself. Actual branches in this plan are **fix/22**, **fix/23**, **fix/24**.
+> Branch numbering note: the spec text mentions fix/21–23 for the three PRs, but fix/21 was used for the spec doc itself and fix/22 for this plan. Actual implementation branches are **fix/23**, **fix/24**, **fix/25**.
 
 ---
 
 ## File Structure
 
-### PR A — fix/22-metadata-scaffolding
+### PR A — fix/23-metadata-scaffolding
 
 - **Create**
   - `src-tauri/migrations/0003_metadata_sync.sql` — adds the new columns on `shows`/`movies`, the `metadata_jobs` queue table, the `app_settings` key/value table, and partial UNIQUE indexes on `(provider, provider_id)`.
@@ -27,7 +27,7 @@
   - `src-tauri/src/queries.rs` — update `MOVIE_SELECT` / `SHOW_SELECT` constants to include the new columns.
   - `src/lib/api.ts` — extend `Show`/`Movie` types; add `getTmdbApiKey`, `setTmdbApiKey`, `metadataStatusCounts` to the `api` object; add `MetadataStatusCounts` interface.
 
-### PR B — fix/23-tmdb-fetch
+### PR B — fix/24-tmdb-fetch
 
 - **Create**
   - `src-tauri/src/metadata/mod.rs` — module root, re-exports.
@@ -41,7 +41,7 @@
   - `src/lib/api.ts` — add `fetchMetadataNow`.
   - `src/routes/series/[id]/edit/+page.svelte` and `src/routes/films/[id]/edit/+page.svelte` (or movies equivalent — verify path) — add a temporary "Sync now" button calling `api.fetchMetadataNow`.
 
-### PR C — fix/24-metadata-worker
+### PR C — fix/25-metadata-worker
 
 - **Create**
   - `src-tauri/src/metadata/worker.rs` — async loop, `Notify`-driven, drains `metadata_jobs`.
@@ -60,7 +60,7 @@
 
 ---
 
-## PR A — fix/22-metadata-scaffolding
+## PR A — fix/23-metadata-scaffolding
 
 Self-contained: schema + Settings page + the `metadata_locked` toggle. No network code, no new crates.
 
@@ -80,7 +80,7 @@ Expected: clean working tree, on master.
 
 Run:
 ```bash
-git checkout -b fix/22-metadata-scaffolding
+git checkout -b fix/23-metadata-scaffolding
 ```
 Expected: branch created.
 
@@ -878,7 +878,7 @@ git commit -m "feat(settings): expose Metadata page in the settings index"
 
 Run:
 ```bash
-git push -u origin fix/22-metadata-scaffolding
+git push -u origin fix/23-metadata-scaffolding
 ```
 
 - [ ] **Step 2: Open the PR**
@@ -915,7 +915,7 @@ gh pr merge <PR-NUMBER> --merge --delete-branch && git checkout master && git pu
 
 ---
 
-## PR B — fix/23-tmdb-fetch
+## PR B — fix/24-tmdb-fetch
 
 TMDB client + matcher + a synchronous `fetch_metadata_now` command for one-item manual verification. Heavy TDD on `matching.rs`.
 
@@ -927,7 +927,7 @@ TMDB client + matcher + a synchronous `fetch_metadata_now` command for one-item 
 
 Run:
 ```bash
-git checkout master && git pull --ff-only && git checkout -b fix/23-tmdb-fetch
+git checkout master && git pull --ff-only && git checkout -b fix/24-tmdb-fetch
 ```
 
 ---
@@ -1968,7 +1968,7 @@ git commit -m "feat(ui): temporary Sync-now button on edit pages (verification h
 
 Run:
 ```bash
-git push -u origin fix/23-tmdb-fetch
+git push -u origin fix/24-tmdb-fetch
 ```
 
 - [ ] **Step 2: Open PR**
@@ -2007,7 +2007,7 @@ gh pr merge <PR-NUMBER> --merge --delete-branch && git checkout master && git pu
 
 ---
 
-## PR C — fix/24-metadata-worker
+## PR C — fix/25-metadata-worker
 
 Background worker + scanner integration + user-facing UI surfaces. Drops the temporary `fetch_metadata_now`.
 
@@ -2017,7 +2017,7 @@ Background worker + scanner integration + user-facing UI surfaces. Drops the tem
 
 Run:
 ```bash
-git checkout master && git pull --ff-only && git checkout -b fix/24-metadata-worker
+git checkout master && git pull --ff-only && git checkout -b fix/25-metadata-worker
 ```
 
 ---
@@ -3485,7 +3485,7 @@ git commit -m "test(metadata): queue SQL helpers (enqueue, park, wake, backoff)"
 
 Run:
 ```bash
-git push -u origin fix/24-metadata-worker
+git push -u origin fix/25-metadata-worker
 ```
 
 - [ ] **Step 2: Open PR**
