@@ -43,6 +43,7 @@ pub fn run() {
             commands::update_show_metadata,
             commands::update_movie_metadata,
             commands::merge_shows,
+            commands::delete_show,
             commands::set_show_poster_from_file,
             commands::set_movie_poster_from_file,
             commands::reset_show_poster,

@@ -340,6 +340,38 @@ pub async fn merge_shows(
     Ok(MergeOutcome { conflicts: vec![] })
 }
 
+/// Removes a show and all of its episodes from the library. Files on disk
+/// are not touched — only DB rows are deleted. Orphan `watch_history` rows
+/// for the show's episodes are cleaned up in the same transaction.
+pub async fn delete_show(pool: &SqlitePool, show_id: i64) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+
+    let episode_ids: Vec<i64> = sqlx::query_scalar("SELECT id FROM episodes WHERE show_id = ?1")
+        .bind(show_id)
+        .fetch_all(&mut *tx)
+        .await?;
+
+    for episode_id in episode_ids {
+        sqlx::query("DELETE FROM watch_history WHERE media_kind = 'episode' AND media_id = ?1")
+            .bind(episode_id)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    let deleted = sqlx::query("DELETE FROM shows WHERE id = ?1")
+        .bind(show_id)
+        .execute(&mut *tx)
+        .await?;
+    if deleted.rows_affected() == 0 {
+        tx.rollback().await?;
+        return Err(AppError::MediaNotFound(show_id));
+    }
+
+    tx.commit().await?;
+
+    Ok(())
+}
+
 impl<'r> sqlx::FromRow<'r, sqlx::sqlite::SqliteRow> for EpisodeRef {
     fn from_row(row: &'r sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
         use sqlx::Row;
