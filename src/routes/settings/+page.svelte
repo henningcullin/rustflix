@@ -33,5 +33,19 @@
         <ChevronRight class="size-4 text-muted-foreground" />
       </a>
     </li>
+    <li>
+      <a
+        href="/admin"
+        class="flex items-center justify-between rounded-md border border-border bg-card px-4 py-3 transition-colors hover:bg-accent"
+      >
+        <div>
+          <div class="font-medium">Admin / Database</div>
+          <div class="text-sm text-muted-foreground">
+            Direct access to every persistent table. For maintenance.
+          </div>
+        </div>
+        <ChevronRight class="size-4 text-muted-foreground" />
+      </a>
+    </li>
   </ul>
 </div>

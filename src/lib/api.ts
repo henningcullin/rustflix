@@ -184,6 +184,31 @@ export const api = {
     invoke<void>('link_metadata', { kind, mediaId, providerId }),
   listNeedsReview: () => invoke<NeedsReviewItem[]>('list_needs_review'),
 
+  adminListRows: (table: string, sortColumn?: string, direction?: 'asc' | 'desc') =>
+    invoke<Record<string, unknown>[]>('admin_list_rows', {
+      table,
+      sortColumn: sortColumn ?? null,
+      direction: direction ?? null,
+    }),
+  adminUpdateRow: (
+    table: string,
+    primaryKeyValues: unknown[],
+    patch: Record<string, unknown>,
+  ) =>
+    invoke<void>('admin_update_row', {
+      table,
+      primaryKeyValues,
+      patch,
+    }),
+  adminDeleteRows: (table: string, primaryKeys: unknown[][]) =>
+    invoke<void>('admin_delete_rows', { table, primaryKeys }),
+  adminFkLabel: (table: string, labelColumn: string, pkValue: unknown) =>
+    invoke<string | null>('admin_fk_label', {
+      table,
+      labelColumn,
+      pkValue,
+    }),
+
   pickFolder: () =>
     open({
       directory: true,
