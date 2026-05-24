@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ColumnConfig } from './tables';
+  import FkChip from './FkChip.svelte';
   import { Pencil } from '$lib/lucide';
 
   type Props = {
@@ -99,7 +100,9 @@
   }
 </script>
 
-{#if editing}
+{#if column.fkTable && column.fkLabel && !editing}
+  <FkChip table={column.fkTable} labelColumn={column.fkLabel} {value} />
+{:else if editing}
   <input
     use:autoFocus
     bind:value={draft}

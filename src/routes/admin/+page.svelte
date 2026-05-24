@@ -1,10 +1,8 @@
 <script lang="ts">
   import { ChevronRight } from '$lib/lucide';
-  import { TABLES, type TableConfig } from '$lib/admin/tables';
+  import { TABLES } from '$lib/admin/tables';
 
-  const entries = Object.values(TABLES).filter(
-    (config): config is TableConfig => config !== undefined,
-  );
+  const entries = Object.values(TABLES);
 </script>
 
 <div class="mx-auto max-w-3xl px-6 py-8">
