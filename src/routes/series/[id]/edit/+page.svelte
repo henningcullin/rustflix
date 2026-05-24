@@ -11,12 +11,15 @@
     CardTitle,
   } from '$lib/components/ui/card';
   import { Input } from '$lib/components/ui/input';
-  import { ChevronLeft, Image as ImageIcon, RotateCcw } from '$lib/lucide';
+  import * as AlertDialog from '$lib/components/ui/alert-dialog';
+  import { ChevronLeft, Image as ImageIcon, RotateCcw, Trash2 } from '$lib/lucide';
 
   let show: Show | null = $state(null);
   let loading = $state(true);
   let saving = $state(false);
   let busyPoster = $state(false);
+  let deleting = $state(false);
+  let confirmDeleteOpen = $state(false);
   let error = $state<string | null>(null);
 
   let titleDraft = $state('');
@@ -129,6 +132,24 @@
       error = String(caught);
     } finally {
       busyPoster = false;
+    }
+  }
+
+  async function deleteSeries() {
+    if (!show) {
+      return;
+    }
+
+    deleting = true;
+    error = null;
+    try {
+      await api.deleteShow(show.id);
+      confirmDeleteOpen = false;
+      await goto('/series');
+    } catch (caught) {
+      error = String(caught);
+    } finally {
+      deleting = false;
     }
   }
 </script>
@@ -251,6 +272,46 @@
             language, genres.
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card class="border-destructive/30">
+        <CardHeader>
+          <CardTitle>Danger zone</CardTitle>
+          <CardDescription>
+            Remove this series from your library. Files on disk are not deleted.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog.Root bind:open={confirmDeleteOpen}>
+            <AlertDialog.Trigger
+              class="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            >
+              <Trash2 class="size-4" />
+              Delete series
+            </AlertDialog.Trigger>
+            <AlertDialog.Content>
+              <AlertDialog.Header>
+                <AlertDialog.Title>Delete this series?</AlertDialog.Title>
+                <AlertDialog.Description>
+                  {show.title} and its {show.episode_count} episode {show.episode_count === 1
+                    ? 'entry'
+                    : 'entries'} will be removed from the library. The files on your disk are not
+                  touched.
+                </AlertDialog.Description>
+              </AlertDialog.Header>
+              <AlertDialog.Footer>
+                <AlertDialog.Cancel disabled={deleting}>Cancel</AlertDialog.Cancel>
+                <AlertDialog.Action
+                  variant="destructive"
+                  onclick={deleteSeries}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </AlertDialog.Action>
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+        </CardContent>
       </Card>
 
       <div class="flex justify-end gap-2">

@@ -123,6 +123,7 @@ export const api = {
     invoke<Movie>('update_movie_metadata', { id, ...patch }),
   mergeShows: (targetId: number, sourceId: number) =>
     invoke<MergeOutcome>('merge_shows', { targetId, sourceId }),
+  deleteShow: (id: number) => invoke<void>('delete_show', { id }),
   setShowPosterFromFile: (id: number, sourcePath: string) =>
     invoke<Show>('set_show_poster_from_file', { id, sourcePath }),
   setMoviePosterFromFile: (id: number, sourcePath: string) =>

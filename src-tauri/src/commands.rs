@@ -171,6 +171,39 @@ pub async fn merge_shows(
 }
 
 #[tauri::command]
+pub async fn delete_show(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResult<()> {
+    let show = queries::get_show(&db, id).await?;
+
+    queries::delete_show(&db, id).await?;
+
+    if show.poster_origin.as_deref() == Some("manual") {
+        if let Some(poster_path) = show.poster_path.as_deref() {
+            try_remove_managed_poster(&app, poster_path).await;
+        }
+    }
+
+    Ok(())
+}
+
+/// Best-effort cleanup of a manual poster file. Only deletes the file when
+/// it sits inside our own `<app_data>/posters/` directory — any other path
+/// is ignored so a malformed `poster_path` can never remove user media.
+async fn try_remove_managed_poster(app: &AppHandle, poster_path: &str) {
+    let app_data_dir = match app.path().app_data_dir() {
+        Ok(dir) => dir,
+        Err(_) => return,
+    };
+    let posters_dir = app_data_dir.join("posters");
+
+    let candidate = Path::new(poster_path);
+    if !candidate.starts_with(&posters_dir) {
+        return;
+    }
+
+    let _ = tokio::fs::remove_file(candidate).await;
+}
+
+#[tauri::command]
 pub async fn set_show_poster_from_file(
     app: AppHandle,
     db: State<'_, Db>,
