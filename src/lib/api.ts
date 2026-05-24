@@ -23,6 +23,14 @@ export interface Movie {
   progress_seconds: number;
   watched: boolean;
   added_at: number;
+  provider: string | null;
+  provider_id: string | null;
+  rating: number | null;
+  genres: string | null;
+  top_cast: string | null;
+  runtime_minutes: number | null;
+  metadata_synced_at: number | null;
+  metadata_locked: number;
 }
 
 export interface Show {
@@ -38,6 +46,22 @@ export interface Show {
   episode_count: number;
   watched_count: number;
   added_at: number;
+  provider: string | null;
+  provider_id: string | null;
+  rating: number | null;
+  genres: string | null;
+  top_cast: string | null;
+  first_air_date: string | null;
+  metadata_synced_at: number | null;
+  metadata_locked: number;
+}
+
+export interface MetadataStatusCounts {
+  pending: number;
+  failed: number;
+  auth_required: number;
+  dead_letter: number;
+  needs_review: number;
 }
 
 export interface Episode {
@@ -132,6 +156,11 @@ export const api = {
     invoke<Movie>('set_movie_poster_from_file', { id, sourcePath }),
   resetShowPoster: (id: number) => invoke<Show>('reset_show_poster', { id }),
   resetMoviePoster: (id: number) => invoke<Movie>('reset_movie_poster', { id }),
+
+  getTmdbApiKey: () => invoke<string | null>('get_tmdb_api_key'),
+  setTmdbApiKey: (key: string) => invoke<void>('set_tmdb_api_key', { key }),
+  metadataStatusCounts: () =>
+    invoke<MetadataStatusCounts>('metadata_status_counts'),
 
   pickFolder: () =>
     open({

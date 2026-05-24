@@ -47,7 +47,9 @@ const MOVIE_SELECT: &str = "
            m.duration_seconds,
            COALESCE(w.progress_seconds, 0) AS progress_seconds,
            COALESCE(w.watched, 0) AS watched,
-           m.added_at
+           m.added_at,
+           m.provider, m.provider_id, m.rating, m.genres, m.top_cast,
+           m.runtime_minutes, m.metadata_synced_at, m.metadata_locked
     FROM movies m
     LEFT JOIN watch_history w
       ON w.media_kind = 'movie' AND w.media_id = m.id
@@ -76,7 +78,9 @@ const SHOW_SELECT: &str = "
               LEFT JOIN watch_history w
                 ON w.media_kind = 'episode' AND w.media_id = e.id
              WHERE e.show_id = s.id AND COALESCE(w.watched, 0) = 1) AS watched_count,
-           s.added_at
+           s.added_at,
+           s.provider, s.provider_id, s.rating, s.genres, s.top_cast,
+           s.first_air_date, s.metadata_synced_at, s.metadata_locked
     FROM shows s
 ";
 
@@ -210,7 +214,10 @@ async fn update_metadata_row(
         return Ok(());
     }
 
-    let sql = format!("UPDATE {table} SET {} WHERE id = ?", assignments.join(", "));
+    let sql = format!(
+        "UPDATE {table} SET {}, metadata_locked = 1 WHERE id = ?",
+        assignments.join(", ")
+    );
 
     let mut query = sqlx::query(&sql);
     if let Some(value) = title {
@@ -437,4 +444,89 @@ pub async fn continue_watching(pool: &SqlitePool, limit: i64) -> AppResult<Vec<C
         }
     }
     Ok(out)
+}
+
+pub async fn get_app_setting(pool: &SqlitePool, key: &str) -> AppResult<Option<String>> {
+    let value: Option<String> =
+        sqlx::query_scalar("SELECT value FROM app_settings WHERE key = ?1")
+            .bind(key)
+            .fetch_optional(pool)
+            .await?;
+
+    Ok(value)
+}
+
+pub async fn set_app_setting(pool: &SqlitePool, key: &str, value: &str) -> AppResult<()> {
+    sqlx::query(
+        "INSERT INTO app_settings (key, value) VALUES (?1, ?2)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    .bind(key)
+    .bind(value)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn delete_app_setting(pool: &SqlitePool, key: &str) -> AppResult<()> {
+    sqlx::query("DELETE FROM app_settings WHERE key = ?1")
+        .bind(key)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn metadata_status_counts(
+    pool: &SqlitePool,
+) -> AppResult<crate::models::MetadataStatusCounts> {
+    let pending: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs
+         WHERE attempts = 0 AND COALESCE(last_error, '') <> 'auth_required'",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let failed: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs
+         WHERE attempts > 0 AND attempts < 8
+           AND COALESCE(last_error, '') <> 'auth_required'",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let auth_required: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'auth_required'",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let dead_letter: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs WHERE attempts >= 8",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let needs_review: i64 = sqlx::query_scalar(
+        "SELECT
+             (SELECT COUNT(*) FROM shows
+                WHERE provider IS NULL
+                  AND NOT EXISTS (SELECT 1 FROM metadata_jobs j
+                                  WHERE j.kind = 'show' AND j.media_id = shows.id))
+           + (SELECT COUNT(*) FROM movies
+                WHERE provider IS NULL
+                  AND NOT EXISTS (SELECT 1 FROM metadata_jobs j
+                                  WHERE j.kind = 'movie' AND j.media_id = movies.id))",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(crate::models::MetadataStatusCounts {
+        pending,
+        failed,
+        auth_required,
+        dead_letter,
+        needs_review,
+    })
 }
