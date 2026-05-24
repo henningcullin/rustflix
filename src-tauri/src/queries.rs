@@ -284,6 +284,20 @@ async fn reset_poster_row(pool: &SqlitePool, table: &str, id: i64) -> AppResult<
     Ok(())
 }
 
+pub async fn update_episode_title(pool: &SqlitePool, id: i64, title: &str) -> AppResult<()> {
+    let result = sqlx::query("UPDATE episodes SET title = ?1 WHERE id = ?2")
+        .bind(title)
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::MediaNotFound(id));
+    }
+
+    Ok(())
+}
+
 /// Reassigns every episode of `source_id` to `target_id` and deletes
 /// `source_id`. If both shows have an episode with the same
 /// `(season, episode)` the merge is rejected — the conflicting pairs are

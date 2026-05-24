@@ -121,6 +121,8 @@ export const api = {
     invoke<Show>('update_show_metadata', { id, ...patch }),
   updateMovieMetadata: (id: number, patch: MetadataPatch) =>
     invoke<Movie>('update_movie_metadata', { id, ...patch }),
+  updateEpisodeTitle: (id: number, title: string) =>
+    invoke<Episode>('update_episode_title', { id, title }),
   mergeShows: (targetId: number, sourceId: number) =>
     invoke<MergeOutcome>('merge_shows', { targetId, sourceId }),
   deleteShow: (id: number) => invoke<void>('delete_show', { id }),

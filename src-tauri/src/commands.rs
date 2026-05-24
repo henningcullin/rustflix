@@ -162,6 +162,21 @@ pub async fn update_movie_metadata(
 }
 
 #[tauri::command]
+pub async fn update_episode_title(
+    db: State<'_, Db>,
+    id: i64,
+    title: String,
+) -> AppResult<Episode> {
+    let trimmed = title.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::Other("episode title cannot be empty".to_string()));
+    }
+
+    queries::update_episode_title(&db, id, trimmed).await?;
+    queries::get_episode(&db, id).await
+}
+
+#[tauri::command]
 pub async fn merge_shows(
     db: State<'_, Db>,
     target_id: i64,

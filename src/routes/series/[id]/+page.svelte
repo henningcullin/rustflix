@@ -8,6 +8,7 @@
     type Season,
     type Show,
   } from '$lib/api';
+  import EpisodeTitleEditor from '$lib/components/EpisodeTitleEditor.svelte';
   import HeroBanner from '$lib/components/HeroBanner.svelte';
   import MergeShowSheet from '$lib/components/MergeShowSheet.svelte';
   import { Check, Circle, GitMerge, Pencil, Play } from '$lib/lucide';
@@ -102,6 +103,24 @@
         poster_path: updated.poster_path,
         poster_origin: updated.poster_origin,
       };
+    } catch (caught) {
+      error = String(caught);
+    }
+  }
+
+  async function saveEpisodeTitle(episodeId: number, nextTitle: string) {
+    try {
+      const updated = await api.updateEpisodeTitle(episodeId, nextTitle);
+
+      for (const season of seasons) {
+        const episode = season.episodes.find((candidate) => candidate.id === episodeId);
+        if (!episode) {
+          continue;
+        }
+
+        episode.title = updated.title;
+        return;
+      }
     } catch (caught) {
       error = String(caught);
     }
@@ -218,7 +237,12 @@
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
-                <span class="truncate font-medium">{ep.title}</span>
+                <div class="min-w-0 flex-1">
+                  <EpisodeTitleEditor
+                    title={ep.title}
+                    onSave={(next) => saveEpisodeTitle(ep.id, next)}
+                  />
+                </div>
                 {#if ep.watched}
                   <Check class="size-4 shrink-0 text-emerald-400" />
                 {/if}
