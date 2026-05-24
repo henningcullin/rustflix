@@ -20,6 +20,7 @@
   let busyPoster = $state(false);
   let deleting = $state(false);
   let confirmDeleteOpen = $state(false);
+  let syncingMetadata = $state(false);
   let error = $state<string | null>(null);
 
   let titleDraft = $state('');
@@ -314,7 +315,28 @@
         </CardContent>
       </Card>
 
-      <div class="flex justify-end gap-2">
+      <div class="flex flex-wrap justify-end gap-2">
+        <Button
+          variant="secondary"
+          disabled={!show || syncingMetadata}
+          onclick={async () => {
+            if (!show) {
+              return;
+            }
+            syncingMetadata = true;
+            error = null;
+            try {
+              await api.fetchMetadataNow('show', show.id);
+              await load(show.id);
+            } catch (caught) {
+              error = String(caught);
+            } finally {
+              syncingMetadata = false;
+            }
+          }}
+        >
+          {syncingMetadata ? 'Syncing…' : 'Sync now (temp)'}
+        </Button>
         <Button
           variant="ghost"
           onclick={() => show && goto(`/series/${show.id}`)}

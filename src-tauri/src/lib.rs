@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod error;
+mod metadata;
 mod models;
 mod player;
 mod queries;
@@ -22,6 +23,14 @@ pub fn run() {
             let pool = tauri::async_runtime::block_on(db::open(&app_data_dir))
                 .expect("failed to open database");
             app.manage(pool);
+
+            let http_client = reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(30))
+                .user_agent(concat!("rustflix/", env!("CARGO_PKG_VERSION")))
+                .build()
+                .expect("failed to build reqwest client");
+            app.manage(http_client);
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -52,6 +61,7 @@ pub fn run() {
             commands::get_tmdb_api_key,
             commands::set_tmdb_api_key,
             commands::metadata_status_counts,
+            commands::fetch_metadata_now,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
