@@ -361,27 +361,29 @@ pub async fn scan_library(
 
         match detected {
             Detected::Movie { title, year } => {
-                let inserted_id: Option<i64> = sqlx::query_scalar(
-                    "INSERT INTO movies (library_id, title, year, path) VALUES (?1, ?2, ?3, ?4)
-                     ON CONFLICT(path) DO NOTHING RETURNING id",
-                )
-                .bind(library_id)
-                .bind(&title)
-                .bind(year)
-                .bind(&path_str)
-                .fetch_optional(pool)
-                .await?;
+                let existing_movie_id: Option<i64> =
+                    sqlx::query_scalar("SELECT id FROM movies WHERE path = ?1")
+                        .bind(&path_str)
+                        .fetch_optional(pool)
+                        .await?;
 
-                let movie_id = match inserted_id {
-                    Some(id) => {
-                        report.movies_added += 1;
-                        id
-                    }
+                let movie_id = match existing_movie_id {
+                    Some(id) => id,
                     None => {
-                        sqlx::query_scalar("SELECT id FROM movies WHERE path = ?1")
-                            .bind(&path_str)
-                            .fetch_one(pool)
-                            .await?
+                        let new_id: i64 = sqlx::query_scalar(
+                            "INSERT INTO movies (library_id, title, year, path)
+                             VALUES (?1, ?2, ?3, ?4)
+                             RETURNING id",
+                        )
+                        .bind(library_id)
+                        .bind(&title)
+                        .bind(year)
+                        .bind(&path_str)
+                        .fetch_one(pool)
+                        .await?;
+
+                        report.movies_added += 1;
+                        new_id
                     }
                 };
 
@@ -396,39 +398,80 @@ pub async fn scan_library(
                 episode,
                 episode_title,
             } => {
+                // If this exact file is already imported, just remember the
+                // show it belongs to (so poster discovery still runs) and
+                // skip every show-creation path. This is the core
+                // rescan-idempotency rule.
+                let existing_show_id: Option<i64> =
+                    sqlx::query_scalar("SELECT show_id FROM episodes WHERE path = ?1")
+                        .bind(&path_str)
+                        .fetch_optional(pool)
+                        .await?;
+
+                if let Some(show_id) = existing_show_id {
+                    touched_shows.insert(show_id);
+                    continue;
+                }
+
                 let show_folder = find_show_folder(&path).unwrap_or_else(|| root.to_path_buf());
                 let show_folder_str = show_folder.to_string_lossy().to_string();
-                let show_fingerprint = fingerprint(&show_title);
 
-                // Upsert by (library_id, fingerprint) so per-season folders
-                // ("Breaking Bad S01", "Breaking Bad S02") converge to a single
-                // show row. On conflict we only refresh folder_path — the
-                // user-editable fields (title, year, overview) are left alone.
-                let show_id: i64 = sqlx::query_scalar(
-                    "INSERT INTO shows (library_id, title, year, folder_path, fingerprint)
-                     VALUES (?1, ?2, ?3, ?4, ?5)
-                     ON CONFLICT(library_id, fingerprint) DO UPDATE SET folder_path = excluded.folder_path
-                     RETURNING id",
+                // Prefer attaching new files to whatever show already owns
+                // sibling files under the same show folder. That survives a
+                // prior manual merge, where the deleted source show would
+                // otherwise be recreated by fingerprint.
+                let folder_prefix =
+                    format!("{}{}%", show_folder_str, std::path::MAIN_SEPARATOR);
+                let owning_show_id: Option<i64> = sqlx::query_scalar(
+                    "SELECT show_id FROM episodes
+                     WHERE path LIKE ?1
+                     GROUP BY show_id
+                     ORDER BY COUNT(*) DESC, show_id ASC
+                     LIMIT 1",
                 )
-                .bind(library_id)
-                .bind(&show_title)
-                .bind(show_year)
-                .bind(&show_folder_str)
-                .bind(&show_fingerprint)
-                .fetch_one(pool)
+                .bind(&folder_prefix)
+                .fetch_optional(pool)
                 .await?;
+
+                let (show_id, created_new_show) = match owning_show_id {
+                    Some(id) => (id, false),
+                    None => {
+                        let show_fingerprint = fingerprint(&show_title);
+
+                        // Upsert by (library_id, fingerprint) so per-season
+                        // folders ("Breaking Bad S01", "Breaking Bad S02")
+                        // converge to a single show row. On conflict we only
+                        // refresh folder_path — user-editable fields stay.
+                        let id: i64 = sqlx::query_scalar(
+                            "INSERT INTO shows (library_id, title, year, folder_path, fingerprint)
+                             VALUES (?1, ?2, ?3, ?4, ?5)
+                             ON CONFLICT(library_id, fingerprint) DO UPDATE SET folder_path = excluded.folder_path
+                             RETURNING id",
+                        )
+                        .bind(library_id)
+                        .bind(&show_title)
+                        .bind(show_year)
+                        .bind(&show_folder_str)
+                        .bind(&show_fingerprint)
+                        .fetch_one(pool)
+                        .await?;
+
+                        let prior_count: i64 = sqlx::query_scalar(
+                            "SELECT COUNT(*) FROM episodes WHERE show_id = ?1",
+                        )
+                        .bind(id)
+                        .fetch_one(pool)
+                        .await?;
+
+                        (id, prior_count == 0)
+                    }
+                };
 
                 touched_shows.insert(show_id);
 
-                let prior_count: i64 = sqlx::query_scalar(
-                    "SELECT COUNT(*) FROM episodes WHERE show_id = ?1",
-                )
-                .bind(show_id)
-                .fetch_one(pool)
-                .await?;
-
                 let res = sqlx::query(
-                    "INSERT OR IGNORE INTO episodes (show_id, season, episode, title, path) VALUES (?1, ?2, ?3, ?4, ?5)",
+                    "INSERT OR IGNORE INTO episodes (show_id, season, episode, title, path)
+                     VALUES (?1, ?2, ?3, ?4, ?5)",
                 )
                 .bind(show_id)
                 .bind(season)
@@ -440,7 +483,7 @@ pub async fn scan_library(
 
                 if res.rows_affected() > 0 {
                     report.episodes_added += 1;
-                    if prior_count == 0 {
+                    if created_new_show {
                         report.shows_added += 1;
                     }
                 }
