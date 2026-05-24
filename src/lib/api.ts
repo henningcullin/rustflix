@@ -64,6 +64,19 @@ export interface MetadataStatusCounts {
   needs_review: number;
 }
 
+export interface MatchCandidate {
+  provider_id: string;
+  title: string;
+  year: number | null;
+}
+
+export interface NeedsReviewItem {
+  kind: 'show' | 'movie';
+  id: number;
+  title: string;
+  year: number | null;
+}
+
 export interface Episode {
   id: number;
   show_id: number;
@@ -161,8 +174,15 @@ export const api = {
   setTmdbApiKey: (key: string) => invoke<void>('set_tmdb_api_key', { key }),
   metadataStatusCounts: () =>
     invoke<MetadataStatusCounts>('metadata_status_counts'),
-  fetchMetadataNow: (kind: 'show' | 'movie', id: number) =>
-    invoke<void>('fetch_metadata_now', { kind, id }),
+  refreshMetadata: (kind: 'show' | 'movie', id: number) =>
+    invoke<void>('refresh_metadata', { kind, id }),
+  unlinkMetadata: (kind: 'show' | 'movie', id: number) =>
+    invoke<void>('unlink_metadata', { kind, id }),
+  metadataSearch: (kind: 'show' | 'movie', query: string, year: number | null) =>
+    invoke<MatchCandidate[]>('metadata_search', { kind, query, year }),
+  linkMetadata: (kind: 'show' | 'movie', mediaId: number, providerId: string) =>
+    invoke<void>('link_metadata', { kind, mediaId, providerId }),
+  listNeedsReview: () => invoke<NeedsReviewItem[]>('list_needs_review'),
 
   pickFolder: () =>
     open({

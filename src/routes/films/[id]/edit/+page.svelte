@@ -265,7 +265,7 @@
             syncingMetadata = true;
             error = null;
             try {
-              await api.fetchMetadataNow('movie', movie.id);
+              await api.refreshMetadata('movie', movie.id);
               await load(movie.id);
             } catch (caught) {
               error = String(caught);
@@ -274,8 +274,31 @@
             }
           }}
         >
-          {syncingMetadata ? 'Syncing…' : 'Sync now (temp)'}
+          {syncingMetadata ? 'Refreshing…' : 'Refresh metadata'}
         </Button>
+        {#if movie?.provider}
+          <Button
+            variant="ghost"
+            disabled={!movie || syncingMetadata}
+            onclick={async () => {
+              if (!movie) {
+                return;
+              }
+              syncingMetadata = true;
+              error = null;
+              try {
+                await api.unlinkMetadata('movie', movie.id);
+                await load(movie.id);
+              } catch (caught) {
+                error = String(caught);
+              } finally {
+                syncingMetadata = false;
+              }
+            }}
+          >
+            Unlink
+          </Button>
+        {/if}
         <Button
           variant="ghost"
           onclick={() => movie && goto(`/films/${movie.id}`)}
