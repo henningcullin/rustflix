@@ -42,6 +42,7 @@ pub fn run() {
             commands::play_episode,
             commands::update_show_metadata,
             commands::update_movie_metadata,
+            commands::update_episode_title,
             commands::merge_shows,
             commands::delete_show,
             commands::set_show_poster_from_file,
