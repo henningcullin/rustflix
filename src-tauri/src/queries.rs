@@ -446,6 +446,33 @@ pub async fn continue_watching(pool: &SqlitePool, limit: i64) -> AppResult<Vec<C
     Ok(out)
 }
 
+#[derive(Debug, sqlx::FromRow, serde::Serialize, serde::Deserialize)]
+pub struct NeedsReviewItem {
+    pub kind: String,
+    pub id: i64,
+    pub title: String,
+    pub year: Option<i32>,
+}
+
+pub async fn list_needs_review(pool: &SqlitePool) -> AppResult<Vec<NeedsReviewItem>> {
+    let items: Vec<NeedsReviewItem> = sqlx::query_as(
+        "SELECT 'show' AS kind, id, title, year FROM shows
+            WHERE provider IS NULL
+              AND NOT EXISTS (SELECT 1 FROM metadata_jobs j
+                              WHERE j.kind = 'show' AND j.media_id = shows.id)
+         UNION ALL
+         SELECT 'movie' AS kind, id, title, year FROM movies
+            WHERE provider IS NULL
+              AND NOT EXISTS (SELECT 1 FROM metadata_jobs j
+                              WHERE j.kind = 'movie' AND j.media_id = movies.id)
+         ORDER BY title COLLATE NOCASE",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(items)
+}
+
 pub async fn get_app_setting(pool: &SqlitePool, key: &str) -> AppResult<Option<String>> {
     let value: Option<String> =
         sqlx::query_scalar("SELECT value FROM app_settings WHERE key = ?1")

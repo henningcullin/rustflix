@@ -326,7 +326,7 @@
             syncingMetadata = true;
             error = null;
             try {
-              await api.fetchMetadataNow('show', show.id);
+              await api.refreshMetadata('show', show.id);
               await load(show.id);
             } catch (caught) {
               error = String(caught);
@@ -335,8 +335,31 @@
             }
           }}
         >
-          {syncingMetadata ? 'Syncing…' : 'Sync now (temp)'}
+          {syncingMetadata ? 'Refreshing…' : 'Refresh metadata'}
         </Button>
+        {#if show?.provider}
+          <Button
+            variant="ghost"
+            disabled={!show || syncingMetadata}
+            onclick={async () => {
+              if (!show) {
+                return;
+              }
+              syncingMetadata = true;
+              error = null;
+              try {
+                await api.unlinkMetadata('show', show.id);
+                await load(show.id);
+              } catch (caught) {
+                error = String(caught);
+              } finally {
+                syncingMetadata = false;
+              }
+            }}
+          >
+            Unlink
+          </Button>
+        {/if}
         <Button
           variant="ghost"
           onclick={() => show && goto(`/series/${show.id}`)}

@@ -397,6 +397,7 @@ pub async fn scan_library(
                         .await?;
 
                         report.movies_added += 1;
+                        crate::metadata::queries::enqueue(pool, "movie", new_id).await?;
                         new_id
                     }
                 };
@@ -520,6 +521,7 @@ pub async fn scan_library(
                     report.episodes_added += 1;
                     if created_new_show {
                         report.shows_added += 1;
+                        crate::metadata::queries::enqueue(pool, "show", show_id).await?;
                     }
                 }
             }

@@ -43,7 +43,7 @@ pub async fn remove_library(db: State<'_, Db>, id: i64) -> AppResult<()> {
 }
 
 #[tauri::command]
-pub async fn scan_libraries(db: State<'_, Db>) -> AppResult<ScanReport> {
+pub async fn scan_libraries(app: AppHandle, db: State<'_, Db>) -> AppResult<ScanReport> {
     let libs = queries::list_libraries(&db).await?;
     let mut report = ScanReport::default();
     for lib in libs {
@@ -57,6 +57,7 @@ pub async fn scan_libraries(db: State<'_, Db>) -> AppResult<ScanReport> {
         report.episodes_added += r.episodes_added;
         report.shows_added += r.shows_added;
     }
+    wake_worker(&app);
     Ok(report)
 }
 
@@ -206,12 +207,26 @@ pub async fn get_tmdb_api_key(db: State<'_, Db>) -> AppResult<Option<String>> {
 }
 
 #[tauri::command]
-pub async fn set_tmdb_api_key(db: State<'_, Db>, key: String) -> AppResult<()> {
+pub async fn set_tmdb_api_key(
+    app: AppHandle,
+    db: State<'_, Db>,
+    key: String,
+) -> AppResult<()> {
     let trimmed = key.trim();
     if trimmed.is_empty() {
-        queries::delete_app_setting(&db, "tmdb_api_key").await
+        queries::delete_app_setting(&db, "tmdb_api_key").await?;
     } else {
-        queries::set_app_setting(&db, "tmdb_api_key", trimmed).await
+        queries::set_app_setting(&db, "tmdb_api_key", trimmed).await?;
+        crate::metadata::queries::wake_parked(&db).await?;
+    }
+
+    wake_worker(&app);
+    Ok(())
+}
+
+fn wake_worker(app: &AppHandle) {
+    if let Some(notify) = app.try_state::<std::sync::Arc<tokio::sync::Notify>>() {
+        notify.notify_one();
     }
 }
 
@@ -223,131 +238,115 @@ pub async fn metadata_status_counts(
 }
 
 #[tauri::command]
-pub async fn fetch_metadata_now(
+pub async fn refresh_metadata(
     app: AppHandle,
     db: State<'_, Db>,
-    http: State<'_, reqwest::Client>,
     kind: String,
     id: i64,
 ) -> AppResult<()> {
-    let api_key = queries::get_app_setting(&db, "tmdb_api_key")
-        .await?
-        .ok_or_else(|| AppError::Other("auth_required: no TMDB key configured".to_string()))?;
-
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|error| AppError::Other(format!("app_data_dir: {error}")))?;
-    let posters_dir = app_data_dir.join("posters");
-
-    let outcome = match kind.as_str() {
-        "movie" => fetch_one_movie(&db, &http, &api_key, id).await?,
-        "show" => fetch_one_show(&db, &http, &api_key, id).await?,
-        other => {
-            return Err(AppError::Other(format!("unknown kind: {other}")));
-        }
+    let table = match kind.as_str() {
+        "show" => "shows",
+        "movie" => "movies",
+        other => return Err(AppError::Other(format!("unknown kind: {other}"))),
     };
 
-    if let Some((poster_url, dest_filename)) = outcome {
-        let dest = posters_dir.join(dest_filename);
-        crate::metadata::tmdb::download_poster(&http, &poster_url, &dest).await?;
-    }
+    sqlx::query(&format!("UPDATE {table} SET metadata_locked = 0 WHERE id = ?1"))
+        .bind(id)
+        .execute(&*db)
+        .await?;
+
+    crate::metadata::queries::force_enqueue(&db, &kind, id).await?;
+    wake_worker(&app);
 
     Ok(())
 }
 
-async fn fetch_one_movie(
-    db: &Db,
-    http: &reqwest::Client,
-    api_key: &str,
-    movie_id: i64,
-) -> AppResult<Option<(String, String)>> {
-    let mut tx = db.begin().await?;
-
-    let locked: i64 = sqlx::query_scalar("SELECT metadata_locked FROM movies WHERE id = ?1")
-        .bind(movie_id)
-        .fetch_one(&mut *tx)
-        .await?;
-    if locked != 0 {
-        tx.rollback().await?;
-        return Ok(None);
-    }
-
-    let (title, year): (String, Option<i32>) =
-        sqlx::query_as("SELECT title, year FROM movies WHERE id = ?1")
-            .bind(movie_id)
-            .fetch_one(&mut *tx)
-            .await?;
-    tx.rollback().await?;
-
-    let candidates = crate::metadata::tmdb::search_movie(http, api_key, &title, year).await?;
-    let Some(pick) =
-        crate::metadata::matching::pick_confident_match(&title, year, &candidates)
-    else {
-        return Ok(None);
+#[tauri::command]
+pub async fn unlink_metadata(
+    app: AppHandle,
+    db: State<'_, Db>,
+    kind: String,
+    id: i64,
+) -> AppResult<()> {
+    let (table, extras) = match kind.as_str() {
+        "show" => ("shows", "first_air_date = NULL, "),
+        "movie" => ("movies", "runtime_minutes = NULL, "),
+        other => return Err(AppError::Other(format!("unknown kind: {other}"))),
     };
 
-    let details =
-        crate::metadata::tmdb::fetch_movie_details(http, api_key, &pick.provider_id).await?;
+    let sql = format!(
+        "UPDATE {table} SET
+             provider = NULL,
+             provider_id = NULL,
+             rating = NULL,
+             genres = NULL,
+             top_cast = NULL,
+             {extras}
+             metadata_synced_at = NULL,
+             metadata_locked = 0
+         WHERE id = ?1"
+    );
 
-    let mut tx = db.begin().await?;
-    let download_ext =
-        crate::metadata::apply::apply_movie_details(&mut *tx, movie_id, &details).await?;
-    tx.commit().await?;
+    sqlx::query(&sql).bind(id).execute(&*db).await?;
+    crate::metadata::queries::force_enqueue(&db, &kind, id).await?;
+    wake_worker(&app);
 
-    Ok(match (download_ext, details.poster_path) {
-        (Some(extension), Some(poster_path)) => {
-            Some((poster_path, format!("movie-{movie_id}.{extension}")))
-        }
-        _ => None,
-    })
+    Ok(())
 }
 
-async fn fetch_one_show(
-    db: &Db,
-    http: &reqwest::Client,
-    api_key: &str,
-    show_id: i64,
-) -> AppResult<Option<(String, String)>> {
-    let mut tx = db.begin().await?;
+#[tauri::command]
+pub async fn metadata_search(
+    db: State<'_, Db>,
+    http: State<'_, reqwest::Client>,
+    kind: String,
+    query: String,
+    year: Option<i32>,
+) -> AppResult<Vec<crate::metadata::matching::MatchCandidate>> {
+    let api_key = queries::get_app_setting(&db, "tmdb_api_key")
+        .await?
+        .ok_or_else(|| AppError::Other("no TMDB key configured".to_string()))?;
 
-    let locked: i64 = sqlx::query_scalar("SELECT metadata_locked FROM shows WHERE id = ?1")
-        .bind(show_id)
-        .fetch_one(&mut *tx)
-        .await?;
-    if locked != 0 {
-        tx.rollback().await?;
-        return Ok(None);
+    match kind.as_str() {
+        "movie" => crate::metadata::tmdb::search_movie(&http, &api_key, &query, year).await,
+        "show" => crate::metadata::tmdb::search_show(&http, &api_key, &query, year).await,
+        other => Err(AppError::Other(format!("unknown kind: {other}"))),
     }
+}
 
-    let (title, year): (String, Option<i32>) =
-        sqlx::query_as("SELECT title, year FROM shows WHERE id = ?1")
-            .bind(show_id)
-            .fetch_one(&mut *tx)
-            .await?;
-    tx.rollback().await?;
-
-    let candidates = crate::metadata::tmdb::search_show(http, api_key, &title, year).await?;
-    let Some(pick) =
-        crate::metadata::matching::pick_confident_match(&title, year, &candidates)
-    else {
-        return Ok(None);
+#[tauri::command]
+pub async fn link_metadata(
+    app: AppHandle,
+    db: State<'_, Db>,
+    kind: String,
+    media_id: i64,
+    provider_id: String,
+) -> AppResult<()> {
+    let table = match kind.as_str() {
+        "show" => "shows",
+        "movie" => "movies",
+        other => return Err(AppError::Other(format!("unknown kind: {other}"))),
     };
 
-    let details =
-        crate::metadata::tmdb::fetch_show_details(http, api_key, &pick.provider_id).await?;
+    sqlx::query(&format!(
+        "UPDATE {table} SET provider = 'tmdb', provider_id = ?2, metadata_locked = 0
+         WHERE id = ?1"
+    ))
+    .bind(media_id)
+    .bind(&provider_id)
+    .execute(&*db)
+    .await?;
 
-    let mut tx = db.begin().await?;
-    let download_ext =
-        crate::metadata::apply::apply_show_details(&mut *tx, show_id, &details).await?;
-    tx.commit().await?;
+    crate::metadata::queries::force_enqueue(&db, &kind, media_id).await?;
+    wake_worker(&app);
 
-    Ok(match (download_ext, details.poster_path) {
-        (Some(extension), Some(poster_path)) => {
-            Some((poster_path, format!("show-{show_id}.{extension}")))
-        }
-        _ => None,
-    })
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn list_needs_review(
+    db: State<'_, Db>,
+) -> AppResult<Vec<crate::queries::NeedsReviewItem>> {
+    queries::list_needs_review(&db).await
 }
 
 /// Best-effort cleanup of a manual poster file. Only deletes the file when

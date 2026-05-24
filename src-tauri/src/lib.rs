@@ -29,7 +29,12 @@ pub fn run() {
                 .user_agent(concat!("rustflix/", env!("CARGO_PKG_VERSION")))
                 .build()
                 .expect("failed to build reqwest client");
-            app.manage(http_client);
+            app.manage(http_client.clone());
+
+            let pool_for_worker = app.state::<db::Db>().inner().clone();
+            let notify =
+                metadata::worker::spawn(pool_for_worker, http_client, app.handle().clone());
+            app.manage(notify);
 
             Ok(())
         })
@@ -61,7 +66,11 @@ pub fn run() {
             commands::get_tmdb_api_key,
             commands::set_tmdb_api_key,
             commands::metadata_status_counts,
-            commands::fetch_metadata_now,
+            commands::refresh_metadata,
+            commands::unlink_metadata,
+            commands::metadata_search,
+            commands::link_metadata,
+            commands::list_needs_review,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

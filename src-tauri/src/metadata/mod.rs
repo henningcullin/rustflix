@@ -3,4 +3,6 @@
 
 pub mod apply;
 pub mod matching;
+pub mod queries;
 pub mod tmdb;
+pub mod worker;
