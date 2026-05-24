@@ -21,7 +21,10 @@ pub fn spawn(pool: SqlitePool, http: reqwest::Client, app: AppHandle) -> Arc<Not
     let notify = Arc::new(Notify::new());
     let notify_clone = notify.clone();
 
-    tokio::spawn(async move {
+    // Tauri's setup closure runs outside a tokio runtime context, so a bare
+    // `tokio::spawn` panics. `tauri::async_runtime::spawn` is the same
+    // multi-threaded tokio runtime Tauri uses for command handlers.
+    tauri::async_runtime::spawn(async move {
         if let Err(error) = run(pool, http, app, notify_clone).await {
             eprintln!("metadata worker exited with error: {error}");
         }
