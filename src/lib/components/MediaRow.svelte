@@ -49,7 +49,7 @@
 
   <div
     bind:this={scroller}
-    class="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth px-6 pb-2"
+    class="no-scrollbar flex gap-4 overflow-x-auto overflow-y-visible scroll-smooth px-6 py-2"
   >
     {@render children()}
   </div>
