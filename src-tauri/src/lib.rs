@@ -49,6 +49,9 @@ pub fn run() {
             commands::set_movie_poster_from_file,
             commands::reset_show_poster,
             commands::reset_movie_poster,
+            commands::get_tmdb_api_key,
+            commands::set_tmdb_api_key,
+            commands::metadata_status_counts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

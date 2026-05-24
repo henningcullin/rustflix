@@ -37,9 +37,9 @@
 
   <div class="ml-auto flex items-center gap-2">
     <a
-      href="/settings/libraries"
+      href="/settings"
       class="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      aria-label="Library settings"
+      aria-label="Settings"
     >
       <Settings class="size-4" />
     </a>

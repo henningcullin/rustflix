@@ -29,6 +29,14 @@ pub struct Movie {
     pub progress_seconds: i64,
     pub watched: bool,
     pub added_at: i64,
+    pub provider: Option<String>,
+    pub provider_id: Option<String>,
+    pub rating: Option<f64>,
+    pub genres: Option<String>,
+    pub top_cast: Option<String>,
+    pub runtime_minutes: Option<i64>,
+    pub metadata_synced_at: Option<i64>,
+    pub metadata_locked: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::FromRow)]
@@ -45,6 +53,14 @@ pub struct Show {
     pub episode_count: i64,
     pub watched_count: i64,
     pub added_at: i64,
+    pub provider: Option<String>,
+    pub provider_id: Option<String>,
+    pub rating: Option<f64>,
+    pub genres: Option<String>,
+    pub top_cast: Option<String>,
+    pub first_air_date: Option<String>,
+    pub metadata_synced_at: Option<i64>,
+    pub metadata_locked: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::FromRow)]
@@ -94,4 +110,13 @@ pub struct EpisodeRef {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MergeOutcome {
     pub conflicts: Vec<EpisodeRef>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct MetadataStatusCounts {
+    pub pending: i64,
+    pub failed: i64,
+    pub auth_required: i64,
+    pub dead_letter: i64,
+    pub needs_review: i64,
 }

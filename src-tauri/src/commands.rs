@@ -200,6 +200,28 @@ pub async fn delete_show(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResul
     Ok(())
 }
 
+#[tauri::command]
+pub async fn get_tmdb_api_key(db: State<'_, Db>) -> AppResult<Option<String>> {
+    queries::get_app_setting(&db, "tmdb_api_key").await
+}
+
+#[tauri::command]
+pub async fn set_tmdb_api_key(db: State<'_, Db>, key: String) -> AppResult<()> {
+    let trimmed = key.trim();
+    if trimmed.is_empty() {
+        queries::delete_app_setting(&db, "tmdb_api_key").await
+    } else {
+        queries::set_app_setting(&db, "tmdb_api_key", trimmed).await
+    }
+}
+
+#[tauri::command]
+pub async fn metadata_status_counts(
+    db: State<'_, Db>,
+) -> AppResult<crate::models::MetadataStatusCounts> {
+    queries::metadata_status_counts(&db).await
+}
+
 /// Best-effort cleanup of a manual poster file. Only deletes the file when
 /// it sits inside our own `<app_data>/posters/` directory — any other path
 /// is ignored so a malformed `poster_path` can never remove user media.
