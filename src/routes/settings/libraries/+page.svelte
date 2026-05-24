@@ -1,11 +1,20 @@
 <script lang="ts">
   import { api, type Library, type LibraryKind, type ScanReport } from '$lib/api';
+  import * as Select from '$lib/components/ui/select';
   import { FolderPlus, RefreshCw, Trash2 } from '$lib/lucide';
 
   let libraries: Library[] = $state([]);
   let loading = $state(true);
   let busy = $state(false);
   let kind: LibraryKind = $state('mixed');
+
+  const kindLabels: Record<LibraryKind, string> = {
+    mixed: 'Auto-detect',
+    movies: 'Movies only',
+    series: 'Series only',
+  };
+
+  const selectedKindLabel = $derived(kindLabels[kind]);
   let mpvOk = $state<boolean | null>(null);
   let lastReport: ScanReport | null = $state(null);
   let error = $state<string | null>(null);
@@ -94,17 +103,25 @@
       Add a folder
     </h2>
     <div class="flex flex-wrap items-center gap-3">
-      <label class="flex items-center gap-2 text-sm">
+      <div class="flex items-center gap-2 text-sm">
         <span class="text-muted-foreground">Treat as:</span>
-        <select
-          bind:value={kind}
-          class="rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:border-primary focus:outline-none"
+        <Select.Root
+          type="single"
+          value={kind}
+          onValueChange={(value) => {
+            kind = value as LibraryKind;
+          }}
         >
-          <option value="mixed">Auto-detect</option>
-          <option value="movies">Movies only</option>
-          <option value="series">Series only</option>
-        </select>
-      </label>
+          <Select.Trigger class="w-[170px]" aria-label="Library kind">
+            {selectedKindLabel}
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="mixed" label="Auto-detect">Auto-detect</Select.Item>
+            <Select.Item value="movies" label="Movies only">Movies only</Select.Item>
+            <Select.Item value="series" label="Series only">Series only</Select.Item>
+          </Select.Content>
+        </Select.Root>
+      </div>
       <button
         type="button"
         onclick={add}
