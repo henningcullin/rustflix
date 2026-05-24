@@ -355,25 +355,25 @@ and the cells are small enough to verify by eye.
 
 ## Rollout
 
-Four PRs, each shippable on its own. Numbers assume metadata-sync PRs
-(#23–25) have landed.
+Four PRs, each shippable on its own. This spec is fix/26; implementation
+follows the metadata-sync PRs (#23–25). Branches:
 
-1. **fix/26 — admin backend.** `src-tauri/src/admin/mod.rs` with `Table`
+1. **fix/27 — admin backend.** `src-tauri/src/admin/mod.rs` with `Table`
    enum + the three commands + binding helpers + row-to-Map helper.
    `#[cfg(test)]` tests on the binding helpers. Registered in `lib.rs`.
    No frontend.
-2. **fix/27 — admin MVP UI.** `/admin` table picker + `/admin/shows` grid
+2. **fix/28 — admin MVP UI.** `/admin` table picker + `/admin/shows` grid
    (one full config). Inline cell editing. No drawer yet, no FK chips,
    no search. First usable surface.
-3. **fix/28 — drawer + remaining tables + FK.** `<RowDrawer>`. Configs for
+3. **fix/29 — drawer + remaining tables + FK.** `<RowDrawer>`. Configs for
    the other six tables. FK chips with the label cache. URL routing for
    `/admin/[table]/[id]`. End-to-end edit flow.
-4. **fix/29 — search, sort, selection, bulk delete.** Client-side search
+4. **fix/30 — search, sort, selection, bulk delete.** Client-side search
    input, sortable headers, checkbox selection, bulk delete button.
    Typed-confirmation for `libraries`.
 
-After fix/27 there's already *something usable* for shows. Stop after
-fix/28 and you have a functional admin, just clunkier. fix/29 is polish.
+After fix/28 there's already *something usable* for shows. Stop after
+fix/29 and you have a functional admin, just clunkier. fix/30 is polish.
 
 ## Open questions deferred to implementation
 
