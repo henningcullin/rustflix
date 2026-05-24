@@ -69,6 +69,20 @@ fn is_video_file(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
+/// Escapes `%`, `_`, and `\` so a literal filename can be used inside a
+/// SQL `LIKE` pattern without those characters being treated as wildcards.
+/// Pair with `ESCAPE '\\'` in the query.
+fn escape_like(input: &str) -> String {
+    let mut output = String::with_capacity(input.len());
+    for character in input.chars() {
+        if character == '\\' || character == '%' || character == '_' {
+            output.push('\\');
+        }
+        output.push(character);
+    }
+    output
+}
+
 fn clean_title(raw: &str) -> String {
     let no_ext = raw.rsplit_once('.').map(|(a, _)| a).unwrap_or(raw);
     let lower_tags = TAGS_RE.replace_all(no_ext, " ");
@@ -413,25 +427,46 @@ pub async fn scan_library(
                     continue;
                 }
 
-                let show_folder = find_show_folder(&path).unwrap_or_else(|| root.to_path_buf());
-                let show_folder_str = show_folder.to_string_lossy().to_string();
+                // Resolve the show folder, but treat the library root itself
+                // as "no show folder" — layouts like <library>/Season 01/file.mkv
+                // would otherwise produce a folder_prefix equal to the entire
+                // library and the LIKE lookup would pick the most-populated
+                // show in the library by accident.
+                let show_folder = find_show_folder(&path).filter(|folder| {
+                    folder.as_path() != root && folder.starts_with(root)
+                });
 
-                // Prefer attaching new files to whatever show already owns
-                // sibling files under the same show folder. That survives a
-                // prior manual merge, where the deleted source show would
-                // otherwise be recreated by fingerprint.
-                let folder_prefix =
-                    format!("{}{}%", show_folder_str, std::path::MAIN_SEPARATOR);
-                let owning_show_id: Option<i64> = sqlx::query_scalar(
-                    "SELECT show_id FROM episodes
-                     WHERE path LIKE ?1
-                     GROUP BY show_id
-                     ORDER BY COUNT(*) DESC, show_id ASC
-                     LIMIT 1",
-                )
-                .bind(&folder_prefix)
-                .fetch_optional(pool)
-                .await?;
+                let owning_show_id: Option<i64> = if let Some(folder) = show_folder.as_ref() {
+                    let folder_str = folder.to_string_lossy().to_string();
+
+                    // Prefer attaching new files to whatever show already owns
+                    // sibling files under the same show folder. That survives a
+                    // prior manual merge, where the deleted source show would
+                    // otherwise be recreated by fingerprint. Escape %, _, and \
+                    // so folder names containing those characters don't turn
+                    // into LIKE wildcards (e.g. "100% Movies/Show/").
+                    let escaped = escape_like(&folder_str);
+                    let folder_prefix =
+                        format!("{}{}%", escaped, std::path::MAIN_SEPARATOR);
+
+                    sqlx::query_scalar(
+                        "SELECT show_id FROM episodes
+                         WHERE path LIKE ?1 ESCAPE '\\'
+                         GROUP BY show_id
+                         ORDER BY COUNT(*) DESC, show_id ASC
+                         LIMIT 1",
+                    )
+                    .bind(&folder_prefix)
+                    .fetch_optional(pool)
+                    .await?
+                } else {
+                    None
+                };
+
+                let show_folder_str = show_folder
+                    .as_ref()
+                    .map(|folder| folder.to_string_lossy().to_string())
+                    .unwrap_or_else(|| root.to_string_lossy().to_string());
 
                 let (show_id, created_new_show) = match owning_show_id {
                     Some(id) => (id, false),
@@ -496,4 +531,34 @@ pub async fn scan_library(
     }
 
     Ok(report)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn escape_like_passes_normal_text_through() {
+        assert_eq!(escape_like("/library/Breaking Bad"), "/library/Breaking Bad");
+    }
+
+    #[test]
+    fn escape_like_escapes_percent() {
+        assert_eq!(escape_like("/library/100% Movies"), "/library/100\\% Movies");
+    }
+
+    #[test]
+    fn escape_like_escapes_underscore() {
+        assert_eq!(escape_like("/library/a_show"), "/library/a\\_show");
+    }
+
+    #[test]
+    fn escape_like_escapes_backslash() {
+        assert_eq!(escape_like("C:\\Media\\Show"), "C:\\\\Media\\\\Show");
+    }
+
+    #[test]
+    fn escape_like_escapes_all_three_in_one_string() {
+        assert_eq!(escape_like("a%b_c\\d"), "a\\%b\\_c\\\\d");
+    }
 }
