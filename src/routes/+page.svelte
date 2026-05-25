@@ -24,18 +24,18 @@
   async function load() {
     loading = true;
     try {
-      const libs = await api.listLibraries();
-      hasLibraries = libs.length > 0;
-      const [m, s, c] = await Promise.all([
+      const libraries = await api.listLibraries();
+      hasLibraries = libraries.length > 0;
+      const [loadedMovies, loadedShows, loadedContinue] = await Promise.all([
         api.listMovies(),
         api.listShows(),
         api.continueWatching(),
       ]);
-      movies = m;
-      shows = s;
-      continueItems = c;
-    } catch (e) {
-      console.error(e);
+      movies = loadedMovies;
+      shows = loadedShows;
+      continueItems = loadedContinue;
+    } catch (caught) {
+      console.error(caught);
     } finally {
       loading = false;
     }
@@ -54,11 +54,13 @@
   const recentMovies = $derived([...movies].sort((a, b) => b.added_at - a.added_at).slice(0, 20));
   const recentShows = $derived([...shows].sort((a, b) => b.added_at - a.added_at).slice(0, 20));
 
-  function showSubtitle(s: Show): string {
-    const watched = s.watched_count;
-    const total = s.episode_count;
-    if (total === 0) return s.year ? `${s.year}` : '';
-    return `${watched}/${total} watched${s.year ? ` · ${s.year}` : ''}`;
+  function showSubtitle(show: Show): string {
+    const watched = show.watched_count;
+    const total = show.episode_count;
+    if (total === 0) {
+      return show.year ? `${show.year}` : '';
+    }
+    return `${watched}/${total} watched${show.year ? ` · ${show.year}` : ''}`;
   }
 </script>
 

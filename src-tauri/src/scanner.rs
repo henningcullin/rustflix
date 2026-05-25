@@ -64,8 +64,12 @@ pub fn fingerprint(name: &str) -> String {
 
 fn is_video_file(path: &Path) -> bool {
     path.extension()
-        .and_then(|e| e.to_str())
-        .map(|e| VIDEO_EXTS.iter().any(|v| v.eq_ignore_ascii_case(e)))
+        .and_then(|extension| extension.to_str())
+        .map(|extension| {
+            VIDEO_EXTS
+                .iter()
+                .any(|candidate| candidate.eq_ignore_ascii_case(extension))
+        })
         .unwrap_or(false)
 }
 
@@ -218,15 +222,15 @@ async fn find_poster_in(dir: &Path) -> Option<PathBuf> {
 
         let Some(stem) = path
             .file_stem()
-            .and_then(|s| s.to_str())
-            .map(|s| s.to_lowercase())
+            .and_then(|name| name.to_str())
+            .map(|name| name.to_lowercase())
         else {
             continue;
         };
         let Some(ext) = path
             .extension()
-            .and_then(|e| e.to_str())
-            .map(|e| e.to_lowercase())
+            .and_then(|extension| extension.to_str())
+            .map(|extension| extension.to_lowercase())
         else {
             continue;
         };
@@ -239,9 +243,17 @@ async fn find_poster_in(dir: &Path) -> Option<PathBuf> {
         }
     }
 
-    candidates.sort_by_key(|p| {
-        let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
-        let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+    candidates.sort_by_key(|path| {
+        let stem = path
+            .file_stem()
+            .and_then(|name| name.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+        let ext = path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or("")
+            .to_lowercase();
         let basename_rank = POSTER_BASENAMES
             .iter()
             .position(|candidate| *candidate == stem)
@@ -361,13 +373,13 @@ pub async fn scan_library(
             .follow_links(true)
             .into_iter()
             .flatten()
-            .filter(|e| e.file_type().is_file())
-            .map(|e| e.into_path())
-            .filter(|p| is_video_file(p))
+            .filter(|entry| entry.file_type().is_file())
+            .map(|entry| entry.into_path())
+            .filter(|path| is_video_file(path))
             .collect()
     })
     .await
-    .map_err(|e| crate::error::AppError::Other(e.to_string()))?;
+    .map_err(|error| crate::error::AppError::Other(error.to_string()))?;
 
     for path in paths {
         let path_str = path.to_string_lossy().to_string();
@@ -505,7 +517,7 @@ pub async fn scan_library(
 
                 touched_shows.insert(show_id);
 
-                let res = sqlx::query(
+                let result = sqlx::query(
                     "INSERT OR IGNORE INTO episodes (show_id, season, episode, title, path)
                      VALUES (?1, ?2, ?3, ?4, ?5)",
                 )
@@ -517,7 +529,7 @@ pub async fn scan_library(
                 .execute(pool)
                 .await?;
 
-                if res.rows_affected() > 0 {
+                if result.rows_affected() > 0 {
                     report.episodes_added += 1;
                     if created_new_show {
                         report.shows_added += 1;

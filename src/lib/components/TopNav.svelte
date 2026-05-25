@@ -9,7 +9,9 @@
   ];
 
   function isActive(href: string, current: string): boolean {
-    if (href === '/') return current === '/';
+    if (href === '/') {
+      return current === '/';
+    }
     return current === href || current.startsWith(href + '/');
   }
 </script>

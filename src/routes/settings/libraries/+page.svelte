@@ -27,8 +27,8 @@
     loading = true;
     try {
       [libraries, mpvOk] = await Promise.all([api.listLibraries(), api.checkMpv()]);
-    } catch (e) {
-      error = String(e);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       loading = false;
     }
@@ -37,13 +37,15 @@
   async function add() {
     error = null;
     const path = await api.pickFolder();
-    if (!path) return;
+    if (!path) {
+      return;
+    }
     busy = true;
     try {
       await api.addLibrary(path, kind);
       await load();
-    } catch (e) {
-      error = String(e);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       busy = false;
     }
@@ -53,9 +55,9 @@
     busy = true;
     try {
       await api.removeLibrary(id);
-      libraries = libraries.filter((l) => l.id !== id);
-    } catch (e) {
-      error = String(e);
+      libraries = libraries.filter((library) => library.id !== id);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       busy = false;
     }
@@ -67,8 +69,8 @@
     try {
       lastReport = await api.scanLibraries();
       await load();
-    } catch (e) {
-      error = String(e);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       busy = false;
     }
@@ -162,17 +164,17 @@
       </div>
     {:else}
       <ul class="divide-y divide-border rounded-lg border border-border bg-card">
-        {#each libraries as lib (lib.id)}
+        {#each libraries as library (library.id)}
           <li class="flex items-center gap-4 px-5 py-4">
             <div class="min-w-0 flex-1">
-              <div class="truncate font-medium">{lib.path}</div>
+              <div class="truncate font-medium">{library.path}</div>
               <div class="text-xs uppercase tracking-wide text-muted-foreground">
-                {lib.kind}
+                {library.kind}
               </div>
             </div>
             <button
               type="button"
-              onclick={() => remove(lib.id)}
+              onclick={() => remove(library.id)}
               disabled={busy}
               class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-destructive/20 hover:text-destructive-foreground"
               aria-label="Remove library"

@@ -222,14 +222,27 @@ export const api = {
 };
 
 export function formatRuntime(seconds: number | null | undefined): string {
-  if (!seconds || seconds <= 0) return '';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (!seconds || seconds <= 0) {
+    return '';
+  }
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 }
 
-export function progressPct(p: { progress_seconds: number; duration_seconds: number | null }): number {
-  if (!p.duration_seconds || p.duration_seconds <= 0) return 0;
-  return Math.min(100, Math.max(0, (p.progress_seconds / p.duration_seconds) * 100));
+export function progressPct(
+  playback: { progress_seconds: number; duration_seconds: number | null },
+): number {
+  if (!playback.duration_seconds || playback.duration_seconds <= 0) {
+    return 0;
+  }
+  return Math.min(
+    100,
+    Math.max(0, (playback.progress_seconds / playback.duration_seconds) * 100),
+  );
 }

@@ -18,7 +18,9 @@
   const id = $derived(Number($page.params.id));
 
   $effect(() => {
-    if (!Number.isFinite(id)) return;
+    if (!Number.isFinite(id)) {
+      return;
+    }
     void load(id);
   });
 
@@ -27,21 +29,23 @@
     error = null;
     try {
       movie = await api.getMovie(movieId);
-    } catch (e) {
-      error = String(e);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       loading = false;
     }
   }
 
   async function play(fromStart = false) {
-    if (!movie) return;
+    if (!movie) {
+      return;
+    }
     playing = true;
     try {
       await api.playMovie(movie.id, fromStart ? 0 : undefined);
       await load(movie.id);
-    } catch (e) {
-      error = String(e);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       playing = false;
     }

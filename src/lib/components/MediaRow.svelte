@@ -13,7 +13,9 @@
   let scroller: HTMLDivElement | null = $state(null);
 
   function scrollBy(dir: 1 | -1) {
-    if (!scroller) return;
+    if (!scroller) {
+      return;
+    }
     scroller.scrollBy({ left: dir * scroller.clientWidth * 0.8, behavior: 'smooth' });
   }
 </script>

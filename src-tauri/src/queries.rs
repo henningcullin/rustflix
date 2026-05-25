@@ -32,11 +32,11 @@ pub async fn add_library(pool: &SqlitePool, path: &str, kind: LibraryKind) -> Ap
 }
 
 pub async fn remove_library(pool: &SqlitePool, id: i64) -> AppResult<()> {
-    let res = sqlx::query("DELETE FROM libraries WHERE id = ?1")
+    let result = sqlx::query("DELETE FROM libraries WHERE id = ?1")
         .bind(id)
         .execute(pool)
         .await?;
-    if res.rows_affected() == 0 {
+    if result.rows_affected() == 0 {
         return Err(AppError::LibraryNotFound(id));
     }
     Ok(())

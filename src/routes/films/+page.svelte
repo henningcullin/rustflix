@@ -15,8 +15,8 @@
     loading = true;
     try {
       movies = await api.listMovies();
-    } catch (e) {
-      console.error(e);
+    } catch (caught) {
+      console.error(caught);
     } finally {
       loading = false;
     }
@@ -25,7 +25,7 @@
   const filtered = $derived(
     query.trim() === ''
       ? movies
-      : movies.filter((m) => m.title.toLowerCase().includes(query.toLowerCase())),
+      : movies.filter((movie) => movie.title.toLowerCase().includes(query.toLowerCase())),
   );
 </script>
 
