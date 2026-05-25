@@ -56,6 +56,10 @@ export interface Show {
   metadata_locked: number;
 }
 
+export interface PlayResult {
+  session_id: number;
+}
+
 export interface MetadataStatusCounts {
   pending: number;
   failed: number;
@@ -150,9 +154,9 @@ export const api = {
 
   checkMpv: () => invoke<boolean>('check_mpv'),
   playMovie: (id: number, resume?: number) =>
-    invoke<{ session_id: number }>('play_movie', { id, resume }),
+    invoke<PlayResult>('play_movie', { id, resume }),
   playEpisode: (id: number, resume?: number) =>
-    invoke<{ session_id: number }>('play_episode', { id, resume }),
+    invoke<PlayResult>('play_episode', { id, resume }),
 
   updateShowMetadata: (id: number, patch: MetadataPatch) =>
     invoke<Show>('update_show_metadata', { id, ...patch }),
