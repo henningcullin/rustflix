@@ -116,9 +116,9 @@ Known keys today:
 | Key | Type / values | Default | Side-effects on write |
 |---|---|---|---|
 | `tmdb_api_key` | text \| null | `null` | wake_parked + notify_worker |
-| `metadata_mode` | `off`/`tmdb_only`/`imdb_only`/`prefer_tmdb`/`prefer_imdb` | `prefer_tmdb` | notify_worker (also wake parked when transitioning *from* `off` or when changing the provider order) |
+| `metadata_mode` | `off`/`tmdb_only`/`imdb_only`/`prefer_tmdb`/`prefer_imdb` | `prefer_tmdb` | notify_worker; wake_parked on every change (frees both `no_provider_available` and `tmdb_auth_required` parks that the new mode no longer needs); clear `tmdb_auth_bad` if the new mode is `off` or `imdb_only` |
 | `scrape_language` | text (e.g. `en`, `sv-SE`) | `en` | notify_worker |
-| `tmdb_auth_bad` | `'1'` flag, present means key is bad | unset | (internal — set by worker, cleared by `set_tmdb_api_key`) |
+| `tmdb_auth_bad` | `'1'` flag, present means key is bad | unset | (internal — set by worker mid-walk after a TMDB 401; cleared by `on_setting_changed` on every `tmdb_api_key` save or any `metadata_mode` change to `off`/`imdb_only`) |
 
 Future (deferred to TODO):
 
@@ -174,8 +174,18 @@ async fn on_setting_changed(
             wake_worker(app);
         }
         "metadata_mode" => {
-            if previous == Some("off") && next != Some("off") {
+            // Wake on every mode change: switching providers can flip
+            // both `no_provider_available` and `tmdb_auth_required`
+            // parks into a runnable state (e.g. tmdb_only-with-no-key
+            // → imdb_only frees a hundred `no_provider_available` rows).
+            if previous != next {
                 crate::metadata::queries::wake_parked(db).await?;
+            }
+            // Clear the TMDB auth banner when the new mode no longer
+            // needs TMDB. Otherwise the banner lingers after the user
+            // gave up on TMDB and switched to IMDB-only.
+            if matches!(next, Some("off") | Some("imdb_only")) {
+                queries::delete_app_setting(db, "tmdb_auth_bad").await?;
             }
             wake_worker(app);
         }
@@ -233,7 +243,16 @@ export const SETTINGS = {
       const valid: readonly MetadataMode[] = [
         'off', 'tmdb_only', 'imdb_only', 'prefer_tmdb', 'prefer_imdb',
       ];
-      return (valid as readonly string[]).includes(raw ?? '')
+      if (raw === null || raw === undefined) {
+        return 'prefer_tmdb';
+      }
+      if (!(valid as readonly string[]).includes(raw)) {
+        // Loud warning rather than silent fallback — a stale or
+        // hand-edited DB row should not silently UI-revert; the user
+        // saving the select would then clobber whatever was there.
+        console.warn(`metadata_mode has invalid value "${raw}", showing default`);
+      }
+      return (valid as readonly string[]).includes(raw)
         ? (raw as MetadataMode)
         : 'prefer_tmdb';
     },
@@ -360,7 +379,7 @@ query TitleDetails($id: ID!) {
     genres { genres { id text } }
     primaryImage { url width height }
     principalCredits(filter: { categories: ["director","writer","cast"] }) {
-      category { text }
+      category { id text }
       credits {
         name { id nameText { text } primaryImage { url } }
         ... on Cast { characters { name } }
@@ -371,14 +390,25 @@ query TitleDetails($id: ID!) {
 ```
 
 Local `ImdbMovieDetails` / `ImdbShowDetails` structs deserialise from
-the JSON. Both share fields; the only behavioural split is which
-`apply_*` function consumes them (movies have `runtime_minutes`, shows
-have `first_air_date` and no runtime).
+the JSON. Both share fields. Note: `runtime.seconds` is **non-null on TV
+series as well** (live verified: Breaking Bad returns 2880, the typical
+per-episode runtime). The apply layer divides by 60 for movies'
+`runtime_minutes` and **ignores `runtime` for shows** (no
+`episode_runtime` column today; revisit when one's added).
 
-**Cast handling:** the `principalCredits` array contains category
-groupings. Filter to `category.text == "Cast"`, take top 10, map to
-`{ name, character, order }` JSON shape we already store in `top_cast`.
-Top-10 order matches IMDB's billed-cast order.
+**Cast handling:** the request filter uses lowercase category ids
+(`"cast"`), but the response's `category.text` returns the **plural
+display name** — `Directors`, `Writers`, `Stars`. **Filter cast on
+`category.id == "cast"`** (preferred — stable lowercase id), or on
+`category.text == "Stars"` as a fallback. The earlier draft of this
+spec said `text == "Cast"`, which returns zero rows. Take top 10, map
+to `{ name, character, order }` JSON shape we already store in
+`top_cast`. Top-10 order matches IMDB's billed-cast order.
+
+**Rating handling:** `ratingsSummary.voteCount` is `0` (not `null`) for
+unreleased titles. The apply layer treats `voteCount == 0` as "no
+rating" and writes `rating = NULL`, regardless of what
+`aggregateRating` contains.
 
 **Image URL rewriting:** the `primaryImage.url` is an Amazon CDN URL
 like `https://m.media-amazon.com/images/M/<asset>@._V1_.jpg`. The
@@ -406,7 +436,8 @@ as TMDB `w500`).
 | Response | Maps to |
 |---|---|
 | HTTP 200 + empty `d` array (search) | `Ok(vec![])` |
-| HTTP 200 + GraphQL `errors[]` | `AppError::Other("imdb graphql: <error message>")` |
+| HTTP 200 + `data.title == null` (unknown id — live-verified) | `AppError::Other("imdb not_found: <id>")` → treated as no-match by the worker (delete job). **Note:** unknown ids do NOT produce a GraphQL `errors[]` array; detect by null on `title` or `title.titleText`. |
+| HTTP 200 + GraphQL `errors[]` (real query syntax errors) | `AppError::Other("imdb graphql: <error message>")` |
 | HTTP 202 (any endpoint) | `AppError::Other("imdb_waf: Amazon may have blocked these endpoints; see CLAUDE.md")` — distinct from regular errors so we can monitor for drift |
 | HTTP 429 / 403 / 5xx | `AppError::Other("imdb_rate_limited: <status>")` → backoff path |
 | HTTP 404 | `AppError::Other("imdb not_found: ...")` → treated as no-match by the worker (delete job) |
@@ -414,14 +445,26 @@ as TMDB `w500`).
 
 ### TOS disclaimer
 
-The GraphQL endpoint includes `extensions.disclaimer` on every response:
-"Public, commercial, and/or non-private use of the IMDb data provided by
-this API is not allowed."
+The GraphQL endpoint returns `extensions.disclaimer` on every response.
+Live-verified full text:
 
-For a personal Tauri app shipping locally, this is acceptable. If
-rustflix ever distributes to third parties as commercial software, the
-IMDB path must be disabled and the `tmdb_only` mode must remain
-functional. The module's top-of-file comment carries this notice.
+> Public, commercial, and/or non-private use of the IMDb data provided
+> by this API is not allowed. For limited non-commercial use of IMDb
+> data and the associated requirements see
+> https://help.imdb.com/article/imdb/general-information/can-i-use-imdb-data-in-my-software/G5JTRESSHJBBHTGX
+
+The disclaimer prohibits **public OR commercial OR non-private** use
+and points users at IMDb's help article for the actual limited
+non-commercial conditions. **rustflix does not interpret "personal
+desktop app" as an automatic exception**: the user of the app is
+personally responsible for compliance with the linked terms, and
+rustflix itself neither redistributes IMDb data nor uses it
+commercially.
+
+The `tmdb_only` mode must always remain a functional escape hatch so
+that anyone uncomfortable with the IMDb terms — or anyone shipping the
+app onward — can disable the IMDb path. The module's top-of-file
+comment carries the full disclaimer text and the help-article URL.
 
 ### Crates
 
@@ -480,6 +523,13 @@ loop {
     let mut saw_tmdb_auth = false;
     let mut matched = false;
 
+    // Snapshot the key the worker is using for this job. If we hit a
+    // TMDB auth error later, we'll only write tmdb_auth_bad when the
+    // key on disk still matches our snapshot — otherwise the user
+    // already pasted a new one between job start and the 401, and we
+    // shouldn't reinstate the banner.
+    let key_at_job_start = read_setting("tmdb_api_key");
+
     for (i, provider) in providers.iter().enumerate() {
         if i > 0 { tokio::time::sleep(Duration::from_millis(250)).await; }
         match dispatch_provider(*provider, &job, &ctx).await {
@@ -488,7 +538,14 @@ loop {
             Err(error) => {
                 if error.to_string().starts_with("tmdb_auth_required") {
                     saw_tmdb_auth = true;
-                    set_app_setting(&db, "tmdb_auth_bad", "1").await?;
+                    // Race guard: only set the flag if the key on disk
+                    // is still the one we used. If the user already
+                    // pasted a new key, on_setting_changed has cleared
+                    // tmdb_auth_bad and we mustn't reset it.
+                    let key_now = read_setting("tmdb_api_key");
+                    if key_now == key_at_job_start {
+                        set_app_setting(&db, "tmdb_auth_bad", "1").await?;
+                    }
                 }
                 last_err = Some(error);
                 continue;
@@ -517,14 +574,72 @@ loop {
 
 ### `dispatch_provider`
 
-Self-contained per-provider function. Reads the row, searches via the
-provider, matches, fetches details, applies, downloads poster, deletes
-the job — all in a single transaction guarded by a re-check of
-`metadata_locked` (existing pattern preserved). Returns `Outcome::Matched`
-or `Outcome::NoMatch` or `Err(AppError)`.
+Self-contained per-provider function. **HTTP calls run outside any
+SQLite transaction** — holding a write lock across a network round-trip
+would block readers (Library views, status counts) for seconds and
+risks a write-stall in WAL mode if HTTP hangs. The shape is:
 
-`dispatch_provider` for IMDB doesn't need an API key (it gets passed
-`&()` or nothing for that argument). For TMDB it takes the key.
+1. Pre-tx: read `(title, year, metadata_locked)` via a one-shot
+   `fetch_optional`. If `metadata_locked = 1` → return
+   `Outcome::NoMatch` (job will be deleted).
+2. Pre-tx: HTTP search → match → if `None` return `Outcome::NoMatch`.
+3. Pre-tx: HTTP fetch_details.
+4. **Open tx.** Re-check `metadata_locked` inside the tx (the user could
+   have edited mid-network-call). If now locked → rollback,
+   `Outcome::NoMatch`.
+5. In tx: `apply_*_details` writes the row.
+6. In tx: `delete_in_tx` removes the job row. **Merging the apply +
+   delete into one tx (vs two separate txs) closes the concurrent-scanner
+   re-enqueue race** — a re-insert into `metadata_jobs` between apply and
+   delete would otherwise be silently dropped by the worker's later
+   delete.
+7. `tx.commit()`.
+8. Post-tx (best-effort, outside tx): `download_poster`. Failure logs
+   and is swallowed; the metadata row is already committed.
+
+Returns `Outcome::Matched` / `Outcome::NoMatch` / `Err(AppError)`.
+
+`dispatch_provider` for IMDB doesn't need an API key. For TMDB it takes
+the key.
+
+### Fast path for hand-linked rows
+
+When a row already has `(provider, provider_id)` set — because the user
+manually picked from the match sheet, or because a prior sync succeeded
+and the user is `Refresh`-ing — the worker **bypasses
+`providers_for_mode` entirely** and dispatches directly against the
+linked provider. The current `metadata_mode` is **ignored** for these
+rows: the user's manual link is the source of truth, regardless of
+whether the mode would otherwise route to a different provider.
+
+Placement in the worker loop (before `providers_for_mode`):
+
+```rust
+if let Some((linked_provider, _)) = read_link_for_row(&db, &job).await? {
+    match dispatch_provider(linked_provider, &job, &ctx).await {
+        Ok(Outcome::Matched) => continue,
+        Ok(Outcome::NoMatch) => { delete_job(&job).await?; continue; }
+        Err(error) => { record_failure(&job, &error).await?; continue; }
+    }
+}
+```
+
+If the user wants to switch providers for a row, they `Unlink` first.
+That clears `(provider, provider_id)` and re-enqueues; the next worker
+pass goes through `providers_for_mode` normally.
+
+### Mode vs manual-search precedence
+
+The Needs-review match sheet allows searching either provider regardless
+of the active mode. Rationale: the user is explicitly overriding the
+default route. The TMDB tab is still disabled when no key is set
+(network requirement, not a mode constraint). The IMDB tab is always
+available.
+
+Picking an IMDB candidate while in `tmdb_only` mode is allowed and
+lands a hand-linked row that the worker's fast path will refresh against
+IMDB on future passes — bypassing the mode setting until the user
+unlinks.
 
 ### Park / wake with new sentinel
 
@@ -532,10 +647,41 @@ or `Outcome::NoMatch` or `Err(AppError)`.
   `last_error = 'tmdb_auth_required'`.
 - `park_with_reason(job, ParkReason::NoProviderAvailable)` writes
   `last_error = 'no_provider_available'`.
-- `wake_parked` clears either sentinel and is called from
-  `on_setting_changed` whenever the TMDB key is set or the mode changes.
+- `wake_parked` clears either sentinel — runs from `on_setting_changed`
+  on every TMDB key save and on every mode change.
 - `next_due` excludes any row whose `last_error` matches a parking
   sentinel.
+
+The exact SQL updates:
+
+```sql
+-- next_due (existing query becomes):
+SELECT kind, media_id, attempts, last_error, next_attempt_at
+FROM metadata_jobs
+WHERE COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')
+  AND attempts < 8
+  AND next_attempt_at <= strftime('%s','now')
+ORDER BY next_attempt_at ASC
+LIMIT 1;
+
+-- wake_parked clears both sentinels:
+UPDATE metadata_jobs SET
+    last_error = NULL,
+    next_attempt_at = strftime('%s','now')
+WHERE last_error IN ('tmdb_auth_required', 'no_provider_available');
+```
+
+The `metadata_status_counts` query's `pending` / `failed` SQL also
+needs to filter out **both** sentinels in its `<>` clauses (today's
+query checks only `'auth_required'`). Adding two more columns —
+`tmdb_auth_required` and `no_provider_available` — gives the UI the
+breakdown.
+
+The one-shot data fixup that renames the legacy sentinel lives in
+`db.rs::dedupe_shows_and_index`. Since the function name no longer
+describes its job (it now does both shows-dedup and metadata-jobs
+fixup), **rename it to `post_migration_fixups`** in the same PR to
+avoid future-author confusion.
 
 ### Status counts
 
@@ -642,8 +788,12 @@ Unit tests:
 - `metadata/dispatch.rs` (new file housing `providers_for_mode`) —
   ~10 tests covering every mode × key-present combination. Pure
   function, no DB.
-- `metadata/matching.rs` — unchanged; the 10 existing tests cover the
-  `MatchCandidate.provider` field passthrough.
+- `metadata/matching.rs` — the 14 existing test call sites need their
+  `candidate(id, title, year)` helper updated to pass a default
+  `Provider`. Trivial: add `provider: Provider` to the helper signature
+  and default to `Provider::Tmdb` in tests. The matcher's behaviour
+  doesn't change — provider just rides along. No new tests required for
+  the new field.
 
 Live HTTP tests are skipped, same policy as TMDB.
 
@@ -704,9 +854,14 @@ sequence (current max: fix/41).
      `dedupe_shows_and_index`.
    - `metadata_status_counts` grows two new columns; UI renders both.
    - Worker loop refactor: `providers_for_mode` → empty-walk path → park.
-   - At end of this PR, behaviour is unchanged for the default mode;
-     `imdb_only` and `prefer_imdb` log "not implemented" since the IMDB
-     module doesn't exist yet.
+   - At end of this PR, behaviour is unchanged for the default mode.
+     **`imdb_only` and `prefer_imdb` modes are pickable in the UI but
+     `providers_for_mode` degrades them to `[Tmdb]` when a TMDB key is
+     present, else `Err(NoProviderAvailable)`** — i.e. they behave like
+     `tmdb_only` until fix/43 lands. This keeps the queue moving for
+     `prefer_imdb` users (TMDB does the work) and parks `imdb_only`
+     users with a clear sentinel rather than spinning indefinitely. The
+     fix/43 PR replaces the degrade with real IMDB dispatch.
 
 2. **fix/43 — IMDB module + dispatch.**
    - `metadata/imdb.rs` with suggestion + GraphQL clients.
