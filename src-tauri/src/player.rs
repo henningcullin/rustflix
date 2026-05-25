@@ -104,17 +104,32 @@ pub async fn play(
         (last_pos, last_dur)
     });
 
-    let _status = child.wait().await?;
-    let (final_pos, final_dur) = parse_task
-        .await
-        .map_err(|e| AppError::Other(e.to_string()))?;
+    // Wait for both halves regardless of which errors first — losing the
+    // child's exit error is worse than losing progress, so we drain the
+    // parse task no matter what and save whatever it captured.
+    let wait_result = child.wait().await;
+    let parse_result = parse_task.await;
+
+    let (final_pos, final_dur) = match parse_result {
+        Ok(values) => values,
+        Err(join_error) => {
+            eprintln!("mpv parse task failed: {join_error}");
+            (0, None)
+        }
+    };
 
     let watched = match final_dur {
-        Some(d) if d > 0 => (final_pos as f64 / d as f64) >= 0.9 || (d - final_pos) <= 60,
+        Some(duration) if duration > 0 => {
+            (final_pos as f64 / duration as f64) >= 0.9 || (duration - final_pos) <= 60
+        }
         _ => false,
     };
 
     queries::upsert_progress(pool, kind, media_id, final_pos, final_dur, watched).await?;
+
+    // Surface the child wait error after we've already persisted progress,
+    // so a failed reap doesn't drop the last-known position.
+    wait_result?;
 
     Ok(PlayResult { session_id })
 }
