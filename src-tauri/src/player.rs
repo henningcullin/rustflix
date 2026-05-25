@@ -41,7 +41,7 @@ pub async fn check_mpv() -> AppResult<()> {
         .stderr(Stdio::null())
         .status()
         .await
-        .map(|s| s.success())
+        .map(|status| status.success())
         .unwrap_or(false);
     if ok {
         Ok(())

@@ -15,8 +15,8 @@
     loading = true;
     try {
       shows = await api.listShows();
-    } catch (e) {
-      console.error(e);
+    } catch (caught) {
+      console.error(caught);
     } finally {
       loading = false;
     }
@@ -25,12 +25,14 @@
   const filtered = $derived(
     query.trim() === ''
       ? shows
-      : shows.filter((s) => s.title.toLowerCase().includes(query.toLowerCase())),
+      : shows.filter((show) => show.title.toLowerCase().includes(query.toLowerCase())),
   );
 
-  function subtitle(s: Show): string {
-    if (s.episode_count === 0) return s.year ? String(s.year) : '';
-    return `${s.watched_count}/${s.episode_count} watched`;
+  function subtitle(show: Show): string {
+    if (show.episode_count === 0) {
+      return show.year ? String(show.year) : '';
+    }
+    return `${show.watched_count}/${show.episode_count} watched`;
   }
 </script>
 

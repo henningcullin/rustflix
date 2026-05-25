@@ -23,7 +23,9 @@
   const id = $derived(Number($page.params.id));
 
   $effect(() => {
-    if (!Number.isFinite(id)) return;
+    if (!Number.isFinite(id)) {
+      return;
+    }
     void load(id);
   });
 
@@ -35,17 +37,19 @@
       if (selectedSeason === null && seasons.length > 0) {
         selectedSeason = seasons[0].season;
       }
-    } catch (e) {
-      error = String(e);
+    } catch (caught) {
+      error = String(caught);
     } finally {
       loading = false;
     }
   }
 
   const nextUp = $derived.by(() => {
-    for (const s of seasons) {
-      for (const e of s.episodes) {
-        if (!e.watched) return e;
+    for (const season of seasons) {
+      for (const episode of season.episodes) {
+        if (!episode.watched) {
+          return episode;
+        }
       }
     }
     return null;
@@ -54,9 +58,11 @@
   async function playEpisode(epId: number, fromStart = false) {
     try {
       await api.playEpisode(epId, fromStart ? 0 : undefined);
-      if (show) await load(show.id);
-    } catch (e) {
-      error = String(e);
+      if (show) {
+        await load(show.id);
+      }
+    } catch (caught) {
+      error = String(caught);
     }
   }
 
@@ -149,7 +155,7 @@
   }
 
   const activeSeason = $derived(
-    seasons.find((s) => s.season === selectedSeason) ?? seasons[0] ?? null,
+    seasons.find((season) => season.season === selectedSeason) ?? seasons[0] ?? null,
   );
 </script>
 
@@ -206,16 +212,16 @@
 
     {#if seasons.length > 1}
       <div class="mb-4 flex flex-wrap gap-2">
-        {#each seasons as s (s.season)}
-          {@const isActive = s.season === activeSeason?.season}
+        {#each seasons as season (season.season)}
+          {@const isActive = season.season === activeSeason?.season}
           <button
             type="button"
-            onclick={() => (selectedSeason = s.season)}
+            onclick={() => (selectedSeason = season.season)}
             class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors {isActive
               ? 'bg-primary text-primary-foreground'
               : 'bg-secondary text-secondary-foreground hover:bg-accent'}"
           >
-            Season {s.season}
+            Season {season.season}
           </button>
         {/each}
       </div>
@@ -225,7 +231,11 @@
       bind:open={mergeOpen}
       {show}
       onClose={() => (mergeOpen = false)}
-      onMerged={() => show && load(show.id)}
+      onMerged={() => {
+        if (show) {
+          void load(show.id);
+        }
+      }}
     />
 
     {#if activeSeason}
