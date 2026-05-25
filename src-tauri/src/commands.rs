@@ -391,6 +391,9 @@ pub async fn admin_fk_label(
 /// Best-effort cleanup of a manual poster file. Only deletes the file when
 /// it sits inside our own `<app_data>/posters/` directory — any other path
 /// is ignored so a malformed `poster_path` can never remove user media.
+///
+/// Both sides are canonicalised before the prefix check so `..` segments
+/// or symlinks in the stored `poster_path` can't escape the posters dir.
 async fn try_remove_managed_poster(app: &AppHandle, poster_path: &str) {
     let app_data_dir = match app.path().app_data_dir() {
         Ok(dir) => dir,
@@ -398,12 +401,20 @@ async fn try_remove_managed_poster(app: &AppHandle, poster_path: &str) {
     };
     let posters_dir = app_data_dir.join("posters");
 
-    let candidate = Path::new(poster_path);
-    if !candidate.starts_with(&posters_dir) {
+    let canonical_dir = match tokio::fs::canonicalize(&posters_dir).await {
+        Ok(path) => path,
+        Err(_) => return,
+    };
+    let canonical_candidate = match tokio::fs::canonicalize(poster_path).await {
+        Ok(path) => path,
+        Err(_) => return,
+    };
+
+    if !canonical_candidate.starts_with(&canonical_dir) {
         return;
     }
 
-    let _ = tokio::fs::remove_file(candidate).await;
+    let _ = tokio::fs::remove_file(&canonical_candidate).await;
 }
 
 #[tauri::command]
