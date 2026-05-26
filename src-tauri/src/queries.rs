@@ -591,6 +591,7 @@ pub fn validate(key: &str, value: Option<&str>) -> AppResult<()> {
 /// `get_app_setting` callers when the row is missing. The TS wrapper has
 /// the parsed-type defaults; this is a parallel string version for the
 /// Rust read path.
+#[allow(dead_code)] // Reserved for a settings-defaults UI; consumers TBD.
 pub fn default_for(key: &str) -> Option<&'static str> {
     match key {
         "metadata_mode" => Some("prefer_tmdb"),
