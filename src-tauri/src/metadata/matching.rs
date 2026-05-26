@@ -4,8 +4,11 @@
 use serde::{Deserialize, Serialize};
 use unicode_normalization::UnicodeNormalization;
 
+use crate::metadata::dispatch::Provider;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MatchCandidate {
+    pub provider: Provider,
     pub provider_id: String,
     pub title: String,
     pub year: Option<i32>,
@@ -90,6 +93,7 @@ mod tests {
 
     fn candidate(id: &str, title: &str, year: Option<i32>) -> MatchCandidate {
         MatchCandidate {
+            provider: Provider::Tmdb,
             provider_id: id.to_string(),
             title: title.to_string(),
             year,
