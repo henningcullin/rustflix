@@ -61,6 +61,7 @@ pub async fn next_due(pool: &SqlitePool) -> AppResult<Option<MetadataJob>> {
     )
     .fetch_optional(pool)
     .await?;
+
     Ok(job)
 }
 
@@ -79,6 +80,7 @@ pub async fn park_with_reason(
     .bind(reason.sentinel())
     .execute(pool)
     .await?;
+
     Ok(())
 }
 
@@ -94,6 +96,7 @@ pub async fn wake_parked(pool: &SqlitePool) -> AppResult<()> {
     )
     .execute(pool)
     .await?;
+
     Ok(())
 }
 
@@ -236,16 +239,68 @@ mod tests {
     #[tokio::test]
     async fn wake_parked_clears_either_sentinel() {
         let pool = fresh_pool().await;
-        let show_id = seed_show(&pool).await;
-        enqueue(&pool, "show", show_id).await.unwrap();
-        park_with_reason(&pool, "show", show_id, ParkReason::TmdbAuthRequired)
+        let library_id: i64 = 1;
+
+        // Seed a show and a movie so we have two distinct (kind, media_id) rows.
+        sqlx::query("INSERT INTO libraries (id, path, kind) VALUES (?1, '/tmp', 'mixed')")
+            .bind(library_id)
+            .execute(&pool)
+            .await
+            .expect("library");
+        sqlx::query(
+            "INSERT INTO shows (library_id, title, folder_path, fingerprint)
+             VALUES (?1, 'TestShow', '/tmp/show', 'testshow')",
+        )
+        .bind(library_id)
+        .execute(&pool)
+        .await
+        .expect("show");
+        let show_id: i64 = sqlx::query_scalar("SELECT last_insert_rowid()")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            "INSERT INTO movies (library_id, title, path)
+             VALUES (?1, 'TestMovie', '/tmp/movie.mkv')",
+        )
+        .bind(library_id)
+        .execute(&pool)
+        .await
+        .expect("movie");
+        let movie_id: i64 = sqlx::query_scalar("SELECT last_insert_rowid()")
+            .fetch_one(&pool)
             .await
             .unwrap();
 
+        enqueue(&pool, "show", show_id).await.unwrap();
+        enqueue(&pool, "movie", movie_id).await.unwrap();
+
+        park_with_reason(&pool, "show", show_id, ParkReason::TmdbAuthRequired)
+            .await
+            .unwrap();
+        park_with_reason(&pool, "movie", movie_id, ParkReason::NoProviderAvailable)
+            .await
+            .unwrap();
+
+        // Both rows should be excluded from next_due before wake.
+        assert!(next_due(&pool).await.unwrap().is_none());
+
         wake_parked(&pool).await.unwrap();
 
-        let job = next_due(&pool).await.unwrap().expect("should be due again");
-        assert!(job.last_error.is_none());
+        // After wake, both rows should be available; pull one then the other.
+        let first = next_due(&pool).await.unwrap().expect("first job back");
+        assert!(first.last_error.is_none());
+
+        // Drain it so the second can surface.
+        let mut conn = pool.acquire().await.unwrap();
+        delete_in_tx(&mut *conn, &first.kind, first.media_id)
+            .await
+            .unwrap();
+        drop(conn);
+
+        let second = next_due(&pool).await.unwrap().expect("second job back");
+        assert!(second.last_error.is_none());
+        assert_ne!((first.kind, first.media_id), (second.kind, second.media_id));
     }
 
     #[tokio::test]
