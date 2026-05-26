@@ -232,6 +232,8 @@ pub struct TextNode {
 #[derive(Debug, Deserialize)]
 pub struct ReleaseYearNode {
     pub year: Option<i32>,
+    // Captured from IMDB so a future "ended in YYYY" UI can show it without a re-fetch.
+    #[allow(dead_code)]
     #[serde(rename = "endYear")]
     pub end_year: Option<i32>,
 }
@@ -378,6 +380,8 @@ async fn fetch_details_internal(client: &Client, imdb_id: &str) -> AppResult<Tit
 #[derive(Debug, Clone, Copy)]
 pub enum PosterSize {
     Small,
+    // Reserved for the future backdrop / hero rendering path.
+    #[allow(dead_code)]
     Hero,
 }
 
