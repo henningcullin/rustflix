@@ -116,7 +116,8 @@ pub struct MergeOutcome {
 pub struct MetadataStatusCounts {
     pub pending: i64,
     pub failed: i64,
-    pub auth_required: i64,
+    pub tmdb_auth_required: i64,
+    pub no_provider_available: i64,
     pub dead_letter: i64,
     pub needs_review: i64,
 }

@@ -510,7 +510,8 @@ pub async fn metadata_status_counts(
 ) -> AppResult<crate::models::MetadataStatusCounts> {
     let pending: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM metadata_jobs
-         WHERE attempts = 0 AND COALESCE(last_error, '') <> 'auth_required'",
+         WHERE attempts = 0
+           AND COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')",
     )
     .fetch_one(pool)
     .await?;
@@ -518,13 +519,19 @@ pub async fn metadata_status_counts(
     let failed: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM metadata_jobs
          WHERE attempts > 0 AND attempts < 8
-           AND COALESCE(last_error, '') <> 'auth_required'",
+           AND COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')",
     )
     .fetch_one(pool)
     .await?;
 
-    let auth_required: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'auth_required'",
+    let tmdb_auth_required: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'tmdb_auth_required'",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let no_provider_available: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'no_provider_available'",
     )
     .fetch_one(pool)
     .await?;
@@ -552,8 +559,88 @@ pub async fn metadata_status_counts(
     Ok(crate::models::MetadataStatusCounts {
         pending,
         failed,
-        auth_required,
+        tmdb_auth_required,
+        no_provider_available,
         dead_letter,
         needs_review,
     })
+}
+
+/// Server-side validator keyed on setting name. Enum-shaped settings
+/// reject unknown values; free-form keys pass through. Defense in depth
+/// against frontend bugs and hand-edited DB rows.
+pub fn validate(key: &str, value: Option<&str>) -> AppResult<()> {
+    match key {
+        "metadata_mode" => {
+            let allowed = ["off", "tmdb_only", "imdb_only", "prefer_tmdb", "prefer_imdb"];
+            match value {
+                Some(v) if allowed.contains(&v) => Ok(()),
+                Some(other) => Err(AppError::Other(format!(
+                    "metadata_mode: invalid value '{other}'"
+                ))),
+                None => Ok(()),
+            }
+        }
+        "scrape_language" | "ui_language" | "theme" | "tmdb_api_key" | "tmdb_auth_bad" => Ok(()),
+        // Unknown keys allowed (forward compat with future settings).
+        _ => Ok(()),
+    }
+}
+
+/// Canonical default value for a known setting, as a string. Returned by
+/// `get_app_setting` callers when the row is missing. The TS wrapper has
+/// the parsed-type defaults; this is a parallel string version for the
+/// Rust read path.
+pub fn default_for(key: &str) -> Option<&'static str> {
+    match key {
+        "metadata_mode" => Some("prefer_tmdb"),
+        "scrape_language" => Some("en"),
+        "ui_language" => Some("en"),
+        "theme" => Some("system"),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod settings_tests {
+    use super::*;
+
+    #[test]
+    fn validate_accepts_known_mode_values() {
+        for value in ["off", "tmdb_only", "imdb_only", "prefer_tmdb", "prefer_imdb"] {
+            assert!(validate("metadata_mode", Some(value)).is_ok(), "{value}");
+        }
+    }
+
+    #[test]
+    fn validate_rejects_unknown_mode_value() {
+        assert!(validate("metadata_mode", Some("perfer_tmdb")).is_err());
+        assert!(validate("metadata_mode", Some("")).is_err());
+    }
+
+    #[test]
+    fn validate_accepts_null_for_any_key() {
+        assert!(validate("metadata_mode", None).is_ok());
+        assert!(validate("tmdb_api_key", None).is_ok());
+    }
+
+    #[test]
+    fn validate_passes_through_free_form_keys() {
+        assert!(validate("scrape_language", Some("en-US")).is_ok());
+        assert!(validate("tmdb_api_key", Some("abc123")).is_ok());
+        assert!(validate("future_setting", Some("anything")).is_ok());
+    }
+
+    #[test]
+    fn default_for_known_keys() {
+        assert_eq!(default_for("metadata_mode"), Some("prefer_tmdb"));
+        assert_eq!(default_for("scrape_language"), Some("en"));
+        assert_eq!(default_for("theme"), Some("system"));
+    }
+
+    #[test]
+    fn default_for_unknown_keys_is_none() {
+        assert_eq!(default_for("tmdb_api_key"), None);
+        assert_eq!(default_for("nonexistent"), None);
+    }
 }

@@ -3,6 +3,7 @@
 use sqlx::SqlitePool;
 
 use crate::error::AppResult;
+use crate::metadata::dispatch::ParkReason;
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct MetadataJob {
@@ -47,12 +48,12 @@ pub async fn force_enqueue(pool: &SqlitePool, kind: &str, media_id: i64) -> AppR
 }
 
 /// Returns the next job whose next_attempt_at <= now and that isn't parked
-/// on 'auth_required'. None ⇒ queue is empty / fully parked.
+/// on either sentinel. None ⇒ queue is empty / fully parked.
 pub async fn next_due(pool: &SqlitePool) -> AppResult<Option<MetadataJob>> {
     let job: Option<MetadataJob> = sqlx::query_as(
         "SELECT kind, media_id, attempts, last_error, next_attempt_at
          FROM metadata_jobs
-         WHERE COALESCE(last_error, '') <> 'auth_required'
+         WHERE COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')
            AND attempts < 8
            AND next_attempt_at <= strftime('%s','now')
          ORDER BY next_attempt_at ASC
@@ -64,26 +65,34 @@ pub async fn next_due(pool: &SqlitePool) -> AppResult<Option<MetadataJob>> {
     Ok(job)
 }
 
-pub async fn park_auth(pool: &SqlitePool, kind: &str, media_id: i64) -> AppResult<()> {
+pub async fn park_with_reason(
+    pool: &SqlitePool,
+    kind: &str,
+    media_id: i64,
+    reason: ParkReason,
+) -> AppResult<()> {
     sqlx::query(
-        "UPDATE metadata_jobs SET last_error = 'auth_required'
+        "UPDATE metadata_jobs SET last_error = ?3
          WHERE kind = ?1 AND media_id = ?2",
     )
     .bind(kind)
     .bind(media_id)
+    .bind(reason.sentinel())
     .execute(pool)
     .await?;
 
     Ok(())
 }
 
-/// Clears the auth_required sentinel from every parked row so the worker
-/// can pick them up. Called when the user saves a new TMDB key.
+/// Clears the park sentinels from every parked row so the worker can pick
+/// them up. Called when the user saves a new TMDB key or changes settings
+/// that may unblock previously-stuck jobs.
 pub async fn wake_parked(pool: &SqlitePool) -> AppResult<()> {
     sqlx::query(
-        "UPDATE metadata_jobs SET last_error = NULL,
-                                  next_attempt_at = strftime('%s','now')
-         WHERE last_error = 'auth_required'",
+        "UPDATE metadata_jobs SET
+             last_error = NULL,
+             next_attempt_at = strftime('%s','now')
+         WHERE last_error IN ('tmdb_auth_required', 'no_provider_available')",
     )
     .execute(pool)
     .await?;
@@ -200,28 +209,98 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn park_auth_excludes_job_from_next_due() {
+    async fn park_with_tmdb_auth_excludes_job_from_next_due() {
         let pool = fresh_pool().await;
         let show_id = seed_show(&pool).await;
         enqueue(&pool, "show", show_id).await.unwrap();
 
-        park_auth(&pool, "show", show_id).await.unwrap();
+        park_with_reason(&pool, "show", show_id, ParkReason::TmdbAuthRequired)
+            .await
+            .unwrap();
 
         let job = next_due(&pool).await.unwrap();
         assert!(job.is_none(), "parked job should be excluded");
     }
 
     #[tokio::test]
-    async fn wake_parked_clears_sentinel() {
+    async fn park_with_no_provider_excludes_job_from_next_due() {
         let pool = fresh_pool().await;
         let show_id = seed_show(&pool).await;
         enqueue(&pool, "show", show_id).await.unwrap();
-        park_auth(&pool, "show", show_id).await.unwrap();
+
+        park_with_reason(&pool, "show", show_id, ParkReason::NoProviderAvailable)
+            .await
+            .unwrap();
+
+        let job = next_due(&pool).await.unwrap();
+        assert!(job.is_none(), "parked job should be excluded");
+    }
+
+    #[tokio::test]
+    async fn wake_parked_clears_either_sentinel() {
+        let pool = fresh_pool().await;
+        let library_id: i64 = 1;
+
+        // Seed a show and a movie so we have two distinct (kind, media_id) rows.
+        sqlx::query("INSERT INTO libraries (id, path, kind) VALUES (?1, '/tmp', 'mixed')")
+            .bind(library_id)
+            .execute(&pool)
+            .await
+            .expect("library");
+        sqlx::query(
+            "INSERT INTO shows (library_id, title, folder_path, fingerprint)
+             VALUES (?1, 'TestShow', '/tmp/show', 'testshow')",
+        )
+        .bind(library_id)
+        .execute(&pool)
+        .await
+        .expect("show");
+        let show_id: i64 = sqlx::query_scalar("SELECT last_insert_rowid()")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            "INSERT INTO movies (library_id, title, path)
+             VALUES (?1, 'TestMovie', '/tmp/movie.mkv')",
+        )
+        .bind(library_id)
+        .execute(&pool)
+        .await
+        .expect("movie");
+        let movie_id: i64 = sqlx::query_scalar("SELECT last_insert_rowid()")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
+        enqueue(&pool, "show", show_id).await.unwrap();
+        enqueue(&pool, "movie", movie_id).await.unwrap();
+
+        park_with_reason(&pool, "show", show_id, ParkReason::TmdbAuthRequired)
+            .await
+            .unwrap();
+        park_with_reason(&pool, "movie", movie_id, ParkReason::NoProviderAvailable)
+            .await
+            .unwrap();
+
+        // Both rows should be excluded from next_due before wake.
+        assert!(next_due(&pool).await.unwrap().is_none());
 
         wake_parked(&pool).await.unwrap();
 
-        let job = next_due(&pool).await.unwrap().expect("should be due again");
-        assert!(job.last_error.is_none());
+        // After wake, both rows should be available; pull one then the other.
+        let first = next_due(&pool).await.unwrap().expect("first job back");
+        assert!(first.last_error.is_none());
+
+        // Drain it so the second can surface.
+        let mut conn = pool.acquire().await.unwrap();
+        delete_in_tx(&mut *conn, &first.kind, first.media_id)
+            .await
+            .unwrap();
+        drop(conn);
+
+        let second = next_due(&pool).await.unwrap().expect("second job back");
+        assert!(second.last_error.is_none());
+        assert_ne!((first.kind, first.media_id), (second.kind, second.media_id));
     }
 
     #[tokio::test]
