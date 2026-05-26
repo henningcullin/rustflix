@@ -202,25 +202,61 @@ pub async fn delete_show(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResul
 }
 
 #[tauri::command]
-pub async fn get_tmdb_api_key(db: State<'_, Db>) -> AppResult<Option<String>> {
-    queries::get_app_setting(&db, "tmdb_api_key").await
+pub async fn get_app_setting(db: State<'_, Db>, key: String) -> AppResult<Option<String>> {
+    queries::get_app_setting(&db, &key).await
 }
 
 #[tauri::command]
-pub async fn set_tmdb_api_key(
+pub async fn set_app_setting(
     app: AppHandle,
     db: State<'_, Db>,
     key: String,
+    value: Option<String>,
 ) -> AppResult<()> {
-    let trimmed = key.trim();
-    if trimmed.is_empty() {
-        queries::delete_app_setting(&db, "tmdb_api_key").await?;
-    } else {
-        queries::set_app_setting(&db, "tmdb_api_key", trimmed).await?;
-        crate::metadata::queries::wake_parked(&db).await?;
+    queries::validate(&key, value.as_deref())?;
+
+    let previous = queries::get_app_setting(&db, &key).await?;
+
+    match value.as_deref() {
+        Some(new_value) => queries::set_app_setting(&db, &key, new_value).await?,
+        None => queries::delete_app_setting(&db, &key).await?,
     }
 
-    wake_worker(&app);
+    on_setting_changed(&app, &db, &key, previous.as_deref(), value.as_deref()).await?;
+
+    Ok(())
+}
+
+async fn on_setting_changed(
+    app: &AppHandle,
+    db: &Db,
+    key: &str,
+    previous: Option<&str>,
+    next: Option<&str>,
+) -> AppResult<()> {
+    match key {
+        "tmdb_api_key" => {
+            if next.is_some() {
+                queries::delete_app_setting(db, "tmdb_auth_bad").await?;
+                crate::metadata::queries::wake_parked(db).await?;
+            }
+            wake_worker(app);
+        }
+        "metadata_mode" => {
+            if previous != next {
+                crate::metadata::queries::wake_parked(db).await?;
+            }
+            if matches!(next, Some("off") | Some("imdb_only")) {
+                queries::delete_app_setting(db, "tmdb_auth_bad").await?;
+            }
+            wake_worker(app);
+        }
+        "scrape_language" => {
+            wake_worker(app);
+        }
+        _ => {}
+    }
+
     Ok(())
 }
 
