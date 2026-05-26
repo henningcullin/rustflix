@@ -221,7 +221,13 @@ async fn handle_failure(
     let message = error.to_string();
 
     if message.starts_with("auth_required") {
-        queries::park_auth(pool, &job.kind, job.media_id).await?;
+        queries::park_with_reason(
+            pool,
+            &job.kind,
+            job.media_id,
+            crate::metadata::dispatch::ParkReason::TmdbAuthRequired,
+        )
+        .await?;
     } else {
         queries::record_failure(pool, &job.kind, job.media_id, &message).await?;
     }

@@ -3,6 +3,7 @@
 use sqlx::SqlitePool;
 
 use crate::error::AppResult;
+use crate::metadata::dispatch::ParkReason;
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct MetadataJob {
@@ -47,12 +48,12 @@ pub async fn force_enqueue(pool: &SqlitePool, kind: &str, media_id: i64) -> AppR
 }
 
 /// Returns the next job whose next_attempt_at <= now and that isn't parked
-/// on 'auth_required'. None ⇒ queue is empty / fully parked.
+/// on either sentinel. None ⇒ queue is empty / fully parked.
 pub async fn next_due(pool: &SqlitePool) -> AppResult<Option<MetadataJob>> {
     let job: Option<MetadataJob> = sqlx::query_as(
         "SELECT kind, media_id, attempts, last_error, next_attempt_at
          FROM metadata_jobs
-         WHERE COALESCE(last_error, '') <> 'auth_required'
+         WHERE COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')
            AND attempts < 8
            AND next_attempt_at <= strftime('%s','now')
          ORDER BY next_attempt_at ASC
@@ -60,34 +61,39 @@ pub async fn next_due(pool: &SqlitePool) -> AppResult<Option<MetadataJob>> {
     )
     .fetch_optional(pool)
     .await?;
-
     Ok(job)
 }
 
-pub async fn park_auth(pool: &SqlitePool, kind: &str, media_id: i64) -> AppResult<()> {
+pub async fn park_with_reason(
+    pool: &SqlitePool,
+    kind: &str,
+    media_id: i64,
+    reason: ParkReason,
+) -> AppResult<()> {
     sqlx::query(
-        "UPDATE metadata_jobs SET last_error = 'auth_required'
+        "UPDATE metadata_jobs SET last_error = ?3
          WHERE kind = ?1 AND media_id = ?2",
     )
     .bind(kind)
     .bind(media_id)
+    .bind(reason.sentinel())
     .execute(pool)
     .await?;
-
     Ok(())
 }
 
-/// Clears the auth_required sentinel from every parked row so the worker
-/// can pick them up. Called when the user saves a new TMDB key.
+/// Clears the park sentinels from every parked row so the worker can pick
+/// them up. Called when the user saves a new TMDB key or changes settings
+/// that may unblock previously-stuck jobs.
 pub async fn wake_parked(pool: &SqlitePool) -> AppResult<()> {
     sqlx::query(
-        "UPDATE metadata_jobs SET last_error = NULL,
-                                  next_attempt_at = strftime('%s','now')
-         WHERE last_error = 'auth_required'",
+        "UPDATE metadata_jobs SET
+             last_error = NULL,
+             next_attempt_at = strftime('%s','now')
+         WHERE last_error IN ('tmdb_auth_required', 'no_provider_available')",
     )
     .execute(pool)
     .await?;
-
     Ok(())
 }
 
@@ -200,23 +206,41 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn park_auth_excludes_job_from_next_due() {
+    async fn park_with_tmdb_auth_excludes_job_from_next_due() {
         let pool = fresh_pool().await;
         let show_id = seed_show(&pool).await;
         enqueue(&pool, "show", show_id).await.unwrap();
 
-        park_auth(&pool, "show", show_id).await.unwrap();
+        park_with_reason(&pool, "show", show_id, ParkReason::TmdbAuthRequired)
+            .await
+            .unwrap();
 
         let job = next_due(&pool).await.unwrap();
         assert!(job.is_none(), "parked job should be excluded");
     }
 
     #[tokio::test]
-    async fn wake_parked_clears_sentinel() {
+    async fn park_with_no_provider_excludes_job_from_next_due() {
         let pool = fresh_pool().await;
         let show_id = seed_show(&pool).await;
         enqueue(&pool, "show", show_id).await.unwrap();
-        park_auth(&pool, "show", show_id).await.unwrap();
+
+        park_with_reason(&pool, "show", show_id, ParkReason::NoProviderAvailable)
+            .await
+            .unwrap();
+
+        let job = next_due(&pool).await.unwrap();
+        assert!(job.is_none(), "parked job should be excluded");
+    }
+
+    #[tokio::test]
+    async fn wake_parked_clears_either_sentinel() {
+        let pool = fresh_pool().await;
+        let show_id = seed_show(&pool).await;
+        enqueue(&pool, "show", show_id).await.unwrap();
+        park_with_reason(&pool, "show", show_id, ParkReason::TmdbAuthRequired)
+            .await
+            .unwrap();
 
         wake_parked(&pool).await.unwrap();
 
