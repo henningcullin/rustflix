@@ -156,6 +156,280 @@ fn http_err(error: reqwest::Error) -> AppError {
     AppError::Other(format!("imdb http: {error}"))
 }
 
+// ---- GraphQL details ----
+
+const GRAPHQL_URL: &str = "https://caching.graphql.imdb.com/";
+
+const GRAPHQL_QUERY: &str = r#"
+query TitleDetails($id: ID!) {
+  title(id: $id) {
+    id
+    titleText { text }
+    titleType { id }
+    releaseYear { year endYear }
+    releaseDate { day month year }
+    plot { plotText { plainText } }
+    ratingsSummary { aggregateRating voteCount }
+    runtime { seconds }
+    genres { genres { id text } }
+    primaryImage { url width height }
+    principalCredits(filter: { categories: ["director","writer","cast"] }) {
+      category { id text }
+      credits {
+        name { id nameText { text } }
+        ... on Cast { characters { name } }
+      }
+    }
+  }
+}
+"#;
+
+#[derive(Debug, Deserialize)]
+struct GraphQLEnvelope {
+    data: Option<GraphQLData>,
+    #[serde(default)]
+    errors: Vec<GraphQLError>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GraphQLData {
+    title: Option<TitleNode>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GraphQLError {
+    message: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TitleNode {
+    pub id: String,
+    #[serde(default, rename = "titleText")]
+    pub title_text: Option<TextNode>,
+    #[serde(default, rename = "releaseYear")]
+    pub release_year: Option<ReleaseYearNode>,
+    #[serde(default, rename = "releaseDate")]
+    pub release_date: Option<ReleaseDateNode>,
+    #[serde(default)]
+    pub plot: Option<PlotNode>,
+    #[serde(default, rename = "ratingsSummary")]
+    pub ratings_summary: Option<RatingsNode>,
+    #[serde(default)]
+    pub runtime: Option<RuntimeNode>,
+    #[serde(default)]
+    pub genres: Option<GenresWrapper>,
+    #[serde(default, rename = "primaryImage")]
+    pub primary_image: Option<PrimaryImage>,
+    #[serde(default, rename = "principalCredits")]
+    pub principal_credits: Vec<PrincipalCredits>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TextNode {
+    pub text: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReleaseYearNode {
+    pub year: Option<i32>,
+    #[serde(rename = "endYear")]
+    pub end_year: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReleaseDateNode {
+    pub day: Option<i32>,
+    pub month: Option<i32>,
+    pub year: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PlotNode {
+    #[serde(rename = "plotText")]
+    pub plot_text: Option<PlotTextNode>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PlotTextNode {
+    #[serde(rename = "plainText")]
+    pub plain_text: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RatingsNode {
+    #[serde(rename = "aggregateRating")]
+    pub aggregate_rating: Option<f64>,
+    #[serde(rename = "voteCount")]
+    pub vote_count: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RuntimeNode {
+    pub seconds: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GenresWrapper {
+    #[serde(default)]
+    pub genres: Vec<GenreNode>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GenreNode {
+    pub text: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PrimaryImage {
+    pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PrincipalCredits {
+    pub category: CategoryNode,
+    #[serde(default)]
+    pub credits: Vec<CreditNode>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CategoryNode {
+    pub id: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditNode {
+    pub name: NameNode,
+    #[serde(default)]
+    pub characters: Vec<CharacterNode>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NameNode {
+    #[serde(rename = "nameText")]
+    pub name_text: TextNode,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CharacterNode {
+    pub name: String,
+}
+
+pub async fn fetch_movie_details(client: &Client, imdb_id: &str) -> AppResult<TitleNode> {
+    fetch_details_internal(client, imdb_id).await
+}
+
+pub async fn fetch_show_details(client: &Client, imdb_id: &str) -> AppResult<TitleNode> {
+    fetch_details_internal(client, imdb_id).await
+}
+
+async fn fetch_details_internal(client: &Client, imdb_id: &str) -> AppResult<TitleNode> {
+    let body = serde_json::json!({
+        "operationName": "TitleDetails",
+        "variables": { "id": imdb_id },
+        "query": GRAPHQL_QUERY,
+    });
+
+    let response = client
+        .post(GRAPHQL_URL)
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
+        .await
+        .map_err(http_err)?;
+
+    let status = response.status();
+    if status == StatusCode::ACCEPTED {
+        return Err(AppError::Other(
+            "imdb_waf: graphql returned 202; see CLAUDE.md".to_string(),
+        ));
+    }
+    if !status.is_success() {
+        return Err(AppError::Other(format!(
+            "imdb_rate_limited: graphql {status}"
+        )));
+    }
+
+    let envelope: GraphQLEnvelope = response
+        .json()
+        .await
+        .map_err(|error| AppError::Other(format!("imdb parse: graphql: {error}")))?;
+
+    if let Some(first_error) = envelope.errors.first() {
+        return Err(AppError::Other(format!(
+            "imdb graphql: {}",
+            first_error.message
+        )));
+    }
+
+    let title = envelope
+        .data
+        .and_then(|data| data.title)
+        .ok_or_else(|| AppError::Other(format!("imdb not_found: {imdb_id}")))?;
+
+    if title.title_text.is_none() {
+        return Err(AppError::Other(format!("imdb not_found: {imdb_id}")));
+    }
+
+    Ok(title)
+}
+
+// ---- Poster download ----
+
+#[derive(Debug, Clone, Copy)]
+pub enum PosterSize {
+    Small,
+    Hero,
+}
+
+impl PosterSize {
+    fn segment(self) -> &'static str {
+        match self {
+            PosterSize::Small => "_V1_SX500_",
+            PosterSize::Hero => "_V1_QL90_UX1280_",
+        }
+    }
+}
+
+pub async fn download_poster(
+    client: &Client,
+    image_url: &str,
+    dest: &std::path::Path,
+    size: PosterSize,
+) -> AppResult<()> {
+    use tokio::io::AsyncWriteExt;
+
+    let url = rewrite_size(image_url, size);
+
+    let mut response = client.get(&url).send().await.map_err(http_err)?;
+    if !response.status().is_success() {
+        return Err(AppError::Other(format!(
+            "poster download failed: {} {}",
+            response.status(),
+            url
+        )));
+    }
+
+    if let Some(parent) = dest.parent() {
+        tokio::fs::create_dir_all(parent).await?;
+    }
+    let mut file = tokio::fs::File::create(dest).await?;
+    while let Some(chunk) = response.chunk().await.map_err(http_err)? {
+        file.write_all(&chunk).await?;
+    }
+    file.flush().await?;
+    Ok(())
+}
+
+fn rewrite_size(url: &str, size: PosterSize) -> String {
+    if let Some(index) = url.rfind("_V1_") {
+        let (head, tail) = url.split_at(index);
+        // Strip everything between `_V1_` and the next `.`, replace with our segment.
+        let dot = tail.rfind('.').unwrap_or(tail.len());
+        return format!("{head}{}{}", size.segment(), &tail[dot..]);
+    }
+    url.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,5 +445,24 @@ mod tests {
     #[test]
     fn slugify_handles_trailing_punctuation() {
         assert_eq!(slugify("The End."), "the_end");
+    }
+
+    #[test]
+    fn rewrite_size_inserts_segment() {
+        let url = "https://m.media-amazon.com/images/M/abc@._V1_.jpg";
+        assert_eq!(
+            rewrite_size(url, PosterSize::Small),
+            "https://m.media-amazon.com/images/M/abc@._V1_SX500_.jpg"
+        );
+        assert_eq!(
+            rewrite_size(url, PosterSize::Hero),
+            "https://m.media-amazon.com/images/M/abc@._V1_QL90_UX1280_.jpg"
+        );
+    }
+
+    #[test]
+    fn rewrite_size_leaves_other_urls_alone() {
+        let url = "https://example.com/image.jpg";
+        assert_eq!(rewrite_size(url, PosterSize::Small), url);
     }
 }
