@@ -4,12 +4,15 @@ Working roadmap. Each item becomes one `fix/N-slug` branch + PR. Items get check
 
 ## Active queue
 
-- [ ] **Posters 404 in dev (and likely prod)** — after a metadata sync, `<img src={posterPath}>` resolves relative to the current URL (`/show-52.jpg`, `/series/52/show-52.jpg`). `apply.rs` writes `poster_path` as a bare filename like `show-52.jpg`; manual uploads write a Windows absolute path. Browsers can't load either as `src`. Pick: (a) Tauri asset protocol + `convertFileSrc` on every `posterPath` consumer, or (b) backend command that returns the bytes / a data URL. Affects PosterCard, the edit pages, and the backdrop on the detail pages.
+- [ ] **IMDB-fallback post-merge verification** — walk these against a real library now that PRs #41 / #42 / #43 / #45 / #46 are on master:
+    - Pick each of the five `metadata_mode` values (`off`, `tmdb_only`, `imdb_only`, `prefer_tmdb`, `prefer_imdb`) and confirm the worker behaves per spec.
+    - Add a known-obscure non-English title to the library; verify TMDB miss → IMDB fallback in `prefer_tmdb` mode.
+    - Hand-link a row to the *other* provider via the match sheet; verify the worker's fast path uses that provider on the next pass regardless of mode.
+    - Break the TMDB key (paste garbage, save), force a sync, observe the yellow banner on Settings → Metadata. Save a real key → banner clears.
+    - Switch modes between IMDB-touching and TMDB-only states and watch parked jobs wake (no orphaned `no_provider_available` rows).
+    - Refresh a row via the detail page; verify `metadata_locked` clears and the worker re-fetches via the linked provider.
 
-- [ ] **Three Rust dead-code warnings** — clean up:
-    - `ReleaseYearNode.end_year` in `metadata/imdb.rs` (parsed but never used — could feed a future "ended in YYYY" UI; for now `#[allow(dead_code)]` or drop the field)
-    - `PosterSize::Hero` variant — added for future backdrop support; mark `#[allow(dead_code)]` or remove until needed
-    - `queries::default_for` — defined in PR #41 but never called; either wire it into a defaults UI or remove
+- [ ] **Dependabot — `cookie` low-severity alert open on master** — https://github.com/henningcullin/rustflix/security/dependabot/64. Out-of-bounds chars accepted in cookie name/path/domain. Transitive via SvelteKit. Take the patched range when Dependabot opens the auto-PR or bump manually if the auto-PR doesn't appear.
 
 - [ ] **Stranger Things seasons fail to merge** — investigate. Probably either an episode-conflict path or a (season, episode) collision the merge sheet doesn't surface. Reproduce, then file a `fix/N` once we know the cause.
 
@@ -30,3 +33,9 @@ Working roadmap. Each item becomes one `fix/N-slug` branch + PR. Items get check
 - [x] **fix/18 — Edit episode title names** (PR #18)
 - [x] **fix/19 — Fix recently-added card hover border clipping** (PR #19)
 - [x] **fix/20 — Replace settings auto-detect Select with shadcn-svelte Select** (PR #20)
+- [x] **fix/44 — Settings infrastructure, 5-mode picker, sentinel rename** (PR #41) — generic `get_app_setting` / `set_app_setting`, `metadata_mode` enum, `tmdb_auth_required` + `no_provider_available` sentinels, 6-card status panel
+- [x] **fix/45 — IMDB module + worker dispatch + hand-link fast path** (PR #42) — suggestion API + GraphQL client, `apply_imdb_*`, real `providers_for_mode` walks, `dispatch_imdb`, hand-linked fast path, `provider` param on `metadata_search` / `link_metadata`
+- [x] **fix/46 — Match-sheet provider toggle + auth-bad banner** (PR #43) — TMDB / IMDB tabs on the Needs-review sheet, `tmdb_auth_bad` banner on Settings → Metadata
+- [x] **fix/47 — Track TODO.md + log poster-404 / dead-code items** (PR #44) — TODO.md was locally ignored via `.git/info/exclude`; brought into the repo
+- [x] **fix/48 — Posters via Tauri asset protocol** (PR #45) — backend normalises bare filenames to `$APPDATA/posters/...`, frontend wraps with `convertFileSrc` via new `posterUrl()` helper
+- [x] **fix/49 — Clear three Rust dead-code warnings** (PR #46) — `#[allow(dead_code)]` on `ReleaseYearNode.end_year`, `PosterSize::Hero`, `queries::default_for`
