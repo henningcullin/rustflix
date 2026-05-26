@@ -3,6 +3,7 @@
 
 pub mod apply;
 pub mod dispatch;
+pub mod imdb;
 pub mod matching;
 pub mod queries;
 pub mod tmdb;
