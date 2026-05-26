@@ -63,7 +63,8 @@ export interface PlayResult {
 export interface MetadataStatusCounts {
   pending: number;
   failed: number;
-  auth_required: number;
+  tmdb_auth_required: number;
+  no_provider_available: number;
   dead_letter: number;
   needs_review: number;
 }
@@ -174,8 +175,6 @@ export const api = {
   resetShowPoster: (id: number) => invoke<Show>('reset_show_poster', { id }),
   resetMoviePoster: (id: number) => invoke<Movie>('reset_movie_poster', { id }),
 
-  getTmdbApiKey: () => invoke<string | null>('get_tmdb_api_key'),
-  setTmdbApiKey: (key: string) => invoke<void>('set_tmdb_api_key', { key }),
   metadataStatusCounts: () =>
     invoke<MetadataStatusCounts>('metadata_status_counts'),
   refreshMetadata: (kind: 'show' | 'movie', id: number) =>
