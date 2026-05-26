@@ -25,18 +25,17 @@ pub async fn open(app_data_dir: &Path) -> AppResult<Db> {
         .await?;
 
     sqlx::migrate!("./migrations").run(&pool).await?;
-    dedupe_shows_and_index(&pool).await?;
+    post_migration_fixups(&pool).await?;
 
     Ok(pool)
 }
 
-/// Runs once after every migration pass. For rows the 0002 migration left
-/// with an empty `fingerprint`, this computes the stable fingerprint from the
-/// existing title, merges any duplicate shows that share `(library_id,
-/// fingerprint)`, and rewrites the canonical row's title to the stripped
-/// form. After backfill it ensures the unique index exists — also covers
-/// fresh installs, where there are simply no rows to dedupe.
-async fn dedupe_shows_and_index(pool: &SqlitePool) -> AppResult<()> {
+/// Runs once after every migration pass. Handles dedup of pre-0002 shows
+/// (the legacy fingerprint backfill + duplicate merge), ensures the
+/// unique index exists, and renames any legacy `auth_required` sentinel
+/// in `metadata_jobs` to `tmdb_auth_required`. Idempotent — re-runs
+/// every startup but only writes when rows actually need fixing.
+async fn post_migration_fixups(pool: &SqlitePool) -> AppResult<()> {
     let stale: Vec<(i64, i64, String)> =
         sqlx::query_as("SELECT id, library_id, title FROM shows WHERE fingerprint = ''")
             .fetch_all(pool)
@@ -103,6 +102,15 @@ async fn dedupe_shows_and_index(pool: &SqlitePool) -> AppResult<()> {
     sqlx::query(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_shows_library_fingerprint
          ON shows(library_id, fingerprint)",
+    )
+    .execute(pool)
+    .await?;
+
+    // One-shot: rename the legacy auth_required sentinel that PRs
+    // before the IMDB-fallback work emitted. Idempotent.
+    sqlx::query(
+        "UPDATE metadata_jobs SET last_error = 'tmdb_auth_required'
+         WHERE last_error = 'auth_required'",
     )
     .execute(pool)
     .await?;
