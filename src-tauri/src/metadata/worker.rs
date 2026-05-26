@@ -100,6 +100,49 @@ async fn run(
             continue;
         }
 
+        // Fast path: hand-linked rows bypass mode dispatch. The user's
+        // pick (or a prior successful link) is the source of truth.
+        if let Some(linked) = read_linked_provider(&pool, &job).await? {
+            let key_for_call = api_key.as_deref().unwrap_or("");
+
+            match dispatch_provider(linked, &pool, &http, &app, key_for_call, &job).await {
+                Ok(Outcome::Matched) => {
+                    sleep(Duration::from_millis(PACING_MS)).await;
+                    continue;
+                }
+                Ok(Outcome::NoMatch) => {
+                    let mut tx = pool.begin().await?;
+                    queries::delete_in_tx(&mut *tx, &job.kind, job.media_id).await?;
+                    tx.commit().await?;
+
+                    sleep(Duration::from_millis(PACING_MS)).await;
+                    continue;
+                }
+                Err(error) => {
+                    let error_string = error.to_string();
+                    if error_string.starts_with("auth_required")
+                        || error_string.starts_with("tmdb_auth_required")
+                    {
+                        let key_now =
+                            app_queries::get_app_setting(&pool, "tmdb_api_key").await?;
+                        if key_now == key_at_job_start {
+                            app_queries::set_app_setting(&pool, "tmdb_auth_bad", "1").await?;
+                        }
+                    }
+                    queries::record_failure(
+                        &pool,
+                        &job.kind,
+                        job.media_id,
+                        &error_string,
+                    )
+                    .await?;
+
+                    sleep(Duration::from_millis(PACING_MS)).await;
+                    continue;
+                }
+            }
+        }
+
         let providers = match providers_for_mode(&mode, api_key.is_some()) {
             Ok(list) => list,
             Err(reason) => {
@@ -481,6 +524,31 @@ async fn dispatch_imdb_show(
             filename,
             size: Some(size),
         }),
+    })
+}
+
+async fn read_linked_provider(
+    pool: &SqlitePool,
+    job: &queries::MetadataJob,
+) -> AppResult<Option<Provider>> {
+    let table = match job.kind.as_str() {
+        "movie" => "movies",
+        "show" => "shows",
+        _ => return Ok(None),
+    };
+
+    let provider: Option<String> = sqlx::query_scalar(&format!(
+        "SELECT provider FROM {table} WHERE id = ?1"
+    ))
+    .bind(job.media_id)
+    .fetch_optional(pool)
+    .await?
+    .flatten();
+
+    Ok(match provider.as_deref() {
+        Some("tmdb") => Some(Provider::Tmdb),
+        Some("imdb") => Some(Provider::Imdb),
+        _ => None,
     })
 }
 
