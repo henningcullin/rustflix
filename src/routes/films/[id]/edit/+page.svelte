@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { api, pickImageFile, type MetadataPatch, type Movie } from '$lib/api';
+  import { api, pickImageFile, posterUrl, type MetadataPatch, type Movie } from '$lib/api';
   import { Button } from '$lib/components/ui/button';
   import {
     Card,
@@ -207,7 +207,7 @@
           <div class="aspect-[2/3] w-32 shrink-0 overflow-hidden rounded-md border border-border bg-card">
             {#if movie.poster_path}
               <img
-                src={movie.poster_path}
+                src={posterUrl(movie.poster_path)}
                 alt=""
                 class="h-full w-full object-cover"
               />

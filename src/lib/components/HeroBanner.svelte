@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Image as ImageIcon, Pencil, Play, RotateCcw } from '$lib/lucide';
-  import { formatRuntime } from '$lib/api';
+  import { formatRuntime, posterUrl } from '$lib/api';
 
   type Props = {
     title: string;
@@ -84,7 +84,7 @@
   <div class="relative h-[60vh] min-h-[420px] w-full">
     {#if backdrop}
       <img
-        src={backdrop}
+        src={posterUrl(backdrop)}
         alt=""
         class="absolute inset-0 h-full w-full object-cover"
       />

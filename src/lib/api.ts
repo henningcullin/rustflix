@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 
 export type LibraryKind = 'movies' | 'series' | 'mixed';
@@ -243,6 +243,19 @@ export function formatRuntime(seconds: number | null | undefined): string {
     return `${hours}h ${minutes}m`;
   }
   return `${minutes}m`;
+}
+
+/**
+ * Convert an absolute filesystem path into a URL the webview can load
+ * (Tauri asset protocol). Bare filenames are rejected — the backend
+ * is responsible for resolving those before returning.
+ */
+export function posterUrl(posterPath: string | null | undefined): string | undefined {
+  if (!posterPath) {
+    return undefined;
+  }
+
+  return convertFileSrc(posterPath);
 }
 
 export function progressPct(

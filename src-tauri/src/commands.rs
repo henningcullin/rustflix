@@ -62,23 +62,35 @@ pub async fn scan_libraries(app: AppHandle, db: State<'_, Db>) -> AppResult<Scan
 }
 
 #[tauri::command]
-pub async fn list_movies(db: State<'_, Db>) -> AppResult<Vec<Movie>> {
-    queries::list_movies(&db).await
+pub async fn list_movies(app: AppHandle, db: State<'_, Db>) -> AppResult<Vec<Movie>> {
+    let mut items = queries::list_movies(&db).await?;
+    for movie in items.iter_mut() {
+        movie.poster_path = resolve_poster_path(&app, movie.poster_path.take());
+    }
+    Ok(items)
 }
 
 #[tauri::command]
-pub async fn get_movie(db: State<'_, Db>, id: i64) -> AppResult<Movie> {
-    queries::get_movie(&db, id).await
+pub async fn get_movie(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResult<Movie> {
+    let mut movie = queries::get_movie(&db, id).await?;
+    movie.poster_path = resolve_poster_path(&app, movie.poster_path.take());
+    Ok(movie)
 }
 
 #[tauri::command]
-pub async fn list_shows(db: State<'_, Db>) -> AppResult<Vec<Show>> {
-    queries::list_shows(&db).await
+pub async fn list_shows(app: AppHandle, db: State<'_, Db>) -> AppResult<Vec<Show>> {
+    let mut items = queries::list_shows(&db).await?;
+    for show in items.iter_mut() {
+        show.poster_path = resolve_poster_path(&app, show.poster_path.take());
+    }
+    Ok(items)
 }
 
 #[tauri::command]
-pub async fn get_show(db: State<'_, Db>, id: i64) -> AppResult<Show> {
-    queries::get_show(&db, id).await
+pub async fn get_show(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResult<Show> {
+    let mut show = queries::get_show(&db, id).await?;
+    show.poster_path = resolve_poster_path(&app, show.poster_path.take());
+    Ok(show)
 }
 
 #[tauri::command]
@@ -92,8 +104,22 @@ pub async fn get_episode(db: State<'_, Db>, id: i64) -> AppResult<Episode> {
 }
 
 #[tauri::command]
-pub async fn continue_watching(db: State<'_, Db>) -> AppResult<Vec<ContinueWatchingItem>> {
-    queries::continue_watching(&db, 12).await
+pub async fn continue_watching(
+    app: AppHandle,
+    db: State<'_, Db>,
+) -> AppResult<Vec<ContinueWatchingItem>> {
+    let mut items = queries::continue_watching(&db, 12).await?;
+    for item in items.iter_mut() {
+        match item {
+            ContinueWatchingItem::Movie { movie } => {
+                movie.poster_path = resolve_poster_path(&app, movie.poster_path.take());
+            }
+            ContinueWatchingItem::Episode { show, .. } => {
+                show.poster_path = resolve_poster_path(&app, show.poster_path.take());
+            }
+        }
+    }
+    Ok(items)
 }
 
 #[tauri::command]
@@ -140,6 +166,7 @@ pub async fn play_episode(
 
 #[tauri::command]
 pub async fn update_show_metadata(
+    app: AppHandle,
     db: State<'_, Db>,
     id: i64,
     title: Option<String>,
@@ -147,11 +174,14 @@ pub async fn update_show_metadata(
     overview: Option<String>,
 ) -> AppResult<Show> {
     queries::update_show_metadata(&db, id, title.as_deref(), year, overview.as_deref()).await?;
-    queries::get_show(&db, id).await
+    let mut show = queries::get_show(&db, id).await?;
+    show.poster_path = resolve_poster_path(&app, show.poster_path.take());
+    Ok(show)
 }
 
 #[tauri::command]
 pub async fn update_movie_metadata(
+    app: AppHandle,
     db: State<'_, Db>,
     id: i64,
     title: Option<String>,
@@ -159,7 +189,9 @@ pub async fn update_movie_metadata(
     overview: Option<String>,
 ) -> AppResult<Movie> {
     queries::update_movie_metadata(&db, id, title.as_deref(), year, overview.as_deref()).await?;
-    queries::get_movie(&db, id).await
+    let mut movie = queries::get_movie(&db, id).await?;
+    movie.poster_path = resolve_poster_path(&app, movie.poster_path.take());
+    Ok(movie)
 }
 
 #[tauri::command]
@@ -441,6 +473,28 @@ pub async fn admin_fk_label(
     crate::admin::fk_label(&db, table, label_column, pk_value).await
 }
 
+/// Resolve a stored `poster_path` to an absolute filesystem path.
+///
+/// Two shapes have existed historically:
+///   * Bare filename like `movie-42.jpg` — written by the metadata
+///     sync layer; the file lives in `<app_data>/posters/`.
+///   * Absolute path — written by manual uploads via copy_poster.
+///
+/// `None` stays `None`. An absolute path is returned as-is.
+fn resolve_poster_path(app: &AppHandle, stored: Option<String>) -> Option<String> {
+    let value = stored?;
+    let candidate = std::path::Path::new(&value);
+
+    if candidate.is_absolute() {
+        return Some(value);
+    }
+
+    let app_data_dir = app.path().app_data_dir().ok()?;
+    let resolved = app_data_dir.join("posters").join(&value);
+
+    Some(resolved.to_string_lossy().to_string())
+}
+
 /// Best-effort cleanup of a manual poster file. Only deletes the file when
 /// it sits inside our own `<app_data>/posters/` directory — any other path
 /// is ignored so a malformed `poster_path` can never remove user media.
@@ -479,7 +533,9 @@ pub async fn set_show_poster_from_file(
 ) -> AppResult<Show> {
     let destination = copy_poster(&app, "show", id, &source_path).await?;
     queries::set_show_poster(&db, id, &destination, "manual").await?;
-    queries::get_show(&db, id).await
+    let mut show = queries::get_show(&db, id).await?;
+    show.poster_path = resolve_poster_path(&app, show.poster_path.take());
+    Ok(show)
 }
 
 #[tauri::command]
@@ -491,19 +547,25 @@ pub async fn set_movie_poster_from_file(
 ) -> AppResult<Movie> {
     let destination = copy_poster(&app, "movie", id, &source_path).await?;
     queries::set_movie_poster(&db, id, &destination, "manual").await?;
-    queries::get_movie(&db, id).await
+    let mut movie = queries::get_movie(&db, id).await?;
+    movie.poster_path = resolve_poster_path(&app, movie.poster_path.take());
+    Ok(movie)
 }
 
 #[tauri::command]
-pub async fn reset_show_poster(db: State<'_, Db>, id: i64) -> AppResult<Show> {
+pub async fn reset_show_poster(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResult<Show> {
     queries::reset_show_poster(&db, id).await?;
-    queries::get_show(&db, id).await
+    let mut show = queries::get_show(&db, id).await?;
+    show.poster_path = resolve_poster_path(&app, show.poster_path.take());
+    Ok(show)
 }
 
 #[tauri::command]
-pub async fn reset_movie_poster(db: State<'_, Db>, id: i64) -> AppResult<Movie> {
+pub async fn reset_movie_poster(app: AppHandle, db: State<'_, Db>, id: i64) -> AppResult<Movie> {
     queries::reset_movie_poster(&db, id).await?;
-    queries::get_movie(&db, id).await
+    let mut movie = queries::get_movie(&db, id).await?;
+    movie.poster_path = resolve_poster_path(&app, movie.poster_path.take());
+    Ok(movie)
 }
 
 /// Copy `source_path` into `<app_data>/posters/{kind}-{id}.{ext}` and return

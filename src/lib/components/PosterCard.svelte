@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { posterUrl } from '$lib/api';
   import { Play, CheckCircle, Image as ImageIcon } from '$lib/lucide';
 
   type Props = {
@@ -32,7 +33,7 @@
   >
     {#if posterPath}
       <img
-        src={posterPath}
+        src={posterUrl(posterPath)}
         alt={title}
         class="absolute inset-0 h-full w-full object-cover"
         loading="lazy"
