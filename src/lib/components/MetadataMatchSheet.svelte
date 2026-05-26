@@ -34,7 +34,7 @@
     error = null;
     candidates = [];
     try {
-      candidates = await api.metadataSearch(item.kind, item.title, item.year);
+      candidates = await api.metadataSearch(item.kind, item.title, item.year, 'tmdb');
     } catch (caught) {
       error = String(caught);
     } finally {
@@ -48,7 +48,7 @@
     }
     error = null;
     try {
-      await api.linkMetadata(item.kind, item.id, candidate.provider_id);
+      await api.linkMetadata(item.kind, item.id, 'tmdb', candidate.provider_id);
       onLinked();
       onClose();
     } catch (caught) {

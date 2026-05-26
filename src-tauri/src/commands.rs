@@ -337,15 +337,26 @@ pub async fn metadata_search(
     kind: String,
     query: String,
     year: Option<i32>,
+    provider: String,
 ) -> AppResult<Vec<crate::metadata::matching::MatchCandidate>> {
-    let api_key = queries::get_app_setting(&db, "tmdb_api_key")
-        .await?
-        .ok_or_else(|| AppError::Other("no TMDB key configured".to_string()))?;
+    match provider.as_str() {
+        "tmdb" => {
+            let api_key = queries::get_app_setting(&db, "tmdb_api_key")
+                .await?
+                .ok_or_else(|| AppError::Other("no TMDB key configured".to_string()))?;
 
-    match kind.as_str() {
-        "movie" => crate::metadata::tmdb::search_movie(&http, &api_key, &query, year).await,
-        "show" => crate::metadata::tmdb::search_show(&http, &api_key, &query, year).await,
-        other => Err(AppError::Other(format!("unknown kind: {other}"))),
+            match kind.as_str() {
+                "movie" => crate::metadata::tmdb::search_movie(&http, &api_key, &query, year).await,
+                "show" => crate::metadata::tmdb::search_show(&http, &api_key, &query, year).await,
+                other => Err(AppError::Other(format!("unknown kind: {other}"))),
+            }
+        }
+        "imdb" => match kind.as_str() {
+            "movie" => crate::metadata::imdb::search_movie(&http, &query, year).await,
+            "show" => crate::metadata::imdb::search_show(&http, &query, year).await,
+            other => Err(AppError::Other(format!("unknown kind: {other}"))),
+        },
+        other => Err(AppError::Other(format!("unknown provider: {other}"))),
     }
 }
 
@@ -355,8 +366,13 @@ pub async fn link_metadata(
     db: State<'_, Db>,
     kind: String,
     media_id: i64,
+    provider: String,
     provider_id: String,
 ) -> AppResult<()> {
+    if !matches!(provider.as_str(), "tmdb" | "imdb") {
+        return Err(AppError::Other(format!("unknown provider: {provider}")));
+    }
+
     let table = match kind.as_str() {
         "show" => "shows",
         "movie" => "movies",
@@ -364,10 +380,11 @@ pub async fn link_metadata(
     };
 
     sqlx::query(&format!(
-        "UPDATE {table} SET provider = 'tmdb', provider_id = ?2, metadata_locked = 0
+        "UPDATE {table} SET provider = ?2, provider_id = ?3, metadata_locked = 0
          WHERE id = ?1"
     ))
     .bind(media_id)
+    .bind(&provider)
     .bind(&provider_id)
     .execute(&*db)
     .await?;

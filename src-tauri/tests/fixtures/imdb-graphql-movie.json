@@ -1,0 +1,29 @@
+{
+  "data": {
+    "title": {
+      "id": "tt0133093",
+      "titleText": { "text": "The Matrix" },
+      "titleType": { "id": "movie" },
+      "releaseYear": { "year": 1999, "endYear": null },
+      "releaseDate": { "day": 31, "month": 3, "year": 1999 },
+      "plot": { "plotText": { "plainText": "Neo discovers reality is a simulation." } },
+      "ratingsSummary": { "aggregateRating": 8.7, "voteCount": 2000000 },
+      "runtime": { "seconds": 8160 },
+      "genres": { "genres": [{ "id": "action", "text": "Action" }, { "id": "scifi", "text": "Sci-Fi" }] },
+      "primaryImage": { "url": "https://m.media-amazon.com/images/M/matrix@._V1_.jpg", "width": 2100, "height": 3156 },
+      "principalCredits": [
+        {
+          "category": { "id": "director", "text": "Directors" },
+          "credits": [{ "name": { "id": "nm0905152", "nameText": { "text": "Lana Wachowski" } } }]
+        },
+        {
+          "category": { "id": "cast", "text": "Stars" },
+          "credits": [
+            { "name": { "id": "nm0000206", "nameText": { "text": "Keanu Reeves" } }, "characters": [{ "name": "Neo" }] },
+            { "name": { "id": "nm0000401", "nameText": { "text": "Laurence Fishburne" } }, "characters": [{ "name": "Morpheus" }] }
+          ]
+        }
+      ]
+    }
+  }
+}

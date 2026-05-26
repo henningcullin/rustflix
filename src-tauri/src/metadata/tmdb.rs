@@ -7,6 +7,7 @@ use serde::Deserialize;
 use tokio::io::AsyncWriteExt;
 
 use crate::error::{AppError, AppResult};
+use crate::metadata::dispatch::Provider;
 use crate::metadata::matching::MatchCandidate;
 
 const API_BASE: &str = "https://api.themoviedb.org/3";
@@ -97,6 +98,7 @@ pub async fn search_movie(
         .results
         .into_iter()
         .map(|raw| MatchCandidate {
+            provider: Provider::Tmdb,
             provider_id: raw.id.to_string(),
             title: raw.title,
             year: parse_year(raw.release_date.as_deref()),
@@ -126,6 +128,7 @@ pub async fn search_show(
         .results
         .into_iter()
         .map(|raw| MatchCandidate {
+            provider: Provider::Tmdb,
             provider_id: raw.id.to_string(),
             title: raw.name,
             year: parse_year(raw.first_air_date.as_deref()),

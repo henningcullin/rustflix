@@ -70,6 +70,7 @@ export interface MetadataStatusCounts {
 }
 
 export interface MatchCandidate {
+  provider: 'tmdb' | 'imdb';
   provider_id: string;
   title: string;
   year: number | null;
@@ -181,10 +182,20 @@ export const api = {
     invoke<void>('refresh_metadata', { kind, id }),
   unlinkMetadata: (kind: 'show' | 'movie', id: number) =>
     invoke<void>('unlink_metadata', { kind, id }),
-  metadataSearch: (kind: 'show' | 'movie', query: string, year: number | null) =>
-    invoke<MatchCandidate[]>('metadata_search', { kind, query, year }),
-  linkMetadata: (kind: 'show' | 'movie', mediaId: number, providerId: string) =>
-    invoke<void>('link_metadata', { kind, mediaId, providerId }),
+  metadataSearch: (
+    kind: 'show' | 'movie',
+    query: string,
+    year: number | null,
+    provider: 'tmdb' | 'imdb',
+  ) =>
+    invoke<MatchCandidate[]>('metadata_search', { kind, query, year, provider }),
+  linkMetadata: (
+    kind: 'show' | 'movie',
+    mediaId: number,
+    provider: 'tmdb' | 'imdb',
+    providerId: string,
+  ) =>
+    invoke<void>('link_metadata', { kind, mediaId, provider, providerId }),
   listNeedsReview: () => invoke<NeedsReviewItem[]>('list_needs_review'),
 
   adminListRows: (table: string, sortColumn?: string, direction?: 'asc' | 'desc') =>
