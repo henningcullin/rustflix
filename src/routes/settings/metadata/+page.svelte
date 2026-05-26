@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type MetadataStatusCounts } from '$lib/api';
   import { getSetting, setSetting, type MetadataMode } from '$lib/settings';
+  import { invoke } from '@tauri-apps/api/core';
   import { Button } from '$lib/components/ui/button';
   import {
     Card,
@@ -19,6 +20,7 @@
   let savingMode = $state(false);
   let counts = $state<MetadataStatusCounts | null>(null);
   let error = $state<string | null>(null);
+  let authBad = $state(false);
 
   const MODE_LABELS: Record<MetadataMode, string> = {
     off: 'Off (no metadata sync)',
@@ -34,15 +36,17 @@
 
   async function load() {
     try {
-      const [keyResult, modeResult, countsResult] = await Promise.all([
+      const [keyResult, modeResult, countsResult, authBadResult] = await Promise.all([
         getSetting('tmdb_api_key'),
         getSetting('metadata_mode'),
         api.metadataStatusCounts(),
+        invoke<string | null>('get_app_setting', { key: 'tmdb_auth_bad' }),
       ]);
       savedKey = keyResult;
       mode = modeResult;
       counts = countsResult;
       keyDraft = savedKey ?? '';
+      authBad = authBadResult === '1';
     } catch (caught) {
       error = String(caught);
     }
@@ -90,6 +94,14 @@
       class="mb-6 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive-foreground"
     >
       {error}
+    </div>
+  {/if}
+
+  {#if authBad && mode !== 'off' && mode !== 'imdb_only'}
+    <div
+      class="mb-6 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200"
+    >
+      Your TMDB key was rejected on the last sync attempt. Paste a new key below to resume.
     </div>
   {/if}
 
