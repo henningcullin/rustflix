@@ -510,7 +510,8 @@ pub async fn metadata_status_counts(
 ) -> AppResult<crate::models::MetadataStatusCounts> {
     let pending: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM metadata_jobs
-         WHERE attempts = 0 AND COALESCE(last_error, '') <> 'auth_required'",
+         WHERE attempts = 0
+           AND COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')",
     )
     .fetch_one(pool)
     .await?;
@@ -518,13 +519,19 @@ pub async fn metadata_status_counts(
     let failed: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM metadata_jobs
          WHERE attempts > 0 AND attempts < 8
-           AND COALESCE(last_error, '') <> 'auth_required'",
+           AND COALESCE(last_error, '') NOT IN ('tmdb_auth_required', 'no_provider_available')",
     )
     .fetch_one(pool)
     .await?;
 
-    let auth_required: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'auth_required'",
+    let tmdb_auth_required: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'tmdb_auth_required'",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let no_provider_available: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM metadata_jobs WHERE last_error = 'no_provider_available'",
     )
     .fetch_one(pool)
     .await?;
@@ -552,7 +559,8 @@ pub async fn metadata_status_counts(
     Ok(crate::models::MetadataStatusCounts {
         pending,
         failed,
-        auth_required,
+        tmdb_auth_required,
+        no_provider_available,
         dead_letter,
         needs_review,
     })
