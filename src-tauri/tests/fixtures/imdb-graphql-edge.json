@@ -1,0 +1,17 @@
+{
+  "data": {
+    "title": {
+      "id": "tt31378509",
+      "titleText": { "text": "Dune Part Three" },
+      "titleType": { "id": "movie" },
+      "releaseYear": { "year": 2026, "endYear": null },
+      "releaseDate": null,
+      "plot": null,
+      "ratingsSummary": { "aggregateRating": null, "voteCount": 0 },
+      "runtime": null,
+      "genres": { "genres": [] },
+      "primaryImage": null,
+      "principalCredits": []
+    }
+  }
+}

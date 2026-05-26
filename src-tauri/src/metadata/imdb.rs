@@ -466,3 +466,65 @@ mod tests {
         assert_eq!(rewrite_size(url, PosterSize::Small), url);
     }
 }
+
+#[cfg(test)]
+mod fixture_tests {
+    use super::*;
+
+    #[test]
+    fn parses_suggestion_movie_response() {
+        let raw = include_str!("../../tests/fixtures/imdb-suggestion-movie.json");
+        let envelope: SuggestionEnvelope = serde_json::from_str(raw).unwrap();
+        assert_eq!(envelope.d.len(), 3);
+        let movies: Vec<_> = envelope
+            .d
+            .iter()
+            .filter(|entry| entry.id.starts_with("tt") && entry.qid.as_deref() == Some("movie"))
+            .collect();
+        assert_eq!(movies.len(), 2);
+        assert_eq!(movies[0].id, "tt0133093");
+        assert_eq!(movies[0].l.as_deref(), Some("The Matrix"));
+        assert_eq!(movies[0].y, Some(1999));
+    }
+
+    #[test]
+    fn parses_graphql_movie_response() {
+        let raw = include_str!("../../tests/fixtures/imdb-graphql-movie.json");
+        let envelope: GraphQLEnvelope = serde_json::from_str(raw).unwrap();
+        let title = envelope.data.unwrap().title.unwrap();
+        assert_eq!(title.id, "tt0133093");
+        assert_eq!(title.title_text.as_ref().unwrap().text, "The Matrix");
+        assert_eq!(title.release_year.as_ref().unwrap().year, Some(1999));
+        assert_eq!(title.runtime.as_ref().unwrap().seconds, Some(8160));
+        assert_eq!(
+            title.ratings_summary.as_ref().unwrap().aggregate_rating,
+            Some(8.7),
+        );
+        let cast = title
+            .principal_credits
+            .iter()
+            .find(|credit| credit.category.id == "cast")
+            .unwrap();
+        assert_eq!(cast.credits.len(), 2);
+        assert_eq!(cast.credits[0].characters[0].name, "Neo");
+    }
+
+    #[test]
+    fn parses_graphql_show_response() {
+        let raw = include_str!("../../tests/fixtures/imdb-graphql-show.json");
+        let envelope: GraphQLEnvelope = serde_json::from_str(raw).unwrap();
+        let title = envelope.data.unwrap().title.unwrap();
+        assert_eq!(title.id, "tt0903747");
+        assert_eq!(title.release_year.as_ref().unwrap().end_year, Some(2013));
+    }
+
+    #[test]
+    fn parses_graphql_edge_case_no_rating() {
+        let raw = include_str!("../../tests/fixtures/imdb-graphql-edge.json");
+        let envelope: GraphQLEnvelope = serde_json::from_str(raw).unwrap();
+        let title = envelope.data.unwrap().title.unwrap();
+        assert_eq!(title.ratings_summary.as_ref().unwrap().vote_count, Some(0));
+        assert!(title.runtime.is_none());
+        assert!(title.primary_image.is_none());
+    }
+}

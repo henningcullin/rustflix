@@ -1,0 +1,24 @@
+{
+  "data": {
+    "title": {
+      "id": "tt0903747",
+      "titleText": { "text": "Breaking Bad" },
+      "titleType": { "id": "tvSeries" },
+      "releaseYear": { "year": 2008, "endYear": 2013 },
+      "releaseDate": { "day": 20, "month": 1, "year": 2008 },
+      "plot": { "plotText": { "plainText": "Chemistry teacher cooks meth." } },
+      "ratingsSummary": { "aggregateRating": 9.5, "voteCount": 2000000 },
+      "runtime": { "seconds": 2880 },
+      "genres": { "genres": [{ "id": "crime", "text": "Crime" }, { "id": "drama", "text": "Drama" }] },
+      "primaryImage": { "url": "https://m.media-amazon.com/images/M/bb@._V1_.jpg", "width": 1600, "height": 2400 },
+      "principalCredits": [
+        {
+          "category": { "id": "cast", "text": "Stars" },
+          "credits": [
+            { "name": { "id": "nm0186505", "nameText": { "text": "Bryan Cranston" } }, "characters": [{ "name": "Walter White" }] }
+          ]
+        }
+      ]
+    }
+  }
+}
