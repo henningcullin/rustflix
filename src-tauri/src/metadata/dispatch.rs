@@ -30,11 +30,6 @@ impl ParkReason {
 
 /// Returns the ordered list of providers to try for a given mode and
 /// key state, or a typed `ParkReason` when no provider can run.
-///
-/// While the IMDB module is unimplemented (PR A of the rollout),
-/// `imdb_only` and `prefer_imdb` degrade to `[Tmdb]` when a key is
-/// present, else park as `NoProviderAvailable`. PR B replaces those
-/// branches with real IMDB walks.
 pub fn providers_for_mode(
     mode: &str,
     has_tmdb_key: bool,
@@ -50,20 +45,20 @@ pub fn providers_for_mode(
                 Err(ParkReason::NoProviderAvailable)
             }
         }
-        // Until PR B lands, IMDB modes degrade to TMDB when possible.
-        "imdb_only" | "prefer_imdb" => {
+        "imdb_only" => Ok(vec![Imdb]),
+        "prefer_imdb" => {
             if has_tmdb_key {
-                Ok(vec![Tmdb])
+                Ok(vec![Imdb, Tmdb])
             } else {
-                Err(ParkReason::NoProviderAvailable)
+                Ok(vec![Imdb])
             }
         }
         _ => {
-            // prefer_tmdb (default). IMDB fallback arrives in PR B.
+            // prefer_tmdb (default) and unknown modes.
             if has_tmdb_key {
-                Ok(vec![Tmdb])
+                Ok(vec![Tmdb, Imdb])
             } else {
-                Err(ParkReason::NoProviderAvailable)
+                Ok(vec![Imdb])
             }
         }
     }
@@ -91,38 +86,52 @@ mod tests {
     }
 
     #[test]
-    fn imdb_only_without_key_parks_in_pr_a_degrade() {
-        let result = providers_for_mode("imdb_only", false);
-        assert_eq!(result.unwrap_err(), ParkReason::NoProviderAvailable);
+    fn imdb_only_returns_imdb_always() {
+        assert_eq!(providers_for_mode("imdb_only", true).unwrap(), vec![Provider::Imdb]);
+        assert_eq!(providers_for_mode("imdb_only", false).unwrap(), vec![Provider::Imdb]);
     }
 
     #[test]
-    fn imdb_only_with_key_degrades_to_tmdb_in_pr_a() {
-        assert_eq!(providers_for_mode("imdb_only", true).unwrap(), vec![Provider::Tmdb]);
-    }
-
-    #[test]
-    fn prefer_tmdb_with_key_returns_tmdb() {
-        assert_eq!(providers_for_mode("prefer_tmdb", true).unwrap(), vec![Provider::Tmdb]);
-    }
-
-    #[test]
-    fn prefer_tmdb_without_key_parks_in_pr_a() {
-        let result = providers_for_mode("prefer_tmdb", false);
-        assert_eq!(result.unwrap_err(), ParkReason::NoProviderAvailable);
-    }
-
-    #[test]
-    fn prefer_imdb_with_key_returns_tmdb_in_pr_a() {
-        assert_eq!(providers_for_mode("prefer_imdb", true).unwrap(), vec![Provider::Tmdb]);
-    }
-
-    #[test]
-    fn unknown_mode_treated_as_prefer_tmdb_default() {
-        assert_eq!(providers_for_mode("garbage", true).unwrap(), vec![Provider::Tmdb]);
+    fn prefer_tmdb_with_key_returns_tmdb_then_imdb() {
         assert_eq!(
-            providers_for_mode("garbage", false).unwrap_err(),
-            ParkReason::NoProviderAvailable,
+            providers_for_mode("prefer_tmdb", true).unwrap(),
+            vec![Provider::Tmdb, Provider::Imdb],
+        );
+    }
+
+    #[test]
+    fn prefer_tmdb_without_key_returns_imdb_only() {
+        assert_eq!(
+            providers_for_mode("prefer_tmdb", false).unwrap(),
+            vec![Provider::Imdb],
+        );
+    }
+
+    #[test]
+    fn prefer_imdb_with_key_returns_imdb_then_tmdb() {
+        assert_eq!(
+            providers_for_mode("prefer_imdb", true).unwrap(),
+            vec![Provider::Imdb, Provider::Tmdb],
+        );
+    }
+
+    #[test]
+    fn prefer_imdb_without_key_returns_imdb_only() {
+        assert_eq!(
+            providers_for_mode("prefer_imdb", false).unwrap(),
+            vec![Provider::Imdb],
+        );
+    }
+
+    #[test]
+    fn unknown_mode_falls_back_to_prefer_tmdb_default() {
+        assert_eq!(
+            providers_for_mode("garbage", true).unwrap(),
+            vec![Provider::Tmdb, Provider::Imdb],
+        );
+        assert_eq!(
+            providers_for_mode("garbage", false).unwrap(),
+            vec![Provider::Imdb],
         );
     }
 
